@@ -1,0 +1,33 @@
+@title Privacy | KoG Client
+@description What the KoG client sends and to whom, read from its source code: update checks, the DDNet server list, player name and skin downloads.
+
+<h1>Privacy</h1>
+<p class="lead">What the client sends, and where. This list comes from reading the source code of version 0.1.0, before the first release.</p>
+
+<h2>What the KoG client adds</h2>
+<ul>
+<li><strong>Update check.</strong> In builds that contain the updater, the client downloads <code>https://client.kog.tw/update.json</code> and <code>update.json.sig</code> at start. The site is served by GitHub Pages, so GitHub sees the request: your IP address, the time and the usual request headers. If you accept an update, the files come from GitHub's download servers. The client adds neither your name nor your settings. Turn it off with <code>kog_check_updates 0</code>.</li>
+<li><strong>No telemetry.</strong> The settings <code>kog_telemetry</code> and <code>kog_hello</code> exist for planned features. They are off by default and not implemented: nothing is sent.</li>
+<li><strong>Game servers</strong> see what they see from any DDNet client, plus a client version string that names this client.</li>
+</ul>
+
+<h2>What it inherits from DDNet and TClient</h2>
+<p>These requests are part of the client it is built from. They are unchanged.</p>
+<div class="table-scroll">
+<table class="stack">
+<thead><tr><th>Address</th><th>When</th><th>What it reveals</th><th>Setting</th></tr></thead>
+<tbody>
+<tr><td data-label="Address"><code>master1.ddnet.org</code> to <code>master4.ddnet.org</code></td><td data-label="When">The server browser loads the server list</td><td data-label="What it reveals">Your IP address</td><td data-label="Setting">None</td></tr>
+<tr><td data-label="Address"><code>info.ddnet.org/info</code></td><td data-label="When">At start and when the information is refreshed</td><td data-label="What it reveals">Your IP address (IPv4 is used). If "Show DDNet map finishes in server browser" is on, also your player name.</td><td data-label="Setting">That option is asked on first start and is checked by default. Set <code>br_indicate_finished 0</code> to stop sending the name.</td></tr>
+<tr><td data-label="Address"><code>skins.ddnet.org</code></td><td data-label="When">A skin is missing on your computer</td><td data-label="What it reveals">Your IP address and the skin name</td><td data-label="Setting"><code>cl_download_skins 0</code></td></tr>
+<tr><td data-label="Address"><code>maps.ddnet.org</code></td><td data-label="When">You join a server whose map you do not have</td><td data-label="What it reveals">Your IP address and the map name</td><td data-label="Setting"><code>cl_map_download_url</code></td></tr>
+<tr><td data-label="Address">The address you enter</td><td data-label="When">Only if you set <code>tc_custom_communities_url</code></td><td data-label="What it reveals">Your IP address</td><td data-label="Setting">Empty by default</td></tr>
+</tbody>
+</table>
+</div>
+<p>Links in menus (for example to <code>ddnet.org</code>) open in your browser, and only when you click them.</p>
+
+<h2>This website</h2>
+<p>This site has no analytics, no cookies, no third-party scripts, fonts or images, and it loads nothing from other sites. It is hosted by GitHub Pages, so GitHub processes the requests to it: see <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>. The download section fetches the release information from this site only.</p>
+
+<p class="note">You can check the list above yourself: search the source for web addresses with <code>grep -rn "https://" src</code>. If you find a request that is not listed here, please open an issue.</p>

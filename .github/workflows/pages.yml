@@ -1,0 +1,46 @@
+name: Pages
+
+# Follows org/repo_settings.yaml of infra-github, which is the source of truth and also makes these calls after every apply.
+# Here they follow the events of the site itself: the branch published is created (create), Pages built (page_build),
+# so that the domain and HTTPS are in place without a timer. Enforcing HTTPS only works once GitHub has the certificate;
+# until then the next event tries again.
+
+on:
+  create:
+  page_build:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  settings:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'create' || github.ref_name == 'published'
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Domain and HTTPS of the site
+        run: |
+          api="repos/$GITHUB_REPOSITORY/pages"
+          if ! gh api "$api" > site.json 2> /dev/null; then
+            gh api -X POST "$api" -f 'source[branch]=published' -f 'source[path]=/' > /dev/null \
+              || { echo "::warning::Pages could not be created with this token: the next apply of infra-github does it"; exit 0; }
+            gh api "$api" > site.json
+          fi
+          cname=$(jq -r '.cname // ""' site.json)
+          https=$(jq -r '.https_enforced' site.json)
+          if [ "$cname" != client.kog.tw ]; then
+            gh api -X PUT "$api" -f 'source[branch]=published' -f 'source[path]=/' -f cname=client.kog.tw > /dev/null \
+              || { echo "::warning::the domain could not be set with this token: the next apply of infra-github does it"; exit 0; }
+          fi
+          if [ "$https" != true ]; then
+            gh api -X PUT "$api" -F https_enforced=true > /dev/null 2>&1 \
+              || { echo "certificate not ready yet: HTTPS is enforced after the next build"; exit 0; }
+            echo "HTTPS is enforced"
+          fi
