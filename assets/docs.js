@@ -91,38 +91,60 @@
     });
   }
 
-  // Scroll spy: the heading of the table of contents that is being read.
+  // Scroll spy: the heading of the table of contents that is being read. No scroll handler: the browser tells us
+  // when a heading crosses the top band of the screen.
   var links = document.querySelectorAll(".docs-toc a");
-  if (links.length) {
-    var targets = [];
+  if (links.length && "IntersectionObserver" in window) {
+    var byId = {};
+    var heads = [];
     for (var l = 0; l < links.length; l++) {
-      var target = document.getElementById(links[l].getAttribute("href").slice(1));
-      if (target) targets.push({ node: target, link: links[l] });
-    }
-    var queued = false;
-    var spy = function () {
-      queued = false;
-      var current = null;
-      for (var t = 0; t < targets.length; t++) {
-        if (targets[t].node.getBoundingClientRect().top <= 120) current = targets[t];
+      var id = links[l].getAttribute("href").slice(1);
+      var target = document.getElementById(id);
+      if (target) {
+        byId[id] = links[l];
+        heads.push(target);
       }
-      for (var u = 0; u < targets.length; u++) {
-        if (targets[u] === current) {
-          targets[u].link.classList.add("active");
-          targets[u].link.setAttribute("aria-current", "location");
+    }
+    var current = null;
+    var mark = function (id) {
+      if (current === id) return;
+      current = id;
+      for (var key in byId) {
+        if (key === id) {
+          byId[key].classList.add("active");
+          byId[key].setAttribute("aria-current", "location");
         } else {
-          targets[u].link.classList.remove("active");
-          targets[u].link.removeAttribute("aria-current");
+          byId[key].classList.remove("active");
+          byId[key].removeAttribute("aria-current");
         }
       }
     };
-    window.addEventListener("scroll", function () {
-      if (!queued) {
-        queued = true;
-        window.requestAnimationFrame(spy);
-      }
-    }, { passive: true });
-    spy();
+    var visible = {};
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        visible[entry.target.id] = entry.isIntersecting;
+      });
+      var last = null;
+      var above = null;
+      heads.forEach(function (head) {
+        if (visible[head.id]) last = last || head.id;
+        else if (head.getBoundingClientRect().top < 0) above = head.id;
+      });
+      mark(last || above || (heads[0] && heads[0].id));
+    }, { rootMargin: "-80px 0px -70% 0px" });
+    heads.forEach(function (head) { spy.observe(head); });
+  }
+
+  // Code blocks and tables that need sideways scrolling get a soft edge.
+  if ("ResizeObserver" in window) {
+    var scrollers = document.querySelectorAll(".doc pre, .doc .table-scroll");
+    var watch = new ResizeObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var node = entry.target;
+        node.classList.toggle("is-scrollable", node.scrollWidth > node.clientWidth + 1);
+      });
+    });
+    for (var w = 0; w < scrollers.length; w++) watch.observe(scrollers[w]);
   }
 
   // Search over the titles and headings of the documentation.

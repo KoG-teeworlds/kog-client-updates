@@ -167,6 +167,7 @@
     fact("Version", data.version);
     fact("Date", Manifest.formatDate(data.issued));
     if (mine && mine.size) fact("Size", Manifest.formatSize(mine.size));
+    if (mine && mine.id === "macos") fact("Runs on", "Apple Silicon Macs only");
     nodes.push(rows);
 
     if (mine && mine.sha256) {
