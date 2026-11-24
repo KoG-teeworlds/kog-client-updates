@@ -1,41 +1,7 @@
 @title Updates and channels | KoG Client
-@description How the KoG client updates itself, why a compromised download host cannot hurt you, and the planned stable, canary and dev channels.
+@description This page moved. Updates and channels is now part of Technical: build channels and the signed manifest.
+@redirect /technical/#channels
 
-<h1>Updates and channels</h1>
-<p class="lead">How the client updates itself, and why a taken-over download host cannot push a bad update.</p>
-<p class="warn">The updater is not switched on in the builds made so far. This page describes the design that is in the source.</p>
-
-<h2>How an update works</h2>
-<ul>
-<li>Linux (64-bit) and Windows (64-bit) can update inside the app. On macOS you download new versions by hand.</li>
-<li>At start the client downloads two small files, <code>update.json</code> and <code>update.json.sig</code>, from <code>client.kog.tw</code>. The setting is <code>kog_check_updates</code> and it is on by default. Nothing is installed without asking.</li>
-<li>The client trusts only an Ed25519 public key compiled into it: not the host, not TLS, not GitHub. A manifest without a valid signature is ignored.</li>
-<li>After the signature it checks the format, the version number and the validity window (at most 90 days). Expired manifests are refused. A manifest with a lower sequence number than the last one seen is refused, so an old manifest cannot be replayed. The new version must be higher than the running one.</li>
-<li>Every file is checked against its SHA-256 and size. Downloads may only come from <code>github.com/KoG-teeworlds/kog-client/releases/download/</code> or <code>client.kog.tw</code>.</li>
-<li>Replaced files are backed up and put back if anything fails.</li>
-<li>If GitHub or <code>client.kog.tw</code> cannot be reached, the client keeps running the version you have.</li>
-</ul>
-
-<h2>Channels <span class="planned">Planned</span></h2>
-<p>Only the stable channel is described in the committed update documentation. Canary and dev are in progress.</p>
-<div class="table-scroll">
-<table>
-<thead><tr><th>Channel</th><th>What it is</th><th>Who it is for</th></tr></thead>
-<tbody>
-<tr><td>Stable</td><td>Tagged releases from the <code>main</code> branch</td><td>Everyone</td></tr>
-<tr><td>Canary</td><td>Builds of <code>main</code> after each merge</td><td>Testers</td></tr>
-<tr><td>Dev</td><td>Builds of the <code>dev</code> branch</td><td>Testers and developers</td></tr>
-</tbody>
-</table>
-</div>
-<ul>
-<li>Each channel has its own signing keys, and the client checks the channel name inside the signed manifest. A problem in a test channel cannot sign a stable release.</li>
-<li>You choose a channel in the client settings, never through a server message or a link. Going back to stable from a newer channel will be an explicit step that you confirm, because it installs an older version.</li>
-<li>Canary and dev builds can break. They may need a clean reinstall of the stable version.</li>
-</ul>
-
-<h2>When an update fails</h2>
-<p>If something goes wrong while files are being replaced, the old files are put back. <span class="planned">Planned</span> An automatic rollback when a new version fails to start twice in a row.</p>
-
-<h2>Who can publish an update</h2>
-<p>A release is signed in the public <code>kog-client-updates</code> repository by a job that needs the maintainer's approval. The private signing key is stored as a write-only secret there and is not in any repository or log. The full design and threat model are in the <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">update channel document</a>. You can check a manifest yourself: see <a href="../verify/">Verify your download</a>.</p>
+<h1>This page moved</h1>
+<p class="lead">Updates and channels is now in <a href="/technical/#channels">Technical: build channels and the signed manifest</a>.</p>
+<p class="small">You are sent there automatically. If nothing happens, use the link.</p>

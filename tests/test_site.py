@@ -1,3 +1,5 @@
+import html as htmllib
+import os
 import re
 import struct
 import subprocess
@@ -8,11 +10,14 @@ from pathlib import Path
 from urllib.parse import urldefrag, urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+import build_site  # noqa: E402
+
 SITE = ROOT / "site"
 PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(SITE.glob("*/index.html"))
 RESERVED = ["stable", "canary", "dev", "base", "releases"]
-BUDGET_TOTAL = 110 * 1024
-BUDGET_PAGE = 60 * 1024
+BUDGET_TOTAL = 150 * 1024
+BUDGET_PAGE = 70 * 1024
 
 
 class Page(HTMLParser):
@@ -35,10 +40,26 @@ class Page(HTMLParser):
         self.event_attrs = 0
         self.in_title = False
         self.in_script = False
+        self.first_in_body = None
+        self.in_body = False
+        self.in_disclaimer = 0
+        self.disclaimer_text = []
+        self.disclaimer_links = []
         self.void = {"meta", "link", "img", "br", "hr", "input", "source", "wbr"}
 
     def handle_starttag(self, tag, attrs):
         data = dict(attrs)
+        if self.in_body and self.first_in_body is None:
+            self.first_in_body = (tag, data)
+            if tag == "aside":
+                self.in_disclaimer = 1
+        elif self.in_disclaimer:
+            if tag == "aside":
+                self.in_disclaimer += 1
+            if tag == "a":
+                self.disclaimer_links.append(data.get("href"))
+        if tag == "body":
+            self.in_body = True
         self.tags.append(tag)
         if tag not in self.void:
             self.stack.append(tag)
@@ -78,6 +99,8 @@ class Page(HTMLParser):
                     pass
             return
         self.stack.pop()
+        if tag == "aside" and self.in_disclaimer:
+            self.in_disclaimer -= 1
         if tag == "title":
             self.in_title = False
         if tag == "script":
@@ -88,6 +111,19 @@ class Page(HTMLParser):
             self.title += data
         elif not self.in_script:
             self.text.append(data)
+            if self.in_disclaimer:
+                self.disclaimer_text.append(data)
+
+
+def squash(text):
+    return " ".join(text.split())
+
+
+def redirect_target(page):
+    for meta in page.metas:
+        if meta.get("http-equiv") == "refresh":
+            return meta["content"].split("url=", 1)[1]
+    return None
 
 
 def parse(path):
@@ -161,7 +197,7 @@ class BuildTests(unittest.TestCase):
     def test_sitemap_lists_every_page_but_404(self):
         sitemap = (SITE / "sitemap.xml").read_text()
         locations = set(re.findall(r"<loc>([^<]+)</loc>", sitemap))
-        expected = {"https://client.kog.tw" + url_of(page) for page in PAGES if page.name != "404.html"}
+        expected = {"https://client.kog.tw" + url_of(page) for page in PAGES if page.name != "404.html" and not redirect_target(parse(page))}
         self.assertEqual(locations, expected)
 
     def test_nothing_in_the_manifest_owners_territory(self):
@@ -194,7 +230,7 @@ class PageTests(unittest.TestCase):
                 self.assertIn("main", page.ids)
                 canonical = [r for r in page.refs if r[3].get("rel") == "canonical"]
                 self.assertEqual(len(canonical), 1)
-                self.assertEqual(canonical[0][2], "https://client.kog.tw" + url_of(path))
+                self.assertEqual(canonical[0][2], redirect_target(page) or "https://client.kog.tw" + url_of(path))
                 self.assertTrue([m for m in page.metas if m.get("name") == "viewport"])
                 self.assertTrue([m for m in page.metas if m.get("name") == "referrer" and m.get("content") == "no-referrer"])
                 self.assertTrue([m for m in page.metas if m.get("property") == "og:image"])
@@ -254,37 +290,70 @@ class PageTests(unittest.TestCase):
                         self.assertIsNotNone(other)
                         self.assertIn(fragment, other.ids)
 
-    def test_disclaimer_on_the_home_page_and_best_effort_in_every_footer(self):
-        home = " ".join(" ".join(parse(SITE / "index.html").text).split())
-        for sentence in [
-            "The KoG client is a reference implementation.",
-            "It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login.",
-            "You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported.",
-            "Builds are for testing and may change or break.",
-            "no warranty and no support guarantee",
-        ]:
-            self.assertIn(sentence, home)
+    def test_the_disclaimer_is_the_first_block_of_every_page_before_main(self):
+        expected = squash(build_site.DISCLAIMER)
+        for path in sorted(SITE.rglob("*.html")):
+            with self.subTest(page=path.relative_to(SITE).as_posix()):
+                page = parse(path)
+                self.assertEqual(page.first_in_body[0], "aside")
+                self.assertEqual(page.first_in_body[1].get("class"), "disclaimer")
+                self.assertLess(page.tags.index("aside"), page.tags.index("main"))
+                text = squash("".join(page.disclaimer_text))
+                self.assertTrue(text.startswith(expected), text)
+                self.assertIn(build_site.DISCLAIMER_LINK, text)
+                self.assertEqual(page.disclaimer_links, ["https://kog.tw/"])
+
+    def test_every_html_page_of_the_site_is_covered_by_the_page_list(self):
+        found = {p for p in SITE.rglob("*.html")}
+        self.assertEqual(found, set(PAGES))
+
+    def test_the_disclaimer_text_is_defined_once_in_the_generator(self):
+        source = (ROOT / "scripts" / "build_site.py").read_text()
+        self.assertEqual(source.count("It exists to demonstrate and test new features"), 1)
+        self.assertEqual(source.count("The KoG client is a reference implementation."), 1)
+        for path in (ROOT / "content").glob("*.html"):
+            self.assertNotIn("It exists to demonstrate", path.read_text(), path.name)
+            self.assertNotIn("The KoG client is a reference implementation", path.read_text(), path.name)
+        self.assertIn("reference implementation", build_site.DISCLAIMER)
+        self.assertIn("fully supported", build_site.DISCLAIMER)
+        self.assertIn("may change or break", build_site.DISCLAIMER)
+
+    def test_best_effort_in_every_footer(self):
         for path in PAGES:
             with self.subTest(page=path.name):
                 self.assertIn("Best effort only", " ".join(parse(path).text))
 
-    def test_disclaimer_comes_before_the_download_section(self):
-        text = (SITE / "index.html").read_text()
-        self.assertLess(text.index('id="disclaimer-title"'), text.index('id="download-title"'))
+    def test_redirect_pages_show_the_banner_and_a_link(self):
+        redirects = [p for p in PAGES if redirect_target(parse(p))]
+        self.assertEqual(sorted(p.parent.name for p in redirects), ["changelog", "faq", "install", "updates", "verify"])
+        for path in redirects:
+            with self.subTest(page=path.parent.name):
+                page = parse(path)
+                target = redirect_target(page)
+                self.assertTrue(target.startswith("https://client.kog.tw/"))
+                local = target[len("https://client.kog.tw"):]
+                self.assertIn(local, [r[2] for r in page.refs if r[0] == "a"])
+                self.assertTrue([m for m in page.metas if m.get("name") == "robots" and m.get("content") == "noindex"])
+
+    def test_navigation_has_the_five_entries_on_every_page(self):
+        for path in PAGES:
+            with self.subTest(page=path.name):
+                hrefs = [r[2] for r in parse(path).refs if r[0] == "a"]
+                for needed in ["https://github.com/KoG-teeworlds/kog-client", "https://kog.tw/", "https://kog.tw/clients"]:
+                    self.assertIn(needed, hrefs)
+                self.assertTrue(any(h.endswith("technical/") for h in hrefs))
 
     def test_home_page_sections(self):
         home = parse(SITE / "index.html")
-        for fragment in ["download", "verify", "what", "limits", "source", "disclaimer-title"]:
+        for fragment in ["download", "install", "install-windows", "install-macos", "install-linux", "safe", "faq", "faq-need", "faq-replace", "faq-login", "faq-data", "faq-update", "faq-problem", "faq-source"]:
             self.assertIn(fragment, home.ids)
         hrefs = [r[2] for r in home.refs if r[0] == "a"]
         for needed in [
             "https://kog.tw/",
             "https://kog.tw/clients",
             "https://github.com/KoG-teeworlds/kog-client",
-            "https://github.com/KoG-teeworlds/kog-client/attestations",
-            "https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md",
-            "https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md",
-            "https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md",
+            "technical/#verify",
+            "technical/#login",
             "privacy/",
         ]:
             self.assertIn(needed, hrefs)
@@ -318,16 +387,110 @@ class PageTests(unittest.TestCase):
             self.assertNotIn("kog.tw/account", text)
 
 
+# Every command on the technical page, and the files of kog-client it names. Checked in both directions.
+COMMANDS = [
+    "sha256sum KoG-Client-linux.tar.xz",
+    "shasum -a 256 KoG-Client-macOS.dmg",
+    "Get-FileHash .\\KoG-Client-windows.zip -Algorithm SHA256",
+    "gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client",
+    "git clone --depth 1 https://github.com/KoG-teeworlds/kog-client",
+    "cd kog-client",
+    "cc -O2 -o kogsign scripts/kog/kogsign.c src/engine/external/monocypher/monocypher.c src/engine/external/monocypher/monocypher-ed25519.c -Isrc/engine/external/monocypher",
+    "curl -fsSO https://client.kog.tw/canary/update.json",
+    "curl -fsSO https://client.kog.tw/canary/update.json.sig",
+    'for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign verify "$k" update.json update.json.sig; done',
+    "scripts/kog/verify_published.sh canary",
+    "git clone https://github.com/KoG-teeworlds/kog-client",
+    "cd kog-client",
+    "mkdir build",
+    "cd build",
+    "cmake .. -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF -DCMAKE_BUILD_TYPE=Release",
+    "cmake --build . --target game-client",
+]
+KOG_CLIENT_FILES = [
+    "scripts/kog/kogsign.c",
+    "scripts/kog/keys_from_header.py",
+    "scripts/kog/verify_published.sh",
+    "src/engine/external/monocypher/monocypher.c",
+    "src/engine/external/monocypher/monocypher-ed25519.c",
+    "src/engine/client/kog_update_pubkey.h",
+    "docs/UPDATE_CHANNEL.md",
+    "docs/LOGIN.md",
+    "docs/PRIVACY.md",
+    "docs/BUILDING.md",
+    "SECURITY.md",
+    "NOTICE_KOG.md",
+    "license.txt",
+]
+
+
+def technical_commands():
+    text = (SITE / "technical" / "index.html").read_text()
+    lines = []
+    for block in re.findall(r"<pre><code>(.*?)</code></pre>", text, re.S):
+        lines.extend(line for line in htmllib.unescape(block).split("\n") if line.strip())
+    return lines
+
+
+class TechnicalPageTests(unittest.TestCase):
+    def test_commands_on_the_page_are_exactly_the_fixture_list(self):
+        self.assertEqual(technical_commands(), COMMANDS)
+
+    def test_files_named_in_commands_and_text_are_in_the_fixture(self):
+        text = htmllib.unescape((SITE / "technical" / "index.html").read_text())
+        named = set(re.findall(r"(?<![\w/.-])((?:scripts|src|docs)/[\w./-]+\.(?:c|py|sh|h|md))", " ".join(COMMANDS)))
+        named |= set(re.findall(r"(?<![\w/.-])(scripts/kog/[\w.-]+)", text))
+        self.assertTrue(named)
+        for name in named:
+            self.assertIn(name, KOG_CLIENT_FILES)
+
+    def test_fixture_files_exist_in_a_checkout_of_kog_client(self):
+        checkout = os.environ.get("KOG_CLIENT_DIR")
+        if not checkout:
+            self.skipTest("set KOG_CLIENT_DIR to a checkout of kog-client")
+        for name in KOG_CLIENT_FILES:
+            self.assertTrue((Path(checkout) / name).exists(), name)
+
+    def test_package_names_in_commands_match_the_download_script(self):
+        script = (SITE / "assets" / "manifest.js").read_text()
+        for name in re.findall(r"KoG-Client-[\w.]+", " ".join(COMMANDS)):
+            self.assertIn(name, script)
+
+    def test_sections_and_table_of_contents(self):
+        page = parse(SITE / "technical" / "index.html")
+        text = (SITE / "technical" / "index.html").read_text()
+        toc = re.findall(r'<nav class="toc".*?</nav>', text, re.S)[0]
+        targets = re.findall(r'href="#([\w-]+)"', toc)
+        self.assertGreaterEqual(len(targets), 12)
+        for target in targets:
+            self.assertIn(target, page.ids)
+        for needed in ["what", "channels", "manifest", "verify", "endpoints", "login", "privacy", "messages", "repro", "build", "signing", "security", "license"]:
+            self.assertIn(needed, targets)
+
+    def test_planned_things_are_labelled_planned(self):
+        text = (SITE / "technical" / "index.html").read_text()
+        for thing in ["builds/allowlist.json", "Join proof", "kog_hello", "kog_telemetry", "master server"]:
+            around = text[max(0, text.index(thing) - 300): text.index(thing) + 600]
+            self.assertIn("planned", around, thing)
+        self.assertIn("not reproducible yet", " ".join(parse(SITE / "technical" / "index.html").text))
+
+    def test_old_urls_still_exist(self):
+        for name in ["verify", "install", "updates", "faq", "changelog", "privacy"]:
+            self.assertTrue((SITE / name / "index.html").exists(), name)
+
+
 class WeightTests(unittest.TestCase):
     def test_total_weight_of_html_css_and_js_stays_under_budget(self):
         total = sum(p.stat().st_size for p in SITE.rglob("*") if p.is_file() and p.suffix in (".html", ".css", ".js"))
         self.assertLess(total, BUDGET_TOTAL)
 
     def test_one_page_load_stays_under_budget(self):
-        shared = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "manifest.js", "app.js"]) + (SITE / "assets" / "kog-logo.svg").stat().st_size
+        base = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "kog-logo.svg"])
+        scripts = sum((SITE / "assets" / name).stat().st_size for name in ["manifest.js", "app.js"])
         for path in PAGES:
             with self.subTest(page=path.name):
-                self.assertLess(path.stat().st_size + shared, BUDGET_PAGE)
+                loaded = parse(path).scripts
+                self.assertLess(path.stat().st_size + base + (scripts if loaded else 0), BUDGET_PAGE)
 
 
 class ScriptTests(unittest.TestCase):

@@ -2,23 +2,25 @@
 @description What the KoG client sends and to whom, read from its source code: update checks, the DDNet server list, player name and skin downloads.
 
 <h1>Privacy</h1>
-<p class="lead">What the client sends, and where. This list comes from reading the source code of version 0.1.0, before the first release.</p>
+<p class="lead">In short: the client sends what the DDNet client sends. On top of that it can look for new versions, and it talks to kog.tw when you log in. It has no tracking, statistics or crash reports. Every host you connect to sees your IP address.</p>
+<p class="small">The list below comes from reading the source code (<a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">PRIVACY.md</a>), before the first stable release. For the technical view see <a href="../technical/#privacy">Technical: what is sent where</a>.</p>
 
 <h2>What the KoG client adds</h2>
 <ul>
-<li><strong>Update check.</strong> In builds that contain the updater, the client downloads <code>https://client.kog.tw/update.json</code> and <code>update.json.sig</code> at start. The site is served by GitHub Pages, so GitHub sees the request: your IP address, the time and the usual request headers. If you accept an update, the files come from GitHub's download servers. The client adds neither your name nor your settings. Turn it off with <code>kog_check_updates 0</code>.</li>
+<li><strong>Update check.</strong> In Windows and Linux builds the client downloads <code>https://client.kog.tw/CHANNEL/update.json</code> and <code>update.json.sig</code> (CHANNEL is canary or dev for today's builds). The site is served by GitHub Pages, so GitHub sees the request: your IP address, the time and the usual request headers. If you accept an update, the files come from GitHub's download servers. The client adds neither your name nor your settings. Turn the check off with <code>kog_check_updates 0</code>.</li>
+<li><strong>Log in with KoG.</strong> Only when you press Log in or Log out, and only in canary and dev builds (<code>cl_kog_login</code>). The client talks to <code>kog.tw</code> (or <code>cl_kog_account_url</code>): the login description, the token exchange, the account name, and the registration or removal of your device. It sends the one-time login code, a device name and the public half of a device key. The device name is "KoG Client" plus your system by default and never your computer's host name unless you type it. The login page itself opens in your browser. See <a href="../technical/#login">how the login works</a>.</li>
 <li><strong>No telemetry.</strong> The settings <code>kog_telemetry</code> and <code>kog_hello</code> exist for planned features. They are off by default and not implemented: nothing is sent.</li>
 <li><strong>Game servers</strong> see what they see from any DDNet client, plus a client version string that names this client.</li>
 </ul>
 
 <h2>What it inherits from DDNet and TClient</h2>
-<p>These requests are part of the client it is built from. They are unchanged.</p>
+<p>These requests are part of the client it is built from.</p>
 <div class="table-scroll">
 <table class="stack">
 <thead><tr><th>Address</th><th>When</th><th>What it reveals</th><th>Setting</th></tr></thead>
 <tbody>
 <tr><td data-label="Address"><code>master1.ddnet.org</code> to <code>master4.ddnet.org</code></td><td data-label="When">The server browser loads the server list</td><td data-label="What it reveals">Your IP address</td><td data-label="Setting">None</td></tr>
-<tr><td data-label="Address"><code>info.ddnet.org/info</code></td><td data-label="When">At start and when the information is refreshed</td><td data-label="What it reveals">Your IP address (IPv4 is used). If "Show DDNet map finishes in server browser" is on, also your player name.</td><td data-label="Setting">That option is asked on first start and is checked by default. Set <code>br_indicate_finished 0</code> to stop sending the name.</td></tr>
+<tr><td data-label="Address"><code>info.ddnet.org/info</code></td><td data-label="When">At start and when the information is refreshed</td><td data-label="What it reveals">Your IP address (IPv4 is used). Your player name is added only if "Show DDNet map finishes in server browser" is on.</td><td data-label="Setting">Off by default (<code>br_indicate_finished 0</code>).</td></tr>
 <tr><td data-label="Address"><code>skins.ddnet.org</code></td><td data-label="When">A skin is missing on your computer</td><td data-label="What it reveals">Your IP address and the skin name</td><td data-label="Setting"><code>cl_download_skins 0</code></td></tr>
 <tr><td data-label="Address"><code>maps.ddnet.org</code></td><td data-label="When">You join a server whose map you do not have</td><td data-label="What it reveals">Your IP address and the map name</td><td data-label="Setting"><code>cl_map_download_url</code></td></tr>
 <tr><td data-label="Address">The address you enter</td><td data-label="When">Only if you set <code>tc_custom_communities_url</code></td><td data-label="What it reveals">Your IP address</td><td data-label="Setting">Empty by default</td></tr>

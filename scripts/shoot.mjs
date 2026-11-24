@@ -53,7 +53,7 @@ if (mode === "og") {
     none: () => null,
     expired: (now) => manifest(now, { issued: now - 60 * 86400, expires: now - 30 * 86400 }),
   };
-  const pages = ["/", "/verify/", "/install/", "/updates/", "/privacy/", "/faq/", "/changelog/", "/nope/"];
+  const pages = ["/", "/technical/", "/privacy/", "/verify/", "/nope/"];
   for (const [state, make] of Object.entries(states)) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "site-"));
     fs.cpSync(site, dir, { recursive: true });
