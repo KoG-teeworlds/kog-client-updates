@@ -1,3 +1,4 @@
-saira-latin.woff2 and saira-cond-700-latin.woff2 are the Latin subsets of the open fonts Saira and Saira Condensed
-(Google Fonts), licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). They are served from this
-site only; the pages load nothing from a font service.
+saira-cond-700-latin.woff2 and spline-mono-latin.woff2 are the Latin subsets of the open fonts Saira Condensed and
+Spline Sans Mono (Google Fonts), licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). Saira
+Condensed is used for large headings and small labels, Spline Sans Mono for code. They are served from this site
+only; the pages load nothing from a font service. Body text uses the system font.

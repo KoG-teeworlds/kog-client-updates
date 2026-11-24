@@ -1,98 +1,93 @@
 @title KoG Client: a test client for King of Gores
 @description A reference implementation for testing new KoG features such as the KoG login. You do not need it to play on KoG. Test builds for Windows, macOS and Linux.
 
-<section class="home-hero">
+<section id="download" class="home-hero" aria-labelledby="home-title">
 <div class="hero-text">
 <p class="eyebrow">Test version for King of Gores</p>
-<h1><img class="hero-logo" src="assets/kog-logo.svg" alt="" width="72" height="72"><span>KoG Client</span></h1>
+<h1 id="home-title"><img class="hero-logo" src="assets/kog-logo.svg" alt="" width="72" height="72"><span>KoG Client</span></h1>
 <p class="lead">Try new KoG features in a test version of the game client. <strong>You can play KoG without it.</strong></p>
-<div id="download" class="download" role="region" aria-label="Download">
-<div id="release" aria-live="polite">
-<p class="small">Choose your system. This opens the GitHub page with all builds: pick the file with this name.</p>
-<ul class="choose">
-<li><a class="button" href="https://github.com/KoG-teeworlds/kog-client/releases">Windows<span class="file">KoG-Client-windows.zip</span></a></li>
-<li><a class="button" href="https://github.com/KoG-teeworlds/kog-client/releases">macOS<span class="file">KoG-Client-macOS.dmg</span></a></li>
-<li><a class="button" href="https://github.com/KoG-teeworlds/kog-client/releases">Linux<span class="file">KoG-Client-linux.tar.xz</span></a></li>
-</ul>
-</div>
 <p class="small">For Windows, macOS and Linux computers. There is no version for phones or tablets.</p>
 </div>
+<aside class="build-card" aria-label="The newest build">
+<div class="chan">
+<input class="tab-input" type="radio" name="channel" id="ch-stable" checked>
+<input class="tab-input" type="radio" name="channel" id="ch-canary">
+<input class="tab-input" type="radio" name="channel" id="ch-dev">
+<div class="tablist chans"><label for="ch-stable">Stable</label><label for="ch-canary">Canary</label><label for="ch-dev">Development</label></div>
 </div>
-<aside class="build-card" aria-labelledby="build-title">
-<div class="card-head"><h2 id="build-title" class="card-title">This build</h2><span id="build-badge" class="state planned">Loading</span></div>
-<div id="build-info" aria-live="polite"><p class="small">Looking for the newest build…</p></div>
-<div id="unstable" class="chooser" hidden>
-<label for="channel">Kind of build</label>
-<select id="channel"><option value="stable">Stable (none yet)</option><option value="canary">Testing builds (canary)</option><option value="dev">Development builds (dev)</option></select>
+<p class="badge-row"><span id="build-badge" class="state planned">Loading</span></p>
+<div id="build-info" aria-live="polite">
+<p class="empty">Looking for the newest build.</p>
+<p class="actions"><a class="button secondary" href="https://github.com/KoG-teeworlds/kog-client/releases">All builds on GitHub</a></p>
 </div>
-<details class="kinds">
-<summary>What are the kinds of build?</summary>
-<dl>
-<dt>Testing builds (canary)</dt>
-<dd>Made automatically after every change. Good for trying things, and they can break.</dd>
-<dt>Development builds (dev)</dt>
-<dd>Made from work that is still in progress. Even more likely to break. For people who build the client.</dd>
-<dt>Stable</dt>
-<dd>A finished version for everyone. There is none yet.</dd>
-</dl>
-</details>
 </aside>
 </section>
 
-<section id="install" aria-labelledby="install-title">
-<h2 id="install-title">Install and start</h2>
-<p>Three steps. The program is called <strong>KoG-Client</strong>. Pick your system:</p>
 <div class="tabs">
 <input class="tab-input" type="radio" name="os" id="tab-windows" checked>
 <input class="tab-input" type="radio" name="os" id="tab-macos">
 <input class="tab-input" type="radio" name="os" id="tab-linux">
+
+<section id="install" aria-labelledby="install-title">
+<h2 id="install-title">Install and start</h2>
 <div class="tablist"><label for="tab-windows">Windows</label><label for="tab-macos">macOS</label><label for="tab-linux">Linux</label></div>
 <div class="panels">
 <div id="install-windows" class="panel">
 <ol class="stepper">
 <li><strong>Download</strong><span>the zip file <code>KoG-Client-windows.zip</code>.</span></li>
-<li><strong>Extract it</strong><span>Right-click the file, choose "Extract All", and pick a folder. Do not start the program from inside the zip.</span></li>
-<li><strong>Start it</strong><span>Open the folder and double-click <code>KoG-Client.exe</code>.</span></li>
+<li><strong>Extract it</strong><span>Right-click, "Extract All", pick a folder. Do not start the program from inside the zip.</span></li>
+<li><strong>Start it</strong><span>Double-click <code>KoG-Client.exe</code>.</span></li>
 </ol>
-<p class="callout warning"><strong>Windows says "Windows protected your PC"?</strong> That is normal for this client. The program is not signed with a certificate that Microsoft knows, and Windows often warns about programs like that. It does not mean that the file is bad. If you got the file from this page, click "More info", then "Run anyway".</p>
+<p class="note"><strong>"Windows protected your PC"?</strong> That is normal: the program is not signed with a certificate Microsoft knows. If you got the file from this page, click "More info", then "Run anyway".</p>
 </div>
 <div id="install-macos" class="panel">
 <ol class="stepper">
 <li><strong>Download</strong><span>the disk image <code>KoG-Client-macOS.dmg</code>.</span></li>
-<li><strong>Open it</strong><span>and drag <code>KoG-Client</code> onto the Applications folder.</span></li>
-<li><strong>Start it</strong><span>from Applications. The first time, macOS refuses. Hold Control, click the app, choose "Open", then "Open" again.</span></li>
+<li><strong>Open it</strong><span>and drag <code>KoG-Client</code> onto Applications.</span></li>
+<li><strong>Start it</strong><span>The first time macOS refuses: hold Control, click the app, choose "Open", then "Open" again.</span></li>
 </ol>
-<p class="callout warning"><strong>macOS says it cannot check the app?</strong> That is normal for this client. Apple has not signed or checked it, and macOS blocks apps like this on the first try. Another way: open System Settings, then Privacy &amp; Security, and click "Open Anyway" after the first attempt. Do it only if you got the file from this page.</p>
+<p class="note"><strong>"macOS cannot check the app"?</strong> That is normal: Apple has not signed or checked it. Or open System Settings, Privacy &amp; Security, and click "Open Anyway" after the first try. Only do this if you got the file from this page.</p>
 </div>
 <div id="install-linux" class="panel">
 <ol class="stepper">
 <li><strong>Download</strong><span>the archive <code>KoG-Client-linux.tar.xz</code>.</span></li>
-<li><strong>Extract it</strong><span>Use your file manager, or run <code>tar -xf KoG-Client-linux.tar.xz</code>.</span></li>
+<li><strong>Extract it</strong><span>With your file manager, or <code>tar -xf KoG-Client-linux.tar.xz</code>.</span></li>
 <li><strong>Start it</strong><span>Open the new folder and run <code>./KoG-Client</code>.</span></li>
 </ol>
-<p class="callout note">Only 64-bit x86 computers are supported. If it does not start, run it in a terminal and read the message. The libraries it needs are the same as for DDNet.</p>
+<p class="note">Only 64-bit x86 computers are supported. If it does not start, run it in a terminal and read the message. It needs the same libraries as DDNet.</p>
 </div>
 </div>
-</div>
-<ul class="info-cards">
-<li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><strong>Its own settings</strong><span>The client keeps its own settings folder and does not touch the one of DDNet. Where it is: see the <a href="#faq-replace">FAQ</a>.</span></li>
-<li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8V4.5h11.5V16H16M4.5 8H16v11.5H4.5z"/></svg><strong>Reuse your DDNet settings</strong><span>Copy <code>settings_ddnet.cfg</code> over by hand, if you want them in the client.</span></li>
-<li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7m-8 0 1 12.5h8L17 7M10 11v5m4-5v5"/></svg><strong>Remove it</strong><span>Delete the program folder (on macOS the app). Your settings stay behind in their folder, and you can delete that too.</span></li>
+<details class="good">
+<summary>Good to know</summary>
+<ul>
+<li>The client keeps <strong>its own settings</strong> and does not touch those of DDNet. Where they are: see the <a href="#faq-replace">FAQ</a>.</li>
+<li>To reuse your DDNet settings, copy <code>settings_ddnet.cfg</code> over by hand.</li>
+<li>To remove the client, delete the program folder (on macOS the app). Your settings stay behind in their folder; delete that too if you like.</li>
 </ul>
+</details>
 </section>
 
-<section id="safe" class="safe-card" aria-labelledby="safe-title">
-<div class="safe-text">
-<h2 id="safe-title"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.4 7 9 4.1-1.6 7-4.8 7-9V6zM9 12l2.2 2.2L15.5 10"/></svg>Is it safe?</h2>
-<p><strong>Check it instead of trusting us.</strong> The code is open, the files are built by public GitHub workflows, and every download can be checked against a signed list.</p>
-<p>Still, this is a new project run by volunteers. Nobody outside the project has reviewed it, and it comes without a warranty. <strong>If you are unsure, do not use it.</strong></p>
-<p><a class="button secondary" href="technical/verify/">How to check your download</a></p>
+<section id="safe" aria-labelledby="safe-title">
+<h2 id="safe-title">Is it safe?</h2>
+<p><strong>Check it instead of trusting us.</strong> The code is open, the files are built by public GitHub workflows, and every download can be compared with a signed list. Still, this is a new project run by volunteers. Nobody outside it has reviewed it, and it comes without a warranty. <strong>If you are unsure, do not use it.</strong></p>
+<p class="small">Run this in the folder of the file you downloaded. It compares the file with the SHA-256 in the list on client.kog.tw (the <span class="vchannel">canary</span> channel).</p>
+<div class="vpanels">
+<div class="vpanel" data-os="windows">
+<pre class="sh" tabindex="0"><code>$m = Invoke-RestMethod https://client.kog.tw/canary/update.json
+$want = ($m.packages | Where-Object name -eq 'KoG-Client-windows.zip').sha256
+$have = (Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256).Hash
+if ($have -eq $want) { 'OK: the file matches the list' } else { 'DIFFERENT: do not open the file' }</code></pre>
 </div>
-<div class="safe-check">
-<p class="small">One of the three checks, with the GitHub CLI. It tells you where the file was built, not that the code is good:</p>
-<pre class="sh" tabindex="0"><code>gh attestation verify <span id="verify-file">KoG-Client-linux.tar.xz</span> -R KoG-teeworlds/kog-client</code></pre>
+<div class="vpanel" data-os="macos">
+<pre class="sh" tabindex="0"><code>echo "$(curl -fsSL https://client.kog.tw/canary/update.json | grep -A1 '"KoG-Client-macOS.dmg"' | grep -o '[0-9a-f]\{64\}')  KoG-Client-macOS.dmg" | shasum -a 256 -c</code></pre>
 </div>
+<div class="vpanel" data-os="linux">
+<pre class="sh" tabindex="0"><code>echo "$(curl -fsSL https://client.kog.tw/canary/update.json | grep -A1 '"KoG-Client-linux.tar.xz"' | grep -o '[0-9a-f]\{64\}')  KoG-Client-linux.tar.xz" | sha256sum -c</code></pre>
+</div>
+</div>
+<p class="small">A match shows that you have the file the list names. It does not show that the list is genuine: for that, check its signature. If a newer build was published after you downloaded, the check fails; download again. <a href="technical/verify/">All checks, step by step</a>.</p>
 </section>
+</div>
 
 <section id="faq" aria-labelledby="faq-title">
 <h2 id="faq-title">Questions</h2>

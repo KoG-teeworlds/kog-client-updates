@@ -14,8 +14,8 @@
 <pre class="sh"><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
 <p>If the hash differs, delete the file and download it again. A matching hash only shows that you have the file the manifest names. It does not show that the manifest is genuine: that is what check 3 is for.</p>
 
-<h2 id="verify-attestation">2. Build attestation</h2>
-<p>GitHub keeps a signed statement of which workflow and commit built each file. With the <a href="https://cli.github.com/">GitHub CLI</a>:</p>
+<h2 id="verify-attestation">2. Build attestation (optional)</h2>
+<p>GitHub keeps a signed statement of which workflow and commit built each file. This extra check needs the <a href="https://cli.github.com/">GitHub CLI</a>, which the other checks do not:</p>
 <pre class="sh"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
 <p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
 
