@@ -1,0 +1,46 @@
+@title Roadmap | KoG Client technical documentation
+@description Planned features of the KoG client, described from the client's side, what they will and will not prove, and the history of the project so far.
+@nav Roadmap
+@status planned
+@lead What may come next, and what has happened so far. Everything in the first part is <strong>planned</strong>: an idea or a design, not a promise and not a schedule. This is a volunteer project.
+
+<div class="callout planned" role="note">
+<p>Planned. Nothing on this page is built unless it says so. Order and scope can change, and items can be dropped. The owner decides which of them are built.</p>
+</div>
+
+<h2 id="planned">Planned features</h2>
+<table>
+<thead><tr><th>Feature</th><th>What the client would do</th><th>Today</th></tr></thead>
+<tbody>
+<tr><td>Stable channel</td><td>Install updates only with two signatures: a CI key and the owner's hardware key. See <a href="/technical/release-signing/">release signing</a>.</td><td><span class="state planned">Planned</span> keys are placeholders</td></tr>
+<tr><td>Join proof</td><td>Prove its account to servers that support it, with a signature from the device key. See <a href="/technical/login/#join-proof">login</a>.</td><td><span class="state partial">Partly built</span> signing code only, nothing is sent</td></tr>
+<tr><td>Hello</td><td>Announce which KoG features it supports (<code>kog_hello</code>). See <a href="/technical/protocol/">protocol</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Opt-in statistics</td><td>Send client-side network statistics to servers that ask for them, only if you switch it on (<code>kog_telemetry</code>).</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Signed list of known builds</td><td>Read <code>builds/allowlist.json</code>, a signed list of released build hashes and recalls, to tell you that your build is known or withdrawn.</td><td><span class="state planned">Planned</span> nothing is served</td></tr>
+<tr><td>Federated login</td><td>Possibly prove the account to servers that are not run by KoG. Nothing about how is decided.</td><td><span class="state planned">Planned</span> an idea</td></tr>
+<tr><td>Code signing</td><td>Builds signed for Windows and notarised for macOS, so the systems stop warning.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Reproducible builds</td><td>A documented way to rebuild a release byte for byte. See <a href="/technical/build/#repro">build</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Second maintainer for signing</td><td>So that nobody approves their own signing run. See <a href="/technical/security/#weak-points">security</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Asset licence check</td><td>Clear the licence of inherited fonts and artwork before a first release. See the <a href="/technical/#license">overview</a>.</td><td><span class="state planned">Open item</span></td></tr>
+</tbody>
+</table>
+
+<h2 id="integrity">Integrity checks: what they can never prove</h2>
+<p>A possible later feature is a statement about the client build, such as its hash compared with a list of known builds. It is useful to the extent that it detects an <em>accidental</em> or <em>careless</em> mismatch: an old build, a repackaged download, a withdrawn version.</p>
+<div class="callout warning" role="note">
+<p>Warning. <strong>No such statement proves that a client is unmodified.</strong> The program that makes the statement runs on a computer controlled by the player. Someone who modifies the client can modify the part that makes the statement, or answer with a statement copied from an honest client. Hardware-backed keys prove that a particular key exists in a particular device, not what code is using it. The statement would be a tripwire for mistakes, never a guarantee against cheating, and the client will not be described as secure against its own user.</p>
+</div>
+<p>The device key of the <a href="/technical/login/">login</a> has the same limit: it shows an account holder's key was used, not that the client was honest.</p>
+
+<h2 id="history">History</h2>
+<p>There is no stable release yet. Testing builds are on the <a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases page</a>.</p>
+<h3 id="history-2026-11">November 2026, before the first release</h3>
+<ul>
+<li>Forked from TClient 10.9.0 (DDNet 20.1).</li>
+<li>Added a notice, a README, contributor files and issue templates.</li>
+<li>Removed the ChaiScript scripting engine, chat translation and the committed Steam library, and stopped contacting TClient's servers.</li>
+<li>Added the KoG version identity, an updater that verifies signed manifests, and the browser login.</li>
+<li>Added release signing and upstream sync scripts, and build, release, spelling and security-scan workflows.</li>
+<li>Published the first canary builds.</li>
+<li>Made this documentation, with diagrams and a page per topic.</li>
+</ul>

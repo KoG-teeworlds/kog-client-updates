@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Update channel | KoG Client technical documentation</title>
+<meta name="description" content="The signed update manifest of the KoG client: format 2, every field, the signature file, key ids, per-channel keys, rollback protection and how the client verifies an update.">
+<link rel="canonical" href="https://client.kog.tw/technical/update-channel/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Update channel | KoG Client technical documentation">
+<meta property="og:description" content="The signed update manifest of the KoG client: format 2, every field, the signature file, key ids, per-channel keys, rollback protection and how the client verifies an update.">
+<meta property="og:url" content="https://client.kog.tw/technical/update-channel/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/" aria-current="page">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#channels">Channels</a>
+</li>
+<li><a href="#endpoints">Endpoints of client.kog.tw</a>
+</li>
+<li><a href="#manifest">The manifest, format 2</a>
+<ul>
+<li><a href="#an-annotated-example">An annotated example</a></li>
+</ul></li>
+<li><a href="#signature">Signature file and key ids</a>
+</li>
+<li><a href="#keys">Per-channel keys and rotation</a>
+</li>
+<li><a href="#client-checks">How the client verifies an update</a>
+</li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Update channel</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Updates and trust</p>
+<h1>Update channel <span class="state built">Built</span></h1>
+<p class="lead">The client updates itself from a signed manifest. Nothing the network delivers is trusted until the signatures check. This page is the reference for the format and for what the client verifies.</p>
+</header>
+<div class="callout note" role="note">
+<p>Source of truth. The client's own description is <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">docs/UPDATE_CHANNEL.md</a>. This page follows it and adds a worked example. The updater is only compiled with <code>-DAUTOUPDATE=ON</code>, and a release build fails while a channel's keys are placeholders.</p>
+</div>
+
+<h2 id="channels">Channels <a class="anchor" href="#channels" aria-label="Link to this section: Channels">#</a></h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Channel</th><th>Built from</th><th>Signatures</th><th>Manifest valid for</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><code>stable</code></td><td>A release started by hand on <code>main</code></td><td>CI key and the owner's hardware key</td><td>up to 90 days</td><td><span class="state planned">Planned</span> no stable release yet</td></tr>
+<tr><td><code>canary</code></td><td>Every push to <code>main</code></td><td>CI key</td><td>up to 30 days</td><td><span class="state built">Built</span> published</td></tr>
+<tr><td><code>dev</code></td><td>Every push to <code>dev</code></td><td>CI key</td><td>up to 14 days</td><td><span class="state built">Built</span> nothing published yet</td></tr>
+</tbody>
+</table></div>
+<p>Canary and dev versions carry the channel (<code>0.1.0-canary.9</code>), are marked "Unstable build, best effort." in the update dialog, and are GitHub prereleases; the last 10 of each are kept. The channel is chosen with <code>kog_update_channel</code> or in the settings, <strong>never from the network</strong>. Switching to a channel with an older version asks for confirmation in that session.</p>
+<p>A client checks a channel only against that channel's own keys, and the channel name is inside the signed text, so a manifest signed for one channel is refused on another.</p>
+
+<figure class="diagram" id="figure-channel-keys">
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/channel-keys-dark.svg"><img src="../../assets/diagrams/channel-keys-light.svg" alt="Diagram of the three channels and their keys. The client has the public keys of every channel built in. The stable channel is checked against two CI keys and the owner&#x27;s hardware keys and needs both kinds of signature. The canary and dev channels each have their own two CI keys and need one signature. A key of one channel cannot be used for another channel, because the channel name is inside the signed manifest." width="998" height="535" loading="lazy" decoding="async"></picture></div>
+<figcaption>Channel and key layout. The public keys are compiled into the client; the private halves are never in it. <a href="../../assets/diagrams/channel-keys-light.svg">Open the diagram alone</a></figcaption>
+<details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>flowchart LR
+  subgraph CL[&quot;Compiled into the client: kog_update_pubkey.h&quot;]
+    direction TB
+    subgraph ST[&quot;stable (planned, keys are placeholders)&quot;]
+      S1[&quot;CI keys a and b&quot;]
+      S2[&quot;Owner hardware keys&quot;]
+      S3[&quot;Offline backup CI key&quot;]
+    end
+    subgraph CA[&quot;canary&quot;]
+      C1[&quot;CI keys a and b&quot;]
+    end
+    subgraph DE[&quot;dev&quot;]
+      D1[&quot;CI keys a and b&quot;]
+    end
+  end
+  M1[&quot;stable/update.json&lt;br/&gt;.sig and .sigb&quot;] --&gt; ST
+  M2[&quot;canary/update.json&lt;br/&gt;.sig&quot;] --&gt; CA
+  M3[&quot;dev/update.json&lt;br/&gt;.sig&quot;] --&gt; DE
+  classDef planned stroke-dasharray:6 4
+  class S1,S2,S3,M1 planned</code></pre></details>
+</figure>
+
+<h2 id="endpoints">Endpoints of client.kog.tw <a class="anchor" href="#endpoints" aria-label="Link to this section: Endpoints of client.kog.tw">#</a></h2>
+<p>The site is served by GitHub Pages from the branch <code>published</code> of <a href="https://github.com/KoG-teeworlds/kog-client-updates">kog-client-updates</a>. Manifests and this website are published by separate jobs and never overwrite each other.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Address</th><th>What</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><code>/canary/update.json</code>, <code>/canary/update.json.sig</code></td><td>Manifest and signature of the canary channel</td><td><span class="state built">Built</span> published</td></tr>
+<tr><td><code>/dev/update.json</code>, <code>/dev/update.json.sig</code></td><td>Manifest and signature of the dev channel</td><td><span class="state built">Built</span> nothing published yet (the address answers 404)</td></tr>
+<tr><td><code>/stable/update.json</code>, <code>.sig</code>, <code>.sigb</code></td><td>Stable channel, two signatures. The start page also tries <code>/update.json</code>.</td><td><span class="state planned">Planned</span> no stable release yet (404)</td></tr>
+<tr><td><code>/builds/allowlist.json</code></td><td>Signed list of released build hashes (idea only)</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td><a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases</a></td><td>The packages and client binaries a manifest points to (immutable releases)</td><td><span class="state built">Built</span></td></tr>
+<tr><td><code>raw.githubusercontent.com/KoG-teeworlds/kog-client-updates/published/CHANNEL/update.json</code></td><td>Fallback host of the client, on another name than the primary. Same files.</td><td><span class="state built">Built</span></td></tr>
+</tbody>
+</table></div>
+<p>The names <code>stable</code>, <code>canary</code>, <code>dev</code>, <code>base</code>, <code>releases</code> and <code>builds</code> belong to the release data and are never used by website pages.</p>
+
+<h2 id="manifest">The manifest, format 2 <a class="anchor" href="#manifest" aria-label="Link to this section: The manifest, format 2">#</a></h2>
+<p><code>update.json</code> is JSON. A field that is absent means the old behaviour. Unknown fields are ignored by the client but are signed with the rest.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Field</th><th>Required</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>format</code></td><td>yes</td><td>The format number, currently <code>2</code>.</td></tr>
+<tr><td><code>channel</code></td><td>yes</td><td>Must equal the channel the client asked for.</td></tr>
+<tr><td><code>version</code></td><td>yes</td><td>The version offered, with the channel in its form for canary and dev.</td></tr>
+<tr><td><code>sequence</code></td><td>yes</td><td>Rises with every manifest of a channel. A client refuses one that is not higher than the last it applied.</td></tr>
+<tr><td><code>issued</code>, <code>expires</code></td><td>yes</td><td>Unix seconds. An expired manifest, or one from the future, is refused. The window is at most the channel's maximum.</td></tr>
+<tr><td><code>platforms.linux-x86_64.client</code>, <code>platforms.win64.client</code></td><td>for updating</td><td>The client binary: <code>sha256</code>, <code>size</code>, <code>url</code>.</td></tr>
+<tr><td><code>files[]</code></td><td>yes (may be empty)</td><td>Data files to update: <code>path</code> below <code>data/</code>, <code>sha256</code>, <code>size</code>, <code>url</code>, optional <code>mirrors[]</code> tried in order. Executables never go through <code>files</code>.</td></tr>
+<tr><td><code>remove[]</code></td><td>no</td><td>Data paths to delete.</td></tr>
+<tr><td><code>packages[]</code></td><td>no</td><td><code>name</code>, <code>sha256</code>, <code>size</code>, <code>url</code> of the zip, dmg and tar.xz that the download page shows. The updater ignores it.</td></tr>
+<tr><td><code>rollout_percent</code></td><td>no</td><td>0 to 100: the share of installs that get the update. The bucket comes from a random per-install value in the config and is never sent anywhere.</td></tr>
+<tr><td><code>halted</code></td><td>no</td><td>The update is withdrawn: clients do not apply it.</td></tr>
+<tr><td><code>min_version</code></td><td>no</td><td>An older client shows a blocking "update required" dialog that explains why. Never silent.</td></tr>
+<tr><td><code>notes_url</code></td><td>no</td><td>Release notes link, only on <code>client.kog.tw</code> or <code>github.com/KoG-teeworlds</code>.</td></tr>
+<tr><td><code>changes[]</code></td><td>no</td><td>Up to 3 plain-text lines of at most 120 characters.</td></tr>
+</tbody>
+</table></div>
+
+<h3 id="an-annotated-example">An annotated example <a class="anchor" href="#an-annotated-example" aria-label="Link to this section: An annotated example">#</a></h3>
+<p>The shape is taken from the published canary manifest. The hashes are shortened and the URLs trimmed, so this is an illustration and not a file to verify. Comments after <code>//</code> are not part of JSON.</p>
+<pre class="json" tabindex="0"><code>{
+  "format": 2,                       // required, must be 2
+  "channel": "canary",               // must equal the channel the client asked for
+  "version": "0.1.0-canary.9",       // the form of the channel
+  "sequence": 3,                     // must be higher than the last applied on this channel
+  "issued": 1795521981,              // Unix seconds, not in the future
+  "expires": 1798113981,             // 30 days later: the canary maximum
+  "files": [],                       // data files: path, sha256, size, url, mirrors[]
+  "platforms": {
+    "linux-x86_64": { "client": { "sha256": "1b318184...", "size": 7814888, "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-9/..." } },
+    "win64":        { "client": { "sha256": "0cb0e106...", "size": 5125632, "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-9/..." } }
+  },
+  "remove": [],
+  "packages": [ { "name": "...", "sha256": "...", "size": 0, "url": "..." } ]   // for the download page only
+}</code></pre>
+<p>The matching <code>update.json.sig</code> of that manifest begins <code>kog-update-sig-v1 1cb978aa d7465f8c...</code>.</p>
+
+<h2 id="signature">Signature file and key ids <a class="anchor" href="#signature" aria-label="Link to this section: Signature file and key ids">#</a></h2>
+<p><code>update.json.sig</code> is one line:</p>
+<pre class="text" tabindex="0"><code>kog-update-sig-v1 KEYID SIGNATURE</code></pre>
+<ul>
+<li><code>kog-update-sig-v1</code> is the format tag.</li>
+<li><code>SIGNATURE</code> is Ed25519 over the <strong>exact bytes</strong> of <code>update.json</code>, 128 hex characters. It is checked with Monocypher.</li>
+<li><code>KEYID</code> is the first 8 hex characters of the public key, so a verifier can see which key was used.</li>
+</ul>
+<p>The stable channel will have a second signature, <code>update.json.sigb</code>, in OpenSSH format (<code>ssh-keygen -Y sign -n kog-client-release</code>, key type <code>sk-ssh-ed25519@openssh.com</code>) made with a hardware key. The client checks the application, that the key was touched (user presence), the namespace and the signature. See <a href="/technical/release-signing/">release signing</a>.</p>
+
+<h2 id="keys">Per-channel keys and rotation <a class="anchor" href="#keys" aria-label="Link to this section: Per-channel keys and rotation">#</a></h2>
+<p>Each channel has two CI keys, a and b, compiled into the client in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/src/engine/client/kog_update_pubkey.h">kog_update_pubkey.h</a> (<code>KOG_&lt;CHANNEL&gt;_CI_KEYS</code>). A key of one channel cannot sign another channel, and the channel name is part of the signed text.</p>
+<p>To replace a CI key without leaving installed clients behind, the client always ships both slots and the signing side holds one active key:</p>
+<ol>
+<li>The client in the field already trusts the key that will be used next, because a and b are always shipped.</li>
+<li>The active slot is switched to the other one.</li>
+<li>The retired slot gets a fresh key; its public half goes into the client through a reviewed change.</li>
+<li>A client release with that change is shipped before the next rotation. Only then may the slot that was just filled become active.</li>
+</ol>
+<p>A key that is not shipped in a client release is never made active. For stable, the owner's hardware keys (<code>KOG_STABLE_OWNER_KEYS</code>) and an offline backup CI key (<code>KOG_STABLE_BACKUP_CI_KEYS</code>) are separate from the CI keys. The stable keys in the client are still placeholders (<code>KOG_UPDATE_KEYS_PLACEHOLDER_STABLE 1</code>): a channel with placeholder keys does not update.</p>
+
+<h2 id="client-checks">How the client verifies an update <a class="anchor" href="#client-checks" aria-label="Link to this section: How the client verifies an update">#</a></h2>
+<figure class="diagram" id="figure-update-flow">
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/update-flow-dark.svg"><img src="../../assets/diagrams/update-flow-light.svg" alt="Sequence diagram of an update check. The client asks client.kog.tw for the manifest and its signature. If that fails it asks a fallback host with the same files. It verifies the signature against the keys of its own channel, then checks channel, sequence, expiry, version and rollout. It downloads each changed file from the allowed hosts, checks size and SHA-256 before anything is replaced, keeps the previous version, and restores it if the new one does not reach the start screen twice." width="930" height="846" loading="lazy" decoding="async"></picture></div>
+<figcaption>What the client does for one update check. Any failed check stops the update and leaves the installed version as it is. <a href="../../assets/diagrams/update-flow-light.svg">Open the diagram alone</a></figcaption>
+<details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>sequenceDiagram
+  autonumber
+  participant C as Client
+  participant P as client.kog.tw
+  participant F as Fallback host
+  participant G as GitHub releases
+  C-&gt;&gt;P: GET channel/update.json and update.json.sig
+  alt primary host does not answer
+    C-&gt;&gt;F: same two files, other host name
+  end
+  Note over C: Signature against this channel&#x27;s compiled-in keys
+  Note over C: Channel, sequence, expiry, version, halted, rollout, min_version
+  C-&gt;&gt;G: GET each changed file (allow-listed hosts only)
+  G--&gt;&gt;C: file bytes
+  Note over C: SHA-256 and size of every file, before it replaces anything
+  Note over C: Keep the previous version beside the new one
+  Note over C: Start marker written, removed at the start screen
+  Note over C: Two starts without reaching it: restore the previous version</code></pre></details>
+</figure>
+<ol>
+<li><strong>Fetch.</strong> The manifest and its signature come from <code>https://client.kog.tw/CHANNEL/update.json</code>, then, if that fails, from the fallback host. The fallback has another name because GitHub redirects <code>github.io</code> to the custom domain. Offline or unreachable is quiet; the settings show the last check and its result.</li>
+<li><strong>Signature.</strong> Checked against the public keys of <em>that channel only</em> (both signatures for stable). Trust never depends on the host or on TLS. The channel inside the payload must equal the configured one.</li>
+<li><strong>Rollback and replay protection.</strong> <code>sequence</code> is higher than the last one applied on that channel; the manifest has not expired and is not from the future; the version has the channel's form; a version older than the installed one is only applied after the user confirmed a channel switch; and a version the client rolled back from before (bad-version memory) is not tried again.</li>
+<li><strong>Policy fields.</strong> <code>halted</code>, the <code>rollout_percent</code> bucket and <code>min_version</code>.</li>
+<li><strong>Files.</strong> Paths and URLs must be on allow-lists: <code>github.com/KoG-teeworlds/kog-client/releases/download/</code> and <code>client.kog.tw</code>. Every file's SHA-256 and size are checked before it replaces anything, with enough free disk space, a per-file retry, then the next mirror.</li>
+<li><strong>Fail-safe.</strong> The previous version stays beside the new one (<code>.kogprev</code>), replaced atomically. A start marker is written on launch and removed when the start screen is reached; after 2 starts that did not reach it, the client restores the previous version and remembers the bad one. Settings are never replaced; a config backup is made when the version changes.</li>
+</ol>
+<p>What these checks do not cover is on the <a href="/technical/security/">security page</a>. To check a published manifest yourself, see <a href="/technical/verify/#verify-manifest">verify a download</a>.</p>
+
+<div class="callout note" role="note">
+<p>Not verified. The Windows free-disk check and the executable-bit handling were not run on Windows, and the updater has had little real-world use. Hardware-key signatures were tested with a software emulation of the OpenSSH format, not with a real security key.</p>
+</div>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/architecture/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Architecture</span></a>
+<a class="pager-next" rel="next" href="../../technical/release-signing/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Release signing</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/update-channel.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

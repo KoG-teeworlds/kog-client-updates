@@ -1,0 +1,54 @@
+@title Security | KoG Client technical documentation
+@description The threat model of the KoG client in short: what the update channel and the login protect against, what is not protected, known weak points, and how to report a vulnerability.
+@nav Security
+@status partial
+@lead What an attacker can and cannot do to a user of the KoG client, stated plainly. Where something is not protected, it says so.
+
+<h2 id="report">Reporting a vulnerability</h2>
+<p>Report vulnerabilities privately through <a href="https://github.com/KoG-teeworlds/kog-client/security/advisories/new">GitHub's private vulnerability reporting</a> of the client repository: on the repository page choose Security, then Report a vulnerability. Please do not open a public issue for it. A report that describes the problem, the affected version and how to reproduce it helps most. See <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">SECURITY.md</a>. Supported: the latest release, once there is one, and the <code>main</code> branch. This is volunteer work with no response time promised, and there is no other reporting address.</p>
+
+<h2 id="protected">What is protected</h2>
+<table>
+<thead><tr><th>Threat</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>A forged or tampered update manifest</td><td>Refused: the signature is checked against keys compiled into the client, for that channel only.</td></tr>
+<tr><td>Replacing a downloaded file</td><td>Refused: the SHA-256 and size of every file are checked before it replaces anything, and the file's address must be on an allow-list.</td></tr>
+<tr><td>Cross-channel replay (a canary manifest offered as stable)</td><td>Refused: per-channel keys, and the channel is inside the signed payload.</td></tr>
+<tr><td>Rollback to an old version, or freezing updates</td><td>Limited: <code>sequence</code>, expiry, version checks and a memory of bad versions. A freeze ends when the manifest expires.</td></tr>
+<tr><td>Takeover of the domain <code>client.kog.tw</code></td><td>Cannot forge a manifest. It can withhold updates, so the client also tries a fallback host under another name.</td></tr>
+<tr><td>A bad update that does not start</td><td>The previous version is restored after two starts that did not reach the start screen.</td></tr>
+<tr><td>Stolen GitHub account or a malicious pull request (for stable)</td><td>Cannot publish a stable update alone: the second signature needs the owner's hardware key. Not yet effective: there is no stable release.</td></tr>
+<tr><td>Capturing the login</td><td>No password, key or token travels on the game connection. The login code is useless without the PKCE verifier, which stays in memory.</td></tr>
+<tr><td>A local program on the loopback port during login</td><td>Random port, short time, exact path and state; see <a href="/technical/login/#threats">login</a>.</td></tr>
+<tr><td>A server asking for a login proof it should not get</td><td>The client answers only servers listed for the <code>kog</code> community, once per join. Nothing is sent today.</td></tr>
+</tbody>
+</table>
+
+<h2 id="not-protected">What is not protected</h2>
+<div class="callout warning" role="note">
+<p>Be clear about these limits before you rely on the client for anything.</p>
+</div>
+<ul>
+<li><strong>Canary and dev are weaker than stable will be.</strong> They need only the CI signature. Whoever could read the CI signing keys could sign an update for these channels. That is why they are opt-in testing channels.</li>
+<li><strong>Stable does not exist.</strong> Its keys are placeholders, so none of the stable protections has been exercised.</li>
+<li><strong>The client cannot prove, and nobody can prove from outside, that a running client is unmodified.</strong> A device key shows that someone holding a key made a signature. It does not show that the program holding it is this one. See <a href="/technical/roadmap/#integrity">the roadmap</a>.</li>
+<li><strong>A program running as you can read your device key</strong>, as it could read an SSH key. On Windows and macOS the keychain asks no further question of the same user; on Linux the key is a file with mode 0600.</li>
+<li><strong>A malicious update that is correctly signed</strong> would be installed. The signature proves who signed, not that the code is good.</li>
+<li><strong>Builds are not code-signed or notarised</strong> for Windows and macOS, so those systems warn, and they cannot vouch for the file.</li>
+<li><strong>There is no certificate pinning</strong> for the account service. TLS is verified in the normal way.</li>
+<li><strong>The game connection itself is not encrypted</strong>, as in DDNet. The client does not change that.</li>
+<li><strong>Builds are not reproducible</strong>, so you cannot rebuild a release and compare it. You can check its attestation.</li>
+<li><strong>An unmodified DDNet client</strong> can play on KoG. Nothing here is meant to stop other clients, and nothing here should be read as protection against cheating.</li>
+</ul>
+
+<h2 id="weak-points">Known weak points</h2>
+<ul>
+<li>The CI private keys are held by automation (see <a href="/technical/release-signing/#weak-points">release signing</a>).</li>
+<li>With one maintainer, the person who approves a signing run can approve their own run.</li>
+<li>The Windows free-disk check and the executable-bit handling of the updater were not run on Windows.</li>
+<li>The workflows have had little time in production, and hardware-key signatures were tested with an emulation, not a real key.</li>
+<li>The HTTP steps of the login and the key store have no automated test.</li>
+</ul>
+
+<h2 id="third-party">Third-party code</h2>
+<p>The client inherits the code of DDNet and TClient, with their bugs and their dependencies (SDL, libcurl, FFmpeg and others). It removed the scripting engine and the chat translation of TClient to reduce what it carries. Added code: Monocypher for Ed25519 and SHA-512. The workflows are checked by CodeQL and a spelling check; first-party actions are pinned by commit.</p>

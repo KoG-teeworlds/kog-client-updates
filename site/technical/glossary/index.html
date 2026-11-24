@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Glossary | KoG Client technical documentation</title>
+<meta name="description" content="Terms used in the KoG client documentation: attestation, channel, device key, manifest, PKCE, sequence and others.">
+<link rel="canonical" href="https://client.kog.tw/technical/glossary/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Glossary | KoG Client technical documentation">
+<meta property="og:description" content="Terms used in the KoG client documentation: attestation, channel, device key, manifest, PKCE, sequence and others.">
+<meta property="og:url" content="https://client.kog.tw/technical/glossary/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/" aria-current="page">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Glossary</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Project</p>
+<h1>Glossary <span class="state built">Built</span></h1>
+<p class="lead">Short explanations of the words used in these pages, in alphabetical order.</p>
+</header>
+<dl class="glossary">
+<dt id="attestation">Attestation</dt>
+<dd>A signed statement, kept by GitHub, of which workflow and commit built a file. Checked with <code>gh attestation verify</code>. See <a href="/technical/verify/#verify-attestation">verify</a>.</dd>
+<dt id="canary">Canary</dt>
+<dd>The channel built from every push to <code>main</code>. For testers; signed by a CI key only.</dd>
+<dt id="channel">Channel</dt>
+<dd>One of <code>stable</code>, <code>canary</code> and <code>dev</code>: a stream of builds with its own manifest, keys and validity time. Chosen by you, never by the network.</dd>
+<dt id="ci-key">CI key</dt>
+<dd>A signing key used by the project's automation. Each channel has two, a and b, and the client trusts both.</dd>
+<dt id="device-key">Device key</dt>
+<dd>An Ed25519 key pair made on your computer at login. The private half stays in the key store; the public half is registered on your account. See <a href="/technical/login/">login</a>.</dd>
+<dt id="ed25519">Ed25519</dt>
+<dd>The signature scheme used for manifests and for the device key. The client uses the Monocypher library for it.</dd>
+<dt id="expires">Expiry (<code>expires</code>)</dt>
+<dd>The time after which a manifest is refused. It limits how long a stale or replayed manifest is useful.</dd>
+<dt id="halt">Halt</dt>
+<dd>A signed manifest with <code>halted: true</code> that tells clients not to update. See <a href="/technical/release-signing/#halt">release signing</a>.</dd>
+<dt id="hardware-key">Hardware key</dt>
+<dd>A security key (FIDO2) that makes signatures without exporting its private key, and needs a touch. The owner's signature B for stable.</dd>
+<dt id="kogsign">kogsign</dt>
+<dd>A small program in the client repository that verifies a manifest signature. See <a href="/technical/verify/#verify-manifest">verify</a>.</dd>
+<dt id="loopback">Loopback listener</dt>
+<dd>A short-lived listener on <code>127.0.0.1</code> that receives the redirect of your browser at the end of the login.</dd>
+<dt id="manifest">Manifest</dt>
+<dd>The signed file <code>update.json</code> that lists the files of a version with their hashes. See <a href="/technical/update-channel/#manifest">update channel</a>.</dd>
+<dt id="oauth">OAuth 2.0 authorization code flow</dt>
+<dd>The login method in which you type your password only in the browser, and the client receives a short-lived code.</dd>
+<dt id="pkce">PKCE</dt>
+<dd>Proof Key for Code Exchange (RFC 7636). A random secret made by the client, whose hash is sent first and itself later, so a stolen code is useless to anyone else.</dd>
+<dt id="rollout">Rollout</dt>
+<dd>The share of installs (<code>rollout_percent</code>) that are offered an update, chosen with a random number that stays on your computer.</dd>
+<dt id="rollback">Rollback protection</dt>
+<dd>The set of checks that stop an older version from replacing a newer one by trickery: sequence, expiry, version rules and bad-version memory.</dd>
+<dt id="sequence">Sequence</dt>
+<dd>A number in the manifest that rises with every manifest of a channel.</dd>
+<dt id="stable">Stable</dt>
+<dd>The channel for released versions, which will need two signatures. It does not exist yet.</dd>
+<dt id="state">State (<code>state</code>)</dt>
+<dd>A random value the client puts in the login URL and expects back unchanged in the callback.</dd>
+</dl>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/roadmap/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Roadmap</span></a>
+<span class="pager-none"></span>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/glossary.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+@title Architecture | KoG Client technical documentation
+@description The parts of the KoG client (updater, login, key store, settings, HTTP layer) and the three public addresses it talks to, with a diagram.
+@nav Architecture
+@status built
+@lead What is inside the client, how the parts depend on each other, and which public addresses it contacts. Server-side programs are out of scope: this documentation describes the client.
+
+<h2>Overview</h2>
+<p>The KoG client is the DDNet and TClient game client plus a small set of additions in separate <code>kog_*</code> files. The additions do two things: they keep the client up to date from a signed manifest, and they let you log in to your KoG account through your browser. Everything else is the code of the game client that the fork is based on.</p>
+<p>Outside your computer the client talks to exactly three places that belong to KoG or its tooling, plus the game servers you choose to join and the server list inherited from DDNet:</p>
+<ul>
+<li><code>client.kog.tw</code>: signed update manifests (static files).</li>
+<li><code>github.com</code>: the release files that a manifest points to.</li>
+<li>The KoG account service at <code>https://kog.tw</code>: the login, seen from the client as an OAuth 2.0 / OpenID Connect provider. The client knows its public endpoints and nothing else about it.</li>
+</ul>
+
+<!-- diagram architecture -->
+
+<h2>Components</h2>
+<p>Paths are relative to <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
+<table>
+<thead><tr><th>Component</th><th>Files</th><th>What it does</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>Manifest rules</td><td><code>src/engine/shared/kog_update.cpp</code>, <code>kog_update.h</code></td><td>Parses <code>update.json</code>, checks the signature (Ed25519, with Monocypher) and every rule: channel, sequence, expiry, version, halt, rollout, minimum version, allowed hosts and paths. Plain functions without network or disk access, so they can be tested alone.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Public keys</td><td><code>src/engine/client/kog_update_pubkey.h</code></td><td>The keys of each channel, compiled into the client. Stable still has placeholders.</td><td><span class="state partial">Partly built</span></td></tr>
+<tr><td>Updater</td><td><code>src/engine/client/updater.cpp</code>, <code>updater.h</code></td><td>Fetches manifest and signature, downloads files, replaces them only after the checks pass, keeps the previous version. Compiled only with <code>-DAUTOUPDATE=ON</code>.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Fail-safe</td><td><code>src/engine/shared/kog_failsafe.cpp</code></td><td>Start marker and the decision to restore the previous version after two starts that did not reach the start screen; remembers a bad version.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Login helpers</td><td><code>src/engine/shared/kog_login.cpp</code>, <code>kog_login.h</code></td><td>PKCE, the callback parser, the loopback listener, the allowed endpoint origins, the bytes of the join challenge and their signature.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Login component</td><td><code>src/game/client/components/kog/kog_login.cpp</code></td><td>The state machine of the login (discovery, browser, token, user info, device registration, removal) and the decision whether to answer a challenge.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Key store</td><td><code>src/engine/client/kog_keystore.cpp</code></td><td>Keeps the device private key: macOS Keychain, Windows Credential Manager, otherwise a file with mode 0600.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Capabilities and hello</td><td><code>src/game/client/components/kog/kog_hello.cpp</code>, <code>src/engine/shared/kog_protocol.h</code></td><td>Only the console command <code>kog_version</code> and reserved names. No message is sent.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Settings and menus</td><td><code>src/game/client/components/menus_settings_ddnet.cpp</code></td><td>The account box, the update channel selection, the switches.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Settings variables</td><td><code>src/engine/shared/config_variables_kog.h</code></td><td>Every <code>kog_*</code> and <code>cl_kog_*</code> setting with its default.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>HTTP layer</td><td><code>src/engine/http.h</code>, <code>src/engine/shared/http_curl.cpp</code></td><td>The one place that makes HTTPS requests (libcurl). The updater and the login use it; the login switches off redirects for its token requests.</td><td><span class="state built">Built</span></td></tr>
+</tbody>
+</table>
+
+<h2>Design rules that follow from this layout</h2>
+<ul>
+<li><strong>Checks are separate from effects.</strong> The rules that decide whether a manifest or a callback is acceptable live in <code>engine/shared</code> and are covered by unit tests (<code>src/test/kog_update_test.cpp</code>, <code>kog_login_test.cpp</code>, <code>kog_failsafe_test.cpp</code>). The updater and the login component only do the I/O.</li>
+<li><strong>Trust does not depend on the network path.</strong> A manifest is accepted because of its signature, not because of the host or TLS. See <a href="/technical/update-channel/">the update channel</a>.</li>
+<li><strong>Nothing changes on the game connection yet.</strong> The client defines no new network message; the planned ones are on the <a href="/technical/protocol/">protocol page</a>.</li>
+<li><strong>Nothing secret leaves the machine.</strong> The device private key is made on your computer and stays in the key store. See <a href="/technical/login/">login</a>.</li>
+</ul>
+
+<div class="callout note" role="note">
+<p>Not verified. This page was written from reading the source. The unit tests above were not re-run for it, and the interplay of the parts (for example the updater and the key store in one session) has no end-to-end test.</p>
+</div>

@@ -1,0 +1,49 @@
+@title Privacy | KoG Client technical documentation
+@description Every outbound connection of the KoG client: what is sent where, when, by which part of the client, what you can switch off, and the setting names.
+@nav Privacy
+@status built
+@lead Every host you connect to sees your IP address. The KoG additions are small; the rest is inherited from DDNet and TClient. The plain-language version is on the <a href="/privacy/">privacy page</a>; this page is the detailed table.
+
+<div class="callout note" role="note">
+<p>Provenance. The list comes from reading the client's source and <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">docs/PRIVACY.md</a>, which was also checked by running the client for 20 seconds without joining a server. Where this page and PRIVACY.md differ, this page follows the source: the update check does start (see below), and the default device name has no host name in it.</p>
+</div>
+
+<h2 id="table">What is sent where</h2>
+<table>
+<thead><tr><th>To</th><th>When</th><th>By</th><th>What besides your IP address</th><th>Setting</th></tr></thead>
+<tbody>
+<tr><td><code>client.kog.tw</code> and <code>raw.githubusercontent.com</code> (fallback), GitHub releases</td><td>Update check at start, in builds with the updater (Windows, Linux releases); a download only if you accept</td><td>Updater</td><td>Nothing</td><td><code>kog_check_updates</code> (on), <code>kog_update_channel</code></td></tr>
+<tr><td><code>kog.tw</code> (or <code>cl_kog_account_url</code>)</td><td>Only when you press Log in or Log out, and only if <code>cl_kog_login</code> is on (canary and dev builds)</td><td>Login component</td><td>The OAuth code and PKCE verifier, a device name (a neutral default such as <code>KoG Client (Linux)</code>, no host name), the <strong>public</strong> device key</td><td><code>cl_kog_login</code>, <code>cl_kog_account_url</code>, <code>cl_kog_device_name</code></td></tr>
+<tr><td><code>master1.ddnet.org</code> to <code>master4.ddnet.org</code></td><td>At start (server list)</td><td>Inherited from DDNet</td><td>Nothing</td><td>None; the server browser needs it</td></tr>
+<tr><td><code>info.ddnet.org</code></td><td>At start (communities and countries)</td><td>Inherited</td><td>Nothing. Your player name is added only when <code>br_indicate_finished</code> is on.</td><td><code>br_indicate_finished</code> (off)</td></tr>
+<tr><td>Game servers (UDP)</td><td>Playing, and pinging every server in the list</td><td>Inherited</td><td>Your name, clan, skin and country to the server you join; a version string that names this client</td><td>None</td></tr>
+<tr><td><code>maps.ddnet.org</code></td><td>When you need a map you do not have</td><td>Inherited</td><td>The map name. A server can name its own map host, which then sees your IP.</td><td><code>cl_map_download_url</code></td></tr>
+<tr><td><code>skins.ddnet.org</code></td><td>When you meet players with skins you do not have</td><td>Inherited</td><td>The skin names of players on your server</td><td><code>cl_download_skins</code></td></tr>
+<tr><td>Community icon hosts named in the info file</td><td>When the server browser shows them</td><td>Inherited</td><td>Nothing</td><td>None</td></tr>
+<tr><td><code>tc_custom_communities_url</code></td><td>Empty by default, so no request</td><td>Inherited from TClient</td><td>Nothing</td><td><code>tc_custom_communities_url</code></td></tr>
+<tr><td>Discord rich presence</td><td>Not compiled in (<code>DISCORD=OFF</code>), and the setting is off</td><td>Inherited from TClient</td><td>Nothing</td><td><code>tc_discord_rpc</code></td></tr>
+<tr><td>ddnet.org, wiki.ddnet.org links in menus</td><td>Only when you click</td><td>Your browser</td><td>Nothing</td><td>None</td></tr>
+</tbody>
+</table>
+<p><strong>Retention.</strong> The client does not keep a record of these requests: login requests are not logged and the browser link is logged by host only. How long the receiving hosts keep your IP address is up to them; this documentation does not state it. For GitHub, see GitHub's own privacy statement; for the KoG account service, see kog.tw.</p>
+
+<h2 id="not-present">What is not there</h2>
+<ul>
+<li>No telemetry, analytics, advertising or crash uploads.</li>
+<li><code>kog_hello</code> and <code>kog_telemetry</code> are off and not implemented: nothing is sent.</li>
+<li>No chat is sent anywhere except to the game server. TClient's chat translation, which sent chat to a third party, was removed.</li>
+<li>The client no longer contacts TClient's servers (update check, information file, identification message).</li>
+</ul>
+
+<h2 id="opt-out">Switching things off</h2>
+<table>
+<thead><tr><th>You want</th><th>Set</th></tr></thead>
+<tbody>
+<tr><td>No update check at all</td><td><code>kog_check_updates 0</code> (also in the settings)</td></tr>
+<tr><td>No login code</td><td><code>cl_kog_login 0</code>. It is off by default in stable builds.</td></tr>
+<tr><td>Log in, but never prove the device to a server</td><td><code>cl_kog_auto_login 0</code> (the default; it sends nothing until the join protocol exists)</td></tr>
+<tr><td>Another channel</td><td><code>kog_update_channel stable|canary|dev</code>, never set from the network</td></tr>
+<tr><td>No skin downloads</td><td><code>cl_download_skins 0</code></td></tr>
+</tbody>
+</table>
+<p>Settings are entered in the client's console or in the settings menu, and are saved in the config in the data folder named on the <a href="/technical/">overview</a>.</p>
