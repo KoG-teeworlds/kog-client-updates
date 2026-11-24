@@ -24,7 +24,7 @@ def write(base, files):
 
 class AllowlistTest(unittest.TestCase):
     def test_site_files_are_allowed(self):
-        for path in ["index.html", "404.html", "CNAME", ".nojekyll", "favicon.svg", "robots.txt", "sitemap.xml",
+        for path in ["index.html", "404.html", "CNAME", ".nojekyll", "robots.txt", "sitemap.xml",
                      "assets/style.css", "assets/sub/x.js", "faq/index.html", "verify/index.html", "technical/index.html",
                      "technical/login/index.html", "assets/diagrams/login-light.svg", "assets/search-index.json"]:
             self.assertTrue(publish_site.allowed(path, NAMES), path)

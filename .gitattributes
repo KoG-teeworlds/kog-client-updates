@@ -1,0 +1,2 @@
+# The official logo files are committed byte for byte: no line-ending conversion, so their SHA-256 stays the pinned one.
+site/assets/brand/*.svg -text

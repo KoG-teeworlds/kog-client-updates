@@ -428,7 +428,8 @@ def render(name, meta, body, marker=None, pages=None):
 {build_meta}{refresh}<title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description, quote=True)}">
 <link rel="canonical" href="{canonical}">
-<link rel="icon" href="{base}favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{base}assets/brand/logo_short_black.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
+<link rel="icon" href="{base}assets/brand/logo_short_white.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KoG Client">
 <meta property="og:title" content="{html.escape(title, quote=True)}">
@@ -446,7 +447,7 @@ def render(name, meta, body, marker=None, pages=None):
 {disclaimer}<a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap bar">
-<a class="brand" href="{base or './'}"><img src="{base}assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<a class="brand" href="{base or './'}" aria-label="KoG Client, home page"><img src="{base}assets/brand/logo_short_white.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
 <nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 {chr(10).join(nav)}
 </ul></details></nav>
@@ -469,6 +470,7 @@ def render(name, meta, body, marker=None, pages=None):
 <li><a href="{REPO}/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
 </ul>
 <p>This page is published automatically when a change is merged.</p>
+<p>The KoG logo files are the official artwork of <a href="https://github.com/KoG-teeworlds/brand_and_media">KoG-teeworlds/brand_and_media</a>, used unmodified under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>. They are not part of the licence of the code.</p>
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
 </footer>
