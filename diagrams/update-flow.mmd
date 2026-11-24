@@ -1,0 +1,20 @@
+%% alt: Sequence diagram of an update check. The client asks client.kog.tw for the manifest and its signature. If that fails it asks a fallback host with the same files. It verifies the signature against the keys of its own channel, then checks channel, sequence, expiry, version and rollout. It downloads each changed file from the allowed hosts, checks size and SHA-256 before anything is replaced, keeps the previous version, and restores it if the new one does not reach the start screen twice.
+%% caption: What the client does for one update check. Any failed check stops the update and leaves the installed version as it is.
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant P as client.kog.tw
+  participant F as Fallback host
+  participant G as GitHub releases
+  C->>P: GET channel/update.json and update.json.sig
+  alt primary host does not answer
+    C->>F: same two files, other host name
+  end
+  Note over C: Signature against this channel's compiled-in keys
+  Note over C: Channel, sequence, expiry, version, halted, rollout, min_version
+  C->>G: GET each changed file (allow-listed hosts only)
+  G-->>C: file bytes
+  Note over C: SHA-256 and size of every file, before it replaces anything
+  Note over C: Keep the previous version beside the new one
+  Note over C: Start marker written, removed at the start screen
+  Note over C: Two starts without reaching it: restore the previous version

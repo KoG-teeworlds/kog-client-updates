@@ -1,0 +1,14 @@
+%% alt: Flow diagram of how a release becomes an update the client accepts. A public workflow builds the client files from the main branch and attests them. A check without secrets verifies attestations, hashes and that the commit is on main and produces the manifest. The CI key signs it. For the stable channel, which is not published yet, the owner also verifies the release on their own machine and signs with a hardware key. The signed manifest is published to client.kog.tw, and the client checks every signature itself.
+%% caption: The two-signature model. Canary and dev need the CI signature only. Stable will need both; no stable release exists yet.
+flowchart TB
+  A["Commit on main (dev for the dev channel)"] --> B["Public workflow builds the client files<br/>and attests them"]
+  B --> C["Check: attestations, hashes,<br/>commit is on main, version is higher"]
+  C --> D["Manifest update.json is made"]
+  D --> E["CI key signs it<br/>update.json.sig"]
+  E --> S{"Stable channel?"}
+  S -->|"canary or dev"| P["Published at client.kog.tw"]
+  S -->|"stable, planned"| H["Owner verifies the release on their own machine<br/>and signs with a hardware key<br/>update.json.sigb"]
+  H --> P
+  P --> V["Client checks every signature<br/>against its compiled-in keys"]
+  classDef planned stroke-dasharray:6 4
+  class S,H planned
