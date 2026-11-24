@@ -21,7 +21,7 @@ concurrency:
 jobs:
   settings:
     runs-on: ubuntu-latest
-    if: github.event_name != 'create' || github.ref_name == 'published'
+    if: github.event_name != 'create' || github.event.ref == 'published'
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
