@@ -43,17 +43,23 @@
   }
 
   // The contents and the table of the page stay open on wide screens and fold on narrow ones.
-  var navWide = window.matchMedia ? window.matchMedia("(min-width: 48rem)") : null;
+  var navWide = window.matchMedia ? window.matchMedia("(min-width: 56.25rem)") : null;
   var tocWide = window.matchMedia ? window.matchMedia("(min-width: 87.5rem)") : null;
   var nav = document.querySelector(".nav-toggle");
   var toc = document.querySelector(".toc-toggle");
+  var groupsOfNav = document.querySelectorAll(".docs-nav .group");
   function setOpen(node, open) {
     if (!node) return;
     if (open) node.setAttribute("open", "");
     else node.removeAttribute("open");
   }
   function fold() {
-    setOpen(nav, !navWide || navWide.matches);
+    var wideNav = !navWide || navWide.matches;
+    setOpen(nav, wideNav);
+    // wide: every group is open; narrow: only the group of the current page
+    for (var g = 0; g < groupsOfNav.length; g++) {
+      setOpen(groupsOfNav[g], wideNav || !!groupsOfNav[g].querySelector('[aria-current="page"]'));
+    }
     setOpen(toc, !tocWide || tocWide.matches);
   }
   fold();
