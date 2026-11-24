@@ -3,6 +3,7 @@
 
   var Manifest = window.KogManifest;
   var box = document.getElementById("release");
+  var side = document.getElementById("build-info");
   if (!Manifest || !box) return;
 
   var RELEASES_URL = "https://github.com/KoG-teeworlds/kog-client/releases";
@@ -55,17 +56,25 @@
 
   function showInstallFor(os) {
     if (!os) return;
+    var narrow = window.matchMedia && window.matchMedia("(max-width: 59.99rem)").matches;
     ["windows", "macos", "linux"].forEach(function (id) {
       var section = document.getElementById("install-" + id);
-      if (section) section.open = id === os;
+      if (!section) return;
+      section.classList.toggle("yours", id === os);
+      if (narrow) section.open = id === os;
     });
   }
 
-  function show(nodes) {
-    while (box.firstChild) box.removeChild(box.firstChild);
+  function fill(target, nodes) {
+    while (target.firstChild) target.removeChild(target.firstChild);
     nodes.forEach(function (node) {
-      box.appendChild(node);
+      target.appendChild(node);
     });
+  }
+
+  function show(nodes, sideNodes) {
+    fill(box, nodes);
+    if (side) fill(side, sideNodes || []);
   }
 
   function message(text, warn, offerCanary) {
@@ -81,7 +90,7 @@
       more.appendChild(button);
     }
     more.appendChild(link("All builds on GitHub", RELEASES_URL, "button secondary"));
-    show([paragraph, more]);
+    show([paragraph, more], [el("p", "No build to show.", "small")]);
   }
 
   function fetchText(path) {
@@ -115,6 +124,7 @@
 
   function render(data, fellBack) {
     var nodes = [];
+    var info = [];
     var os = detectOs();
     var mine = null;
     data.packages.forEach(function (item) {
@@ -147,16 +157,25 @@
       nodes.push(list);
     }
 
-    var build = el("p", "", "build-line");
-    build.appendChild(el("strong", KIND[data.channel] + " " + data.version));
-    build.appendChild(document.createTextNode(" from " + Manifest.formatDate(data.issued) + "."));
-    nodes.push(build);
-    if (fellBack) nodes.push(el("p", "There is no stable version yet, so this is a testing build.", "small"));
+    var rows = el("dl", "", "facts");
+    function fact(name, value) {
+      rows.appendChild(el("dt", name));
+      rows.appendChild(el("dd", value));
+    }
+    fact("Version", data.version);
+    fact("Kind", KIND[data.channel]);
+    fact("Date", Manifest.formatDate(data.issued));
+    if (mine) {
+      fact("File", mine.file);
+      if (mine.size) fact("Size", Manifest.formatSize(mine.size));
+    }
+    info.push(rows);
+    if (fellBack) info.push(el("p", "There is no stable version yet, so this is a testing build.", "small"));
     if (data.channel !== "stable") {
-      nodes.push(el("p", "This build is for testing. It can break, and it can change without notice. You can always play with the normal DDNet client.", "warn"));
+      info.push(el("p", "This build is for testing. It can break, and it can change without notice. You can always play with the normal DDNet client.", "warn"));
     }
     if (data.expired) {
-      nodes.push(el("p", "The release information on this page ran out on " + Manifest.formatDate(data.expires) + ", so a newer build may exist. Check the GitHub releases page.", "warn"));
+      info.push(el("p", "The release information on this page ran out on " + Manifest.formatDate(data.expires) + ", so a newer build may exist. Check the GitHub releases page.", "warn"));
     }
 
     var checks = (mine ? [mine] : data.packages).filter(function (item) {
@@ -167,21 +186,35 @@
     details.appendChild(el("p", "After the download, you can compare the file with this fingerprint (SHA-256). If it differs, do not open the file.", "small"));
     checks.forEach(function (item) {
       details.appendChild(el("p", item.file, "small"));
-      var hash = el("p");
+      var hash = el("p", "", "hashline");
       hash.appendChild(el("code", item.sha256, "hash"));
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        var copy = el("button", "Copy", "copy-hash");
+        copy.setAttribute("type", "button");
+        copy.setAttribute("aria-label", "Copy the SHA-256 of " + item.file);
+        copy.addEventListener("click", function () {
+          navigator.clipboard.writeText(item.sha256).then(function () {
+            copy.textContent = "Copied";
+            setTimeout(function () { copy.textContent = "Copy"; }, 2000);
+          }, function () {
+            copy.textContent = "Not copied";
+          });
+        });
+        hash.appendChild(copy);
+      }
       details.appendChild(hash);
     });
     var how = el("p", "", "small");
     how.appendChild(link("How to check a file", VERIFY_URL));
     how.appendChild(document.createTextNode(". This page does not check signatures itself."));
     details.appendChild(how);
-    nodes.push(details);
-    show(nodes);
+    info.push(details);
+    show(nodes, info);
   }
 
   function load(channel, tryFallback, fellBack) {
     var mine = ++token;
-    show([el("p", "Looking for the newest build…", "empty")]);
+    show([el("p", "Looking for the newest build…", "empty")], [el("p", "Looking for the newest build…", "small")]);
     firstManifest(Manifest.MANIFEST_PATHS[channel])
       .then(function (text) {
         if (mine !== token) return null;

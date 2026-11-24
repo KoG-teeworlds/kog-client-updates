@@ -216,6 +216,27 @@ class BuildTests(unittest.TestCase):
         self.assertEqual((width, height), (1200, 630))
 
 
+class ShellTests(unittest.TestCase):
+    def test_every_page_has_the_same_banner_header_container_and_footer(self):
+        banners, headers = set(), set()
+        for path in PAGES:
+            with self.subTest(page=url_of(path)):
+                text = path.read_text()
+                banners.add(re.search(r'<aside class="disclaimer".*?</aside>', text, re.S).group(0))
+                header = re.search(r'<header class="site">.*?</header>', text, re.S).group(0)
+                header = re.sub(r'(href|src)="(?:\.{1,2}/)*/?', r'\1="', header)
+                header = header.replace(' aria-current="page"', "")
+                headers.add(header)
+                order = [text.index(marker) for marker in ('<aside class="disclaimer"', '<a class="skip"', '<header class="site">', '<footer class="site">')]
+                self.assertEqual(order, sorted(order))
+                between = text[text.index("</header>") + len("</header>"): text.index('<footer class="site">')]
+                self.assertTrue(between.strip().startswith('<div class="wrap">'), path)
+                self.assertEqual(between.count('<main id="main"'), 1)
+                self.assertGreaterEqual(text.count('class="wrap'), 4)
+        self.assertEqual(len(banners), 1)
+        self.assertEqual(len(headers), 1)
+
+
 class PageTests(unittest.TestCase):
     def test_every_page_is_well_formed_and_has_the_basics(self):
         for path in PAGES:
@@ -822,7 +843,7 @@ class StyleTests(unittest.TestCase):
         checked = 0
         for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
             names = [n.strip() for n in selector.split(",")]
-            if not any(n in (".docs", ".doc", ".docs-page .wrap", ".docs.no-toc") for n in names):
+            if not any(n in (".docs", ".doc", ".wrap", ".docs.no-toc") for n in names):
                 continue
             for value in re.findall(r"(?<![-\w])max-width:\s*([^;]+)", body):
                 checked += 1
@@ -835,6 +856,23 @@ class StyleTests(unittest.TestCase):
                 self.assertGreaterEqual(pixels, 1800, "%s caps the article at %s" % (selector.strip(), value))
         self.assertGreaterEqual(checked, 1)
         self.assertIn("grid-template-columns: 16rem minmax(0, 1fr) 13.5rem", css)
+
+    def test_one_container_rule_for_every_page(self):
+        css = (SITE / "assets" / "style.css").read_text()
+        rules = [(sel.strip(), body) for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css) if ".wrap" in sel]
+        self.assertEqual([sel for sel, _ in rules], [".wrap"], "only one rule may style the container: " + str(rules))
+        self.assertIn("max-width: 120rem", rules[0][1])
+        self.assertIn("padding-left: clamp(1rem, 2.5vw, 3rem)", rules[0][1])
+        self.assertIn("scrollbar-gutter: stable", css)
+
+    def test_secondary_text_has_high_contrast_in_both_themes(self):
+        light, dark = theme_variables()
+        for name, theme in (("light", light), ("dark", dark)):
+            for foreground, background in [("fg", "bg"), ("fg", "surface"), ("muted", "bg"), ("muted", "surface"), ("muted", "code-bg")]:
+                with self.subTest(theme=name, pair=foreground + "/" + background):
+                    self.assertGreaterEqual(contrast(theme[foreground], theme[background]), 7.0)
+            for foreground, background in [("link", "bg"), ("link", "surface")]:
+                self.assertGreaterEqual(contrast(theme[foreground], theme[background]), 4.5)
 
     def test_motion_and_focus_rules_exist(self):
         css = (SITE / "assets" / "style.css").read_text()
