@@ -538,7 +538,7 @@ nav.main ul { margin: 0; padding: 0; }
 .search-open.side:hover { color: var(--fg); border-color: var(--link); }
 .search-open.side kbd { border-color: var(--line); color: var(--muted); }
 header.site .bar { flex-wrap: nowrap; }
-@media (max-width: 56.24rem) {
+@media (max-width: 63.99rem) {
   header.site { position: relative; }
   header.site .bar { gap: 0 var(--s1); }
   nav.main { flex: 0 0 auto; order: 3; }
@@ -547,11 +547,11 @@ header.site .bar { flex-wrap: nowrap; }
   .menu[open] > ul { position: absolute; left: 0; right: 0; top: 100%; z-index: 40; display: flex; flex-direction: column; gap: 0; padding: var(--s1) clamp(1rem, 2.5vw, 3rem) var(--s2); background: var(--head-bg); border-bottom: 3px solid var(--brand); }
   .menu[open] > ul a { display: flex; align-items: center; min-height: 2.75rem; border-bottom: 0; }
 }
-@media (min-width: 56.25rem) {
+@media (min-width: 64rem) {
   nav.main { flex: 1 1 auto; margin-left: var(--s1); }
 }
 @supports selector(::details-content) {
-  @media (min-width: 56.25rem) {
+  @media (min-width: 64rem) {
     .menu::details-content { content-visibility: visible; display: block; }
     .menu > summary { display: none; }
   }
@@ -624,3 +624,8 @@ header.site .bar { flex-wrap: wrap; }
   .search-open { padding: 0 0.6rem; }
 }
 body { overflow-x: clip; }
+
+/* The channel tabs wrap instead of pushing the page wider than the screen. */
+.chans { flex-wrap: wrap; }
+.chans label { flex: 1 1 5.5rem; min-width: 0; padding: 0 0.5rem; }
+@media (min-width: 48rem) { header.site { position: sticky; } }

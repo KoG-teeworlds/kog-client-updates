@@ -13,7 +13,7 @@
 
   // The menu stays open on wide screens and folds on narrow ones.
   var menu = document.querySelector("header.site .menu");
-  var wide = window.matchMedia ? window.matchMedia("(min-width: 56.25rem)") : null;
+  var wide = window.matchMedia ? window.matchMedia("(min-width: 64rem)") : null;
   function foldMenu() {
     if (!menu) return;
     if (!wide || wide.matches) menu.setAttribute("open", "");

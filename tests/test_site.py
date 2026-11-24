@@ -899,9 +899,10 @@ class NavigationTests(unittest.TestCase):
         self.assertRegex(css, r"\.docs-nav li > a \{[^}]*text-overflow: ellipsis[^}]*\}")
         self.assertRegex(css, r"\.docs-nav li > a \{[^}]*white-space: nowrap[^}]*\}")
         self.assertRegex(css, r"\.docs-nav \.state \{[^}]*white-space: nowrap[^}]*\}")
-        # the drawer, the sidebar column and the folding top bar share one breakpoint (900 px)
+        # the docs drawer and the sidebar column change at 900 px, the top bar folds into the Menu under 1024 px
         self.assertIn("@media (min-width: 56.25rem) {\n  .docs { display: grid;", css)
-        self.assertIn("@media (max-width: 56.24rem) {\n  header.site { position: relative; }", css)
+        self.assertIn("@media (max-width: 63.99rem) {\n  header.site { position: relative; }", css)
+        self.assertIn(".chans { flex-wrap: wrap; }", css)
         # the brand text gives way to Search and Menu on very small screens
         self.assertRegex(css, r"@media \(max-width: 25rem\) \{\s*\.brand span \{ position: absolute;")
         self.assertIn("grid-template-columns: minmax(0, 1fr); gap: 2rem 4rem", css)

@@ -34,10 +34,14 @@ for (const url of pages) {
     const page = await browser.newPage();
     await page.setViewport({ width, height: 900, deviceScaleFactor: 2 });
     await page.goto(base + url, { waitUntil: "networkidle0" });
+    if (process.env.TEST_FONT) {
+      // local stand-in for the wider system fonts of other machines
+      await page.evaluate((font) => { const s = new CSSStyleSheet(); s.replaceSync("html, body, button, input, select, summary { font-family: " + font + " !important; }"); document.adoptedStyleSheets = [...document.adoptedStyleSheets, s]; }, process.env.TEST_FONT);
+    }
     const m = await page.evaluate(() => {
       const rect = (node) => node.getBoundingClientRect();
       const nav = document.querySelector(".docs-nav");
-      const rows = nav ? [...nav.querySelectorAll(".group li > a")].filter((a) => a.offsetParent !== null) : [];
+      const rows = nav ? [...nav.querySelectorAll(".group > ul > li > a")].filter((a) => a.offsetParent !== null) : [];
       const badgeOff = rows.map((a) => {
         const badge = a.parentElement.querySelector(":scope > .state");
         return badge ? Math.abs(rect(badge).top + rect(badge).height / 2 - (rect(a).top + rect(a).height / 2)) : 0;
