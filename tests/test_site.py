@@ -778,20 +778,58 @@ class ClientOnlyTests(unittest.TestCase):
         self.assertEqual(ALLOWED, {})
 
 
-class VerifyCommandTests(unittest.TestCase):
-    def test_the_command_of_the_safety_card_follows_the_chosen_system(self):
+HOME_COMMANDS = {
+    "windows": [
+        "$m = Invoke-RestMethod https://client.kog.tw/canary/update.json",
+        "$want = ($m.packages | Where-Object name -eq 'KoG-Client-windows.zip').sha256",
+        "$have = (Get-FileHash .\\KoG-Client-windows.zip -Algorithm SHA256).Hash",
+        "if ($have -eq $want) { 'OK: the file matches the list' } else { 'DIFFERENT: do not open the file' }",
+    ],
+    "macos": [
+        "echo \"$(curl -fsSL https://client.kog.tw/canary/update.json | grep -A1 '\"KoG-Client-macOS.dmg\"' | grep -o '[0-9a-f]\\{64\\}')  KoG-Client-macOS.dmg\" | shasum -a 256 -c",
+    ],
+    "linux": [
+        "echo \"$(curl -fsSL https://client.kog.tw/canary/update.json | grep -A1 '\"KoG-Client-linux.tar.xz\"' | grep -o '[0-9a-f]\\{64\\}')  KoG-Client-linux.tar.xz\" | sha256sum -c",
+    ],
+}
+
+
+class HomeCheckTests(unittest.TestCase):
+    def test_the_home_page_needs_no_github_cli_and_shows_one_command_per_system(self):
         home = (SITE / "index.html").read_text()
-        self.assertIn('<code>gh attestation verify <span id="verify-file">KoG-Client-linux.tar.xz</span> -R KoG-teeworlds/kog-client</code>', home)
-        script = (SITE / "assets" / "app.js").read_text()
+        self.assertNotRegex(home, r"\bgh (attestation|release|api)")
+        found = {}
+        for system, block in re.findall(r'<div class="vpanel" data-os="(\w+)">\s*<pre class="sh" tabindex="0"><code>(.*?)</code></pre>', home, re.S):
+            found[system] = [line for line in htmllib.unescape(block).split("\n") if line.strip()]
+        self.assertEqual(found, HOME_COMMANDS)
         packages = set(re.findall(r"KoG-Client-[\w.]+", (SITE / "assets" / "manifest.js").read_text()))
-        shown = set(re.findall(r'"(KoG-Client-[\w.]+)"', script.split("VERIFY_FILES")[1].split("}")[0]))
-        self.assertEqual(shown, {"KoG-Client-windows.zip", "KoG-Client-macOS.dmg", "KoG-Client-linux.tar.xz"})
-        self.assertTrue(shown <= packages, shown - packages)
+        for lines in HOME_COMMANDS.values():
+            for name in re.findall(r"KoG-Client-[\w.]+", " ".join(lines)):
+                self.assertIn(name, packages)
+
+    def test_the_command_blocks_follow_the_system_switch_without_script(self):
+        css = (SITE / "assets" / "style.css").read_text()
         for system in ("windows", "macos", "linux"):
-            self.assertIn('id="tab-%s"' % system, home)
-            self.assertIn('"tab-" + id', script)
-        self.assertIn("showVerifyFile(os)", script)
-        self.assertIn('typeof text === "function"', script)
+            self.assertIn('#tab-%s:checked ~ #safe .vpanel[data-os="%s"]' % (system, system), css)
+        home = (SITE / "index.html").read_text()
+        self.assertEqual(len(re.findall(r'type="radio" name="os"', home)), 3)
+        self.assertEqual(len(re.findall(r'type="radio" name="channel"', home)), 3)
+        # the radios are siblings of the sections they switch, so no script is needed
+        tabs = re.search(r'<div class="tabs">(.*?)<details class="good">', home, re.S).group(1)
+        self.assertEqual(tabs.count('name="os"'), 3)
+
+    def test_the_gh_command_stays_on_the_verify_page_as_an_optional_extra(self):
+        text = (SITE / "technical" / "verify" / "index.html").read_text()
+        self.assertIn("gh attestation verify", text)
+        self.assertRegex(text, r"(?i)optional")
+
+    def test_channel_choice_is_remembered_with_guarded_storage_and_a_stable_default(self):
+        script = (SITE / "assets" / "app.js").read_text()
+        for needle in ('"kog-channel"', "localStorage.getItem", "localStorage.setItem", 'load("stable", true)', "Nothing is published on the development channel yet.", "There is no stable version yet"):
+            self.assertIn(needle, script)
+        for match in re.finditer(r"localStorage", script):
+            before = script[max(0, match.start() - 120): match.start()]
+            self.assertIn("try {", before)
 
 
 class WeightTests(unittest.TestCase):
@@ -826,6 +864,8 @@ class ScriptTests(unittest.TestCase):
         for name in ["app.js", "manifest.js", "docs.js"]:
             code = (SITE / "assets" / name).read_text()
             for pattern in self.FORBIDDEN:
+                if pattern == r"localStorage" and name == "app.js":
+                    continue  # the channel choice; every access is inside try, see HomeCheckTests
                 with self.subTest(file=name, pattern=pattern):
                     self.assertIsNone(re.search(pattern, code))
 
