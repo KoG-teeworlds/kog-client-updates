@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<title>Architecture | KoG Client technical documentation</title>
+<meta name="description" content="The parts of the KoG client (updater, login, key store, settings, HTTP layer) and the three public addresses it talks to, with a diagram.">
+<link rel="canonical" href="https://client.kog.tw/technical/architecture/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Architecture | KoG Client technical documentation">
+<meta property="og:description" content="The parts of the KoG client (updater, login, key store, settings, HTTP layer) and the three public addresses it talks to, with a diagram.">
+<meta property="og:url" content="https://client.kog.tw/technical/architecture/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/" aria-current="page">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#overview">Overview</a>
+</li>
+<li><a href="#components">Components</a>
+</li>
+<li><a href="#design-rules-that-follow-from-this-layout">Design rules that follow from this layout</a>
+</li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Architecture</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Start</p>
+<h1>Architecture <span class="state built">Built</span></h1>
+<p class="lead">What is inside the client, how the parts depend on each other, and which public addresses it contacts. Server-side programs are out of scope: this documentation describes the client.</p>
+</header>
+<h2 id="overview">Overview <a class="anchor" href="#overview" aria-label="Link to this section: Overview">#</a></h2>
+<p>The KoG client is the DDNet and TClient game client plus a small set of additions in separate <code>kog_*</code> files. The additions do two things: they keep the client up to date from a signed manifest, and they let you log in to your KoG account through your browser. Everything else is the code of the game client that the fork is based on.</p>
+<p>Outside your computer the client talks to exactly three places that belong to KoG or its tooling, plus the game servers you choose to join and the server list inherited from DDNet:</p>
+<ul>
+<li><code>client.kog.tw</code>: signed update manifests (static files).</li>
+<li><code>github.com</code>: the release files that a manifest points to.</li>
+<li>The KoG account service at <code>https://kog.tw</code>: the login, seen from the client as an OAuth 2.0 / OpenID Connect provider. The client knows its public endpoints and nothing else about it.</li>
+</ul>
+
+<figure class="diagram" id="figure-architecture">
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/architecture-dark.svg"><img src="../../assets/diagrams/architecture-light.svg" alt="Diagram of the KoG client on your computer and the public places it talks to. Inside the client, the settings menus start the updater and the login component. Both use one HTTP layer. The updater reads signed manifests from client.kog.tw and files from GitHub releases, and checks them against public keys compiled into the client. The login component talks to the KoG account service at kog.tw through the HTTP layer and through your web browser, and keeps the device key in the operating system key store. A dashed arrow marks the planned join proof towards game servers." width="1376" height="512" loading="lazy" decoding="async"></picture></div>
+<figcaption>The KoG client and the public addresses it talks to. Solid lines exist today; the dashed line is planned. <a href="../../assets/diagrams/architecture-light.svg">Open the diagram alone</a></figcaption>
+<details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>flowchart LR
+  subgraph PC[&quot;Your computer: the KoG client&quot;]
+    UI[&quot;Settings and menus&quot;]
+    UPD[&quot;Updater&lt;br/&gt;checks against compiled-in&lt;br/&gt;public keys&quot;]
+    LOG[&quot;Login component&quot;]
+    STORE[&quot;Key store&lt;br/&gt;OS keychain or key file&quot;]
+    HTTP[&quot;HTTP layer&quot;]
+  end
+  BR[&quot;Your web browser&quot;]
+  CT[&quot;client.kog.tw&lt;br/&gt;signed manifests&quot;]
+  GH[&quot;github.com&lt;br/&gt;release files&quot;]
+  ACC[&quot;KoG account service&lt;br/&gt;kog.tw&quot;]
+  SRV[&quot;Game servers&quot;]
+  UI --&gt; UPD
+  UI --&gt; LOG
+  UPD --&gt; HTTP
+  LOG --&gt; HTTP
+  LOG --&gt; STORE
+  HTTP --&gt;|&quot;manifest, signature&quot;| CT
+  HTTP --&gt;|&quot;files, checked by hash&quot;| GH
+  HTTP --&gt;|&quot;token, public device key&quot;| ACC
+  LOG &lt;--&gt;|&quot;login page, loopback callback&quot;| BR
+  BR &lt;--&gt;|&quot;you log in&quot;| ACC
+  LOG -.-&gt;|&quot;planned: join proof&quot;| SRV
+  classDef planned stroke-dasharray:6 4
+  class SRV planned</code></pre></details>
+</figure>
+
+<h2 id="components">Components <a class="anchor" href="#components" aria-label="Link to this section: Components">#</a></h2>
+<p>Paths are relative to <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Component</th><th>Files</th><th>What it does</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>Manifest rules</td><td><code>src/engine/shared/kog_update.cpp</code>, <code>kog_update.h</code></td><td>Parses <code>update.json</code>, checks the signature (Ed25519, with Monocypher) and every rule: channel, sequence, expiry, version, halt, rollout, minimum version, allowed hosts and paths. Plain functions without network or disk access, so they can be tested alone.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Public keys</td><td><code>src/engine/client/kog_update_pubkey.h</code></td><td>The keys of each channel, compiled into the client. Stable still has placeholders.</td><td><span class="state partial">Partly built</span></td></tr>
+<tr><td>Updater</td><td><code>src/engine/client/updater.cpp</code>, <code>updater.h</code></td><td>Fetches manifest and signature, downloads files, replaces them only after the checks pass, keeps the previous version. Compiled only with <code>-DAUTOUPDATE=ON</code>.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Fail-safe</td><td><code>src/engine/shared/kog_failsafe.cpp</code></td><td>Start marker and the decision to restore the previous version after two starts that did not reach the start screen; remembers a bad version.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Login helpers</td><td><code>src/engine/shared/kog_login.cpp</code>, <code>kog_login.h</code></td><td>PKCE, the callback parser, the loopback listener, the allowed endpoint origins, the bytes of the join challenge and their signature.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Login component</td><td><code>src/game/client/components/kog/kog_login.cpp</code></td><td>The state machine of the login (discovery, browser, token, user info, device registration, removal) and the decision whether to answer a challenge.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Key store</td><td><code>src/engine/client/kog_keystore.cpp</code></td><td>Keeps the device private key: macOS Keychain, Windows Credential Manager, otherwise a file with mode 0600.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Capabilities and hello</td><td><code>src/game/client/components/kog/kog_hello.cpp</code>, <code>src/engine/shared/kog_protocol.h</code></td><td>Only the console command <code>kog_version</code> and reserved names. No message is sent.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Settings and menus</td><td><code>src/game/client/components/menus_settings_ddnet.cpp</code></td><td>The account box, the update channel selection, the switches.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>Settings variables</td><td><code>src/engine/shared/config_variables_kog.h</code></td><td>Every <code>kog_*</code> and <code>cl_kog_*</code> setting with its default.</td><td><span class="state built">Built</span></td></tr>
+<tr><td>HTTP layer</td><td><code>src/engine/http.h</code>, <code>src/engine/shared/http_curl.cpp</code></td><td>The one place that makes HTTPS requests (libcurl). The updater and the login use it; the login switches off redirects for its token requests.</td><td><span class="state built">Built</span></td></tr>
+</tbody>
+</table></div>
+
+<h2 id="design-rules-that-follow-from-this-layout">Design rules that follow from this layout <a class="anchor" href="#design-rules-that-follow-from-this-layout" aria-label="Link to this section: Design rules that follow from this layout">#</a></h2>
+<ul>
+<li><strong>Checks are separate from effects.</strong> The rules that decide whether a manifest or a callback is acceptable live in <code>engine/shared</code> and are covered by unit tests (<code>src/test/kog_update_test.cpp</code>, <code>kog_login_test.cpp</code>, <code>kog_failsafe_test.cpp</code>). The updater and the login component only do the I/O.</li>
+<li><strong>Trust does not depend on the network path.</strong> A manifest is accepted because of its signature, not because of the host or TLS. See <a href="/technical/update-channel/">the update channel</a>.</li>
+<li><strong>Nothing changes on the game connection yet.</strong> The client defines no new network message; the planned ones are on the <a href="/technical/protocol/">protocol page</a>.</li>
+<li><strong>Nothing secret leaves the machine.</strong> The device private key is made on your computer and stays in the key store. See <a href="/technical/login/">login</a>.</li>
+</ul>
+
+<div class="callout note" role="note">
+<p>Not verified. This page was written from reading the source. The unit tests above were not re-run for it, and the interplay of the parts (for example the updater and the key store in one session) has no end-to-end test.</p>
+</div>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Overview</span></a>
+<a class="pager-next" rel="next" href="../../technical/update-channel/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Update channel</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/architecture.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

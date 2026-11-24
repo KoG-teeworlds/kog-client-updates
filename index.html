@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
 <title>KoG Client: a test client for King of Gores</title>
 <meta name="description" content="A reference implementation for testing new KoG features such as the KoG login. You do not need it to play on KoG. Test builds for Windows, macOS and Linux.">
 <link rel="canonical" href="https://client.kog.tw/">
@@ -109,7 +110,7 @@
 <section id="safe" aria-labelledby="safe-title">
 <h2 id="safe-title">Is it safe?</h2>
 <p>We try to make it easy to check instead of asking you to trust us. The code is open, the files are built by public GitHub workflows, and every download can be checked against a signed list. Still, this is a new project run by volunteers. Nobody outside the project has reviewed it, and it comes without a warranty. If you are unsure, do not use it.</p>
-<p><a class="button secondary" href="technical/#verify">How to check your download</a></p>
+<p><a class="button secondary" href="technical/verify/">How to check your download</a></p>
 </section>
 
 <section id="faq" aria-labelledby="faq-title">
@@ -132,7 +133,7 @@
 <summary>Can I use my KoG account?</summary>
 <p>Yes, but it is optional, and today it does little. The login is in testing and development builds only. It opens your web browser, where you log in on kog.tw as usual. You never type your password into the game. After that the client keeps a key for this computer in the keychain of your system (on Linux, in a protected file) and forgets the rest.</p>
 <p>Game servers do not use this key yet. Proving your account when you join a server is planned, not built.</p>
-<p>To log out, use the same place in the client settings. That deletes the key from your computer at once. To also remove this computer from your account, finish the browser step it opens, or remove the device on kog.tw. How it works: <a href="technical/#login">Technical: the login</a>.</p>
+<p>To log out, use the same place in the client settings. That deletes the key from your computer at once. To also remove this computer from your account, finish the browser step it opens, or remove the device on kog.tw. How it works: <a href="technical/login/">Technical: the login</a>.</p>
 </details>
 <details id="faq-data">
 <summary>What data does it send?</summary>
