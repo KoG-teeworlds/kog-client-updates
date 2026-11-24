@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Build from source | KoG Client technical documentation</title>
+<meta name="description" content="How to build the KoG client from source on Linux, macOS and Windows with CMake, how to run the tests, and an honest statement about reproducible builds.">
+<link rel="canonical" href="https://client.kog.tw/technical/build/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Build from source | KoG Client technical documentation">
+<meta property="og:description" content="How to build the KoG client from source on Linux, macOS and Windows with CMake, how to run the tests, and an honest statement about reproducible builds.">
+<meta property="og:url" content="https://client.kog.tw/technical/build/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/" aria-current="page">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#get">Get the source</a>
+</li>
+<li><a href="#linux">Linux</a>
+</li>
+<li><a href="#macos">macOS</a>
+</li>
+<li><a href="#windows">Windows</a>
+</li>
+<li><a href="#options">Options that matter</a>
+</li>
+<li><a href="#tests">Tests</a>
+</li>
+<li><a href="#repro">Reproducibility</a>
+</li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Build from source</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Data and building</p>
+<h1>Build from source <span class="state partial">Partly built</span></h1>
+<p class="lead">The client builds like DDNet: with CMake, the client only. The commands below are the ones the project's own build workflow uses. A build you make yourself is not on any channel and is not signed.</p>
+</header>
+<div class="callout note" role="note">
+<p>What was run. The commands below were taken from the repository's build workflows (<code>.github/workflows/kog-build.yml</code>, <code>kog-package.yml</code>) and README, where they run on GitHub's Linux, macOS and Windows runners. They were <strong>not run by hand</strong> for this page. For the dependencies and the many options, see <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/BUILDING.md">docs/BUILDING.md</a>, which is the DDNet guide.</p>
+</div>
+
+<h2 id="get">Get the source <a class="anchor" href="#get" aria-label="Link to this section: Get the source">#</a></h2>
+<p>Bundled libraries come from a git submodule (<code>ddnet-libs</code>), which Windows and macOS builds need.</p>
+<pre class="sh" tabindex="0"><code>git clone https://github.com/KoG-teeworlds/kog-client
+cd kog-client
+git submodule update --init --recursive</code></pre>
+
+<h2 id="linux">Linux <a class="anchor" href="#linux" aria-label="Link to this section: Linux">#</a></h2>
+<p>The dependencies the workflow installs on Ubuntu (other distributions have the same libraries under other names):</p>
+<pre class="sh" tabindex="0"><code>sudo apt-get install -y cmake glslang-tools libavcodec-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libswresample-dev libswscale-dev libvulkan-dev libwavpack-dev libx264-dev ninja-build pkg-config spirv-tools zlib1g-dev</code></pre>
+<p>The client only, without server and tools, which is how the release workflows build it:</p>
+<pre class="sh" tabindex="0"><code>mkdir build
+cd build
+cmake .. -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build . --target game-client</code></pre>
+
+<h2 id="macos">macOS <a class="anchor" href="#macos" aria-label="Link to this section: macOS">#</a></h2>
+<pre class="sh" tabindex="0"><code>brew install ffmpeg molten-vk ninja pkg-config sdl2</code></pre>
+<p>Then the same <code>mkdir build</code>, <code>cmake</code> and <code>cmake --build</code> commands as on Linux. The workflow adds <code>-G Ninja</code> and <code>-DIPO=ON</code> for release builds.</p>
+
+<h2 id="windows">Windows <a class="anchor" href="#windows" aria-label="Link to this section: Windows">#</a></h2>
+<p>The workflow uses a Visual Studio generator for x64 and the bundled libraries. In a developer PowerShell, from the <code>build</code> folder:</p>
+<pre class="sh" tabindex="0"><code>cmake .. -A x64 -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF
+cmake --build . --config Release --target game-client</code></pre>
+
+<h2 id="options">Options that matter <a class="anchor" href="#options" aria-label="Link to this section: Options that matter">#</a></h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>-DAUTOUPDATE=ON</code></td><td>OFF</td><td>Compiles the updater. A release build with it fails while a channel's keys are placeholders (override: <code>-DKOG_ALLOW_PLACEHOLDER_KEY=ON</code>). The release workflow turns it on.</td></tr>
+<tr><td><code>-DKOG_CHANNEL=stable|canary|dev</code></td><td><code>stable</code></td><td>The channel of this build. Canary and dev builds also need <code>-DKOG_BUILD_NUMBER=&lt;number&gt;</code> and have <code>cl_kog_login</code> on by default.</td></tr>
+<tr><td><code>-DDOWNLOAD_GTEST=ON</code></td><td>OFF</td><td>Downloads GTest for the tests, if it is not installed.</td></tr>
+<tr><td><code>-DDEV=ON</code></td><td>OFF</td><td>Faster development build, Debug by default; no packaging files.</td></tr>
+</tbody>
+</table></div>
+<p>Without <code>-DAUTOUPDATE=ON</code> your build has no updater at all. This differs from what <code>docs/BUILDING.md</code> still says (the DDNet default of ON for Windows and Linux); the <code>CMakeLists.txt</code> of this repository sets OFF.</p>
+
+<h2 id="tests">Tests <a class="anchor" href="#tests" aria-label="Link to this section: Tests">#</a></h2>
+<p>Configure with the GTest option once, then run the test target:</p>
+<pre class="sh" tabindex="0"><code>cmake .. -DDOWNLOAD_GTEST=ON
+cmake --build . --target run_tests</code></pre>
+<p>The KoG-specific tests are <code>src/test/kog_update_test.cpp</code> (manifest rules and signatures), <code>kog_failsafe_test.cpp</code> (rollback) and <code>kog_login_test.cpp</code> (PKCE, callback, challenge). Linux builds in CI also start the client under a virtual display for 25 seconds (<code>scripts/kog/smoke_test.sh</code>); the Windows and macOS runners have no GPU, so only compilation and unit tests run there.</p>
+
+<h2 id="repro">Reproducibility <a class="anchor" href="#repro" aria-label="Link to this section: Reproducibility">#</a></h2>
+<p><strong>The builds are not reproducible yet.</strong> The repository has no documented procedure that rebuilds a release byte for byte, and this has not been tested. What exists instead: public workflows build the files on GitHub, every file carries a <a href="/technical/verify/#verify-attestation">build attestation</a>, releases are immutable, and the signing check verifies attestation, hashes and that the commit is on <code>main</code> before it signs. That shows where a file came from, not that two builds from one commit give identical files.</p>
+<p>Other targets inherited from DDNet (Android, iOS, WebAssembly) have guides in the repository, but the KoG client is only built and released for Windows, macOS and Linux, and nothing about the others is checked here.</p>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/privacy/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Privacy</span></a>
+<a class="pager-next" rel="next" href="../../technical/security/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Security</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/build.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

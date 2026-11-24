@@ -1,0 +1,11 @@
+%% alt: Planned sequence, not built. A server that supports the proof sends a challenge to the client. The client first decides whether to answer at all: the login switch and the automatic login switch must be on, a device key must exist, the server must be listed for the kog community in the server list, and it answers at most once per join. If so it signs a message bound to the server address and the nonce with its device key and sends the signature. Nothing is sent to other servers.
+%% caption: PLANNED. The wire format is not decided, so the client has the signing code but sends nothing today.
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant S as Server that supports the proof
+  C->>S: Join
+  S-->>C: Challenge (planned, format not decided)
+  Note over C: Answer only if both switches are on,<br/>a device key exists, the server is listed for the<br/>kog community, and once per join
+  Note over C: Sign server address, nonce, device and session<br/>with the device key
+  C->>S: Proof (signature, no secret)

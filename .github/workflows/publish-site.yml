@@ -13,6 +13,7 @@ on:
       - content/**
       - site/**
       - scripts/build_site.py
+      - diagrams/**
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,22 @@
+%% alt: Diagram of the three channels and their keys. The client has the public keys of every channel built in. The stable channel is checked against two CI keys and the owner's hardware keys and needs both kinds of signature. The canary and dev channels each have their own two CI keys and need one signature. A key of one channel cannot be used for another channel, because the channel name is inside the signed manifest.
+%% caption: Channel and key layout. The public keys are compiled into the client; the private halves are never in it.
+flowchart LR
+  subgraph CL["Compiled into the client: kog_update_pubkey.h"]
+    direction TB
+    subgraph ST["stable (planned, keys are placeholders)"]
+      S1["CI keys a and b"]
+      S2["Owner hardware keys"]
+      S3["Offline backup CI key"]
+    end
+    subgraph CA["canary"]
+      C1["CI keys a and b"]
+    end
+    subgraph DE["dev"]
+      D1["CI keys a and b"]
+    end
+  end
+  M1["stable/update.json<br/>.sig and .sigb"] --> ST
+  M2["canary/update.json<br/>.sig"] --> CA
+  M3["dev/update.json<br/>.sig"] --> DE
+  classDef planned stroke-dasharray:6 4
+  class S1,S2,S3,M1 planned

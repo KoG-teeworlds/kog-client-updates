@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Security | KoG Client technical documentation</title>
+<meta name="description" content="The threat model of the KoG client in short: what the update channel and the login protect against, what is not protected, known weak points, and how to report a vulnerability.">
+<link rel="canonical" href="https://client.kog.tw/technical/security/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Security | KoG Client technical documentation">
+<meta property="og:description" content="The threat model of the KoG client in short: what the update channel and the login protect against, what is not protected, known weak points, and how to report a vulnerability.">
+<meta property="og:url" content="https://client.kog.tw/technical/security/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/" aria-current="page">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#report">Reporting a vulnerability</a>
+</li>
+<li><a href="#protected">What is protected</a>
+</li>
+<li><a href="#not-protected">What is not protected</a>
+</li>
+<li><a href="#weak-points">Known weak points</a>
+</li>
+<li><a href="#third-party">Third-party code</a>
+</li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Security</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Security</p>
+<h1>Security <span class="state partial">Partly built</span></h1>
+<p class="lead">What an attacker can and cannot do to a user of the KoG client, stated plainly. Where something is not protected, it says so.</p>
+</header>
+<h2 id="report">Reporting a vulnerability <a class="anchor" href="#report" aria-label="Link to this section: Reporting a vulnerability">#</a></h2>
+<p>Report vulnerabilities privately through <a href="https://github.com/KoG-teeworlds/kog-client/security/advisories/new">GitHub's private vulnerability reporting</a> of the client repository: on the repository page choose Security, then Report a vulnerability. Please do not open a public issue for it. A report that describes the problem, the affected version and how to reproduce it helps most. See <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">SECURITY.md</a>. Supported: the latest release, once there is one, and the <code>main</code> branch. This is volunteer work with no response time promised, and there is no other reporting address.</p>
+
+<h2 id="protected">What is protected <a class="anchor" href="#protected" aria-label="Link to this section: What is protected">#</a></h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Threat</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>A forged or tampered update manifest</td><td>Refused: the signature is checked against keys compiled into the client, for that channel only.</td></tr>
+<tr><td>Replacing a downloaded file</td><td>Refused: the SHA-256 and size of every file are checked before it replaces anything, and the file's address must be on an allow-list.</td></tr>
+<tr><td>Cross-channel replay (a canary manifest offered as stable)</td><td>Refused: per-channel keys, and the channel is inside the signed payload.</td></tr>
+<tr><td>Rollback to an old version, or freezing updates</td><td>Limited: <code>sequence</code>, expiry, version checks and a memory of bad versions. A freeze ends when the manifest expires.</td></tr>
+<tr><td>Takeover of the domain <code>client.kog.tw</code></td><td>Cannot forge a manifest. It can withhold updates, so the client also tries a fallback host under another name.</td></tr>
+<tr><td>A bad update that does not start</td><td>The previous version is restored after two starts that did not reach the start screen.</td></tr>
+<tr><td>Stolen GitHub account or a malicious pull request (for stable)</td><td>Cannot publish a stable update alone: the second signature needs the owner's hardware key. Not yet effective: there is no stable release.</td></tr>
+<tr><td>Capturing the login</td><td>No password, key or token travels on the game connection. The login code is useless without the PKCE verifier, which stays in memory.</td></tr>
+<tr><td>A local program on the loopback port during login</td><td>Random port, short time, exact path and state; see <a href="/technical/login/#threats">login</a>.</td></tr>
+<tr><td>A server asking for a login proof it should not get</td><td>The client answers only servers listed for the <code>kog</code> community, once per join. Nothing is sent today.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="not-protected">What is not protected <a class="anchor" href="#not-protected" aria-label="Link to this section: What is not protected">#</a></h2>
+<div class="callout warning" role="note">
+<p>Be clear about these limits before you rely on the client for anything.</p>
+</div>
+<ul>
+<li><strong>Canary and dev are weaker than stable will be.</strong> They need only the CI signature. Whoever could read the CI signing keys could sign an update for these channels. That is why they are opt-in testing channels.</li>
+<li><strong>Stable does not exist.</strong> Its keys are placeholders, so none of the stable protections has been exercised.</li>
+<li><strong>The client cannot prove, and nobody can prove from outside, that a running client is unmodified.</strong> A device key shows that someone holding a key made a signature. It does not show that the program holding it is this one. See <a href="/technical/roadmap/#integrity">the roadmap</a>.</li>
+<li><strong>A program running as you can read your device key</strong>, as it could read an SSH key. On Windows and macOS the keychain asks no further question of the same user; on Linux the key is a file with mode 0600.</li>
+<li><strong>A malicious update that is correctly signed</strong> would be installed. The signature proves who signed, not that the code is good.</li>
+<li><strong>Builds are not code-signed or notarised</strong> for Windows and macOS, so those systems warn, and they cannot vouch for the file.</li>
+<li><strong>There is no certificate pinning</strong> for the account service. TLS is verified in the normal way.</li>
+<li><strong>The game connection itself is not encrypted</strong>, as in DDNet. The client does not change that.</li>
+<li><strong>Builds are not reproducible</strong>, so you cannot rebuild a release and compare it. You can check its attestation.</li>
+<li><strong>An unmodified DDNet client</strong> can play on KoG. Nothing here is meant to stop other clients, and nothing here should be read as protection against cheating.</li>
+</ul>
+
+<h2 id="weak-points">Known weak points <a class="anchor" href="#weak-points" aria-label="Link to this section: Known weak points">#</a></h2>
+<ul>
+<li>The CI private keys are held by automation (see <a href="/technical/release-signing/#weak-points">release signing</a>).</li>
+<li>With one maintainer, the person who approves a signing run can approve their own run.</li>
+<li>The Windows free-disk check and the executable-bit handling of the updater were not run on Windows.</li>
+<li>The workflows have had little time in production, and hardware-key signatures were tested with an emulation, not a real key.</li>
+<li>The HTTP steps of the login and the key store have no automated test.</li>
+</ul>
+
+<h2 id="third-party">Third-party code <a class="anchor" href="#third-party" aria-label="Link to this section: Third-party code">#</a></h2>
+<p>The client inherits the code of DDNet and TClient, with their bugs and their dependencies (SDL, libcurl, FFmpeg and others). It removed the scripting engine and the chat translation of TClient to reduce what it carries. Added code: Monocypher for Ed25519 and SHA-512. The workflows are checked by CodeQL and a spelling check; first-party actions are pinned by commit.</p>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/build/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Build from source</span></a>
+<a class="pager-next" rel="next" href="../../technical/roadmap/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Roadmap</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/security.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

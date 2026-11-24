@@ -1,0 +1,66 @@
+@title Technical documentation | KoG Client
+@description How the KoG client works, in detail: architecture, the signed update channel, verification, login, privacy, building from source, release signing, security and what is built or only planned.
+@nav Overview
+@heading Technical documentation
+@lead How the KoG client is built, signed and checked, page by page, and what exists today versus what is only planned. Looking for a download? <a href="/">Go to the start page</a>.
+
+<div class="callout note" role="note">
+<p>Status of these pages. Everything here describes the <strong>client</strong> only, and was read from the repository <a href="https://github.com/KoG-teeworlds/kog-client">KoG-teeworlds/kog-client</a> (its <code>docs/</code> folder, source and workflows, at the state of 24 November 2026) and from the files published at client.kog.tw. A claim that was not run or tested says so on the page. Anything that is not built is marked <span class="state planned">Planned</span>.</p>
+</div>
+
+<h2 id="what">What it is and is not</h2>
+<p>The KoG client is a <strong>reference implementation</strong>: a working example of features that need new code in the game client. It is a fork of <a href="https://github.com/TaterClient/TClient">TClient</a> 10.9.0, which is a fork of the <a href="https://ddnet.org">DDNet</a> client 20.1. The KoG-specific code lives in separate files (<code>kog_*</code>), so upstream changes can still be merged.</p>
+<ul>
+<li><strong>Added:</strong> a verifying updater, a browser login with a device key, release signing and sync scripts, build and release workflows.</li>
+<li><strong>Removed from TClient:</strong> the ChaiScript scripting engine, chat translation (it sent chat to a third-party service) and a committed Steam library. The client no longer contacts TClient's servers.</li>
+<li><strong>Not</strong> an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors. "KoG Client" is a placeholder name.</li>
+<li><strong>Not</strong> required to play on KoG, and not a stable product: there is no stable release yet.</li>
+<li>The executable is <code>KoG-Client</code> (<code>KoG-Client.exe</code>, <code>KoG-Client.app</code>). Its data folder is separate from DDNet's: <code>%APPDATA%\KoG-Client</code>, <code>~/Library/Application Support/KoG-Client</code>, <code>~/.local/share/kog-client</code>.</li>
+</ul>
+
+<h2 id="status">What is built and what is planned</h2>
+<table>
+<thead><tr><th>Feature</th><th>State</th><th>Notes</th><th>Details</th></tr></thead>
+<tbody>
+<tr><td>Signed update manifest, channels canary and dev</td><td><span class="state built">Built</span></td><td>Canary is published and signed. Dev is built but nothing is published there yet.</td><td><a href="/technical/update-channel/">Update channel</a></td></tr>
+<tr><td>In-app updater (Windows, Linux)</td><td><span class="state built">Built</span></td><td>Verifies signature, expiry, sequence and every file hash; keeps the previous version for rollback. Little real-world testing so far, and the Windows disk-space check was not run on Windows.</td><td><a href="/technical/update-channel/">Update channel</a></td></tr>
+<tr><td>Browser login and device key</td><td><span class="state built">Built</span></td><td>Canary and dev builds only (<code>cl_kog_login</code>). The HTTP steps and the key store have no automated test.</td><td><a href="/technical/login/">Login</a></td></tr>
+<tr><td>Join proof (signed challenge when joining a server)</td><td><span class="state partial">Partly built</span></td><td>The signing code exists, the wire transport does not. <code>cl_kog_auto_login</code> is off and sends nothing.</td><td><a href="/technical/login/#join-proof">Login</a></td></tr>
+<tr><td>Capability announcement to servers (<code>kog_hello</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Only names are reserved in the source.</td><td><a href="/technical/protocol/">Protocol</a></td></tr>
+<tr><td>Opt-in network statistics (<code>kog_telemetry</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Nothing is sent.</td><td><a href="/technical/privacy/">Privacy</a></td></tr>
+<tr><td>Stable channel with two signatures</td><td><span class="state planned">Planned</span></td><td>The stable keys are placeholders. No stable release has been made.</td><td><a href="/technical/release-signing/">Release signing</a></td></tr>
+<tr><td>Signed list of known builds (<code>builds/allowlist.json</code>)</td><td><span class="state planned">Planned</span></td><td>Idea only; nothing is served at that address.</td><td><a href="/technical/roadmap/">Roadmap</a></td></tr>
+<tr><td>Integrity statements about the client build</td><td><span class="state planned">Planned</span></td><td>Idea only. Such a statement can never prove that the client is unmodified.</td><td><a href="/technical/roadmap/#integrity">Roadmap</a></td></tr>
+<tr><td>Code signing for Windows and macOS</td><td><span class="state planned">Planned</span></td><td>Not done. Builds are neither code-signed nor notarised, which is why Windows and macOS warn.</td><td><a href="/technical/roadmap/">Roadmap</a></td></tr>
+<tr><td>Reproducible builds</td><td><span class="state planned">Planned</span></td><td>Not yet. Builds carry an attestation instead.</td><td><a href="/technical/build/#repro">Build</a></td></tr>
+</tbody>
+</table>
+
+<h2 id="map">Map of the documentation</h2>
+<p>The pages are in reading order. Use the contents on the left, or the Previous and Next links at the end of each page.</p>
+<ul class="map">
+<li><a href="/technical/architecture/"><strong>Architecture</strong><span class="sub">The parts of the client and the three public addresses it talks to.</span></a></li>
+<li><a href="/technical/update-channel/"><strong>Update channel</strong><span class="sub">The signed manifest, its fields and how the client checks it.</span></a></li>
+<li><a href="/technical/release-signing/"><strong>Release signing</strong><span class="sub">CI signature, hardware key, channels, rollback and halt.</span></a></li>
+<li><a href="/technical/verify/"><strong>Verify a download</strong><span class="sub">Hashes, attestations and kogsign, with commands that work.</span></a></li>
+<li><a href="/technical/login/"><strong>Login</strong><span class="sub">OAuth 2.0 with PKCE in your browser and a device key.</span></a></li>
+<li><a href="/technical/protocol/"><strong>Protocol</strong><span class="sub">What the client adds to the game connection: built and planned.</span></a></li>
+<li><a href="/technical/privacy/"><strong>Privacy</strong><span class="sub">What is sent where, when, and how to switch it off.</span></a></li>
+<li><a href="/technical/build/"><strong>Build from source</strong><span class="sub">Commands for each system, tests, reproducibility.</span></a></li>
+<li><a href="/technical/security/"><strong>Security</strong><span class="sub">What is protected, what is not, and how to report.</span></a></li>
+<li><a href="/technical/roadmap/"><strong>Roadmap</strong><span class="sub">Planned features, and the history so far.</span></a></li>
+<li><a href="/technical/glossary/"><strong>Glossary</strong><span class="sub">Terms used in these pages.</span></a></li>
+</ul>
+
+<h2 id="license">Licence and credits</h2>
+<table>
+<thead><tr><th>Project</th><th>Authors</th><th>Licence</th></tr></thead>
+<tbody>
+<tr><td>Teeworlds</td><td>Magnus Auvinen and contributors</td><td>zlib</td></tr>
+<tr><td>DDRace</td><td>Shereef Marzouk</td><td>zlib</td></tr>
+<tr><td><a href="https://github.com/ddnet/ddnet">DDNet</a></td><td>Dennis Felsing and contributors</td><td>zlib; <code>data/</code> CC-BY-SA 3.0 except assets, fonts, languages and skins, which have their own licences</td></tr>
+<tr><td><a href="https://github.com/TaterClient/TClient">TClient</a></td><td>Tater and contributors</td><td>as DDNet</td></tr>
+<tr><td>KoG client</td><td>King of Gores</td><td>zlib</td></tr>
+</tbody>
+</table>
+<p>All upstream notices are kept in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">license.txt</a>. Added third-party code: Monocypher 4.0.3 (BSD-2-Clause or CC0-1.0). <strong>Open item:</strong> some inherited assets, such as fonts and artwork from TClient, still need a licence check before a first release; <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">NOTICE_KOG.md</a> lists them. Under the zlib licence this is an altered version and must not be presented as the original software.</p>

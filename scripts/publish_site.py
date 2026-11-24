@@ -18,7 +18,12 @@ RESERVED = {"stable", "canary", "dev", "base", "releases", "builds", "releases.j
 
 
 def pages(content=ROOT / "content"):
-    return {p.stem for p in content.glob("*.html")} - {"index", "404"} - RESERVED
+    """Names of the pages with their own address: faq, technical, technical/login."""
+    names = set()
+    for path in content.rglob("*.html"):
+        name = path.relative_to(content).with_suffix("").as_posix()
+        names.add(name[: -len("/index")] if name.endswith("/index") else name)
+    return {n for n in names if n not in ("index", "404") and n.split("/")[0] not in RESERVED}
 
 
 def allowed(path, names):
@@ -29,7 +34,7 @@ def allowed(path, names):
         return parts[0] in ROOT_FILES
     if parts[0] == "assets":
         return True
-    return len(parts) == 2 and parts[0] in names and parts[1] == "index.html"
+    return len(parts) >= 2 and parts[-1] == "index.html" and "/".join(parts[:-1]) in names
 
 
 def files(base):

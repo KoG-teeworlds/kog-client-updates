@@ -1,0 +1,15 @@
+{
+ "mermaid-cli": "@mermaid-js/mermaid-cli@11.12.0",
+ "config": {
+  "light": "a56253d139170bd09b9f0a0273904d42835bffeff34a01adc160d4bf24c528a5",
+  "dark": "9f4d829675204a14968ff481ba1e1ae21ac2e2c34c459be4e166895a2cfe29af"
+ },
+ "sources": {
+  "architecture": "f397045fe8abcd2e64c94da3be5e8afef08832acbbacca50c22abbb5d74db6c5",
+  "channel-keys": "5846d67df9711b294c1d474f1f0ab2e9a88a6fae34c8529685126ddb3868ff0c",
+  "join-proof": "aa314682d420d27551049ed01972e75fff90343afa74eb0f20b69eb7601ec077",
+  "login": "830f7a7ff9cab4299ebe85b055edc0c1cb2b4f38b11d7336f9a1c507e58a5ea0",
+  "release-signing": "00694753601699e9ada86c03bd8459fb62d2dbb46266be42a5343689e87c7342",
+  "update-flow": "6123d917531c3f294c2d136ec6c407177bb7f9e1bd092c6c33769cb2c9e47013"
+ }
+}

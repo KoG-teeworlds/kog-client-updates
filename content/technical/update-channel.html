@@ -1,0 +1,116 @@
+@title Update channel | KoG Client technical documentation
+@description The signed update manifest of the KoG client: format 2, every field, the signature file, key ids, per-channel keys, rollback protection and how the client verifies an update.
+@nav Update channel
+@status built
+@lead The client updates itself from a signed manifest. Nothing the network delivers is trusted until the signatures check. This page is the reference for the format and for what the client verifies.
+
+<div class="callout note" role="note">
+<p>Source of truth. The client's own description is <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">docs/UPDATE_CHANNEL.md</a>. This page follows it and adds a worked example. The updater is only compiled with <code>-DAUTOUPDATE=ON</code>, and a release build fails while a channel's keys are placeholders.</p>
+</div>
+
+<h2 id="channels">Channels</h2>
+<table>
+<thead><tr><th>Channel</th><th>Built from</th><th>Signatures</th><th>Manifest valid for</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><code>stable</code></td><td>A release started by hand on <code>main</code></td><td>CI key and the owner's hardware key</td><td>up to 90 days</td><td><span class="state planned">Planned</span> no stable release yet</td></tr>
+<tr><td><code>canary</code></td><td>Every push to <code>main</code></td><td>CI key</td><td>up to 30 days</td><td><span class="state built">Built</span> published</td></tr>
+<tr><td><code>dev</code></td><td>Every push to <code>dev</code></td><td>CI key</td><td>up to 14 days</td><td><span class="state built">Built</span> nothing published yet</td></tr>
+</tbody>
+</table>
+<p>Canary and dev versions carry the channel (<code>0.1.0-canary.9</code>), are marked "Unstable build, best effort." in the update dialog, and are GitHub prereleases; the last 10 of each are kept. The channel is chosen with <code>kog_update_channel</code> or in the settings, <strong>never from the network</strong>. Switching to a channel with an older version asks for confirmation in that session.</p>
+<p>A client checks a channel only against that channel's own keys, and the channel name is inside the signed text, so a manifest signed for one channel is refused on another.</p>
+
+<!-- diagram channel-keys -->
+
+<h2 id="endpoints">Endpoints of client.kog.tw</h2>
+<p>The site is served by GitHub Pages from the branch <code>published</code> of <a href="https://github.com/KoG-teeworlds/kog-client-updates">kog-client-updates</a>. Manifests and this website are published by separate jobs and never overwrite each other.</p>
+<table>
+<thead><tr><th>Address</th><th>What</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><code>/canary/update.json</code>, <code>/canary/update.json.sig</code></td><td>Manifest and signature of the canary channel</td><td><span class="state built">Built</span> published</td></tr>
+<tr><td><code>/dev/update.json</code>, <code>/dev/update.json.sig</code></td><td>Manifest and signature of the dev channel</td><td><span class="state built">Built</span> nothing published yet (the address answers 404)</td></tr>
+<tr><td><code>/stable/update.json</code>, <code>.sig</code>, <code>.sigb</code></td><td>Stable channel, two signatures. The start page also tries <code>/update.json</code>.</td><td><span class="state planned">Planned</span> no stable release yet (404)</td></tr>
+<tr><td><code>/builds/allowlist.json</code></td><td>Signed list of released build hashes (idea only)</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td><a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases</a></td><td>The packages and client binaries a manifest points to (immutable releases)</td><td><span class="state built">Built</span></td></tr>
+<tr><td><code>raw.githubusercontent.com/KoG-teeworlds/kog-client-updates/published/CHANNEL/update.json</code></td><td>Fallback host of the client, on another name than the primary. Same files.</td><td><span class="state built">Built</span></td></tr>
+</tbody>
+</table>
+<p>The names <code>stable</code>, <code>canary</code>, <code>dev</code>, <code>base</code>, <code>releases</code> and <code>builds</code> belong to the release data and are never used by website pages.</p>
+
+<h2 id="manifest">The manifest, format 2</h2>
+<p><code>update.json</code> is JSON. A field that is absent means the old behaviour. Unknown fields are ignored by the client but are signed with the rest.</p>
+<table>
+<thead><tr><th>Field</th><th>Required</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>format</code></td><td>yes</td><td>The format number, currently <code>2</code>.</td></tr>
+<tr><td><code>channel</code></td><td>yes</td><td>Must equal the channel the client asked for.</td></tr>
+<tr><td><code>version</code></td><td>yes</td><td>The version offered, with the channel in its form for canary and dev.</td></tr>
+<tr><td><code>sequence</code></td><td>yes</td><td>Rises with every manifest of a channel. A client refuses one that is not higher than the last it applied.</td></tr>
+<tr><td><code>issued</code>, <code>expires</code></td><td>yes</td><td>Unix seconds. An expired manifest, or one from the future, is refused. The window is at most the channel's maximum.</td></tr>
+<tr><td><code>platforms.linux-x86_64.client</code>, <code>platforms.win64.client</code></td><td>for updating</td><td>The client binary: <code>sha256</code>, <code>size</code>, <code>url</code>.</td></tr>
+<tr><td><code>files[]</code></td><td>yes (may be empty)</td><td>Data files to update: <code>path</code> below <code>data/</code>, <code>sha256</code>, <code>size</code>, <code>url</code>, optional <code>mirrors[]</code> tried in order. Executables never go through <code>files</code>.</td></tr>
+<tr><td><code>remove[]</code></td><td>no</td><td>Data paths to delete.</td></tr>
+<tr><td><code>packages[]</code></td><td>no</td><td><code>name</code>, <code>sha256</code>, <code>size</code>, <code>url</code> of the zip, dmg and tar.xz that the download page shows. The updater ignores it.</td></tr>
+<tr><td><code>rollout_percent</code></td><td>no</td><td>0 to 100: the share of installs that get the update. The bucket comes from a random per-install value in the config and is never sent anywhere.</td></tr>
+<tr><td><code>halted</code></td><td>no</td><td>The update is withdrawn: clients do not apply it.</td></tr>
+<tr><td><code>min_version</code></td><td>no</td><td>An older client shows a blocking "update required" dialog that explains why. Never silent.</td></tr>
+<tr><td><code>notes_url</code></td><td>no</td><td>Release notes link, only on <code>client.kog.tw</code> or <code>github.com/KoG-teeworlds</code>.</td></tr>
+<tr><td><code>changes[]</code></td><td>no</td><td>Up to 3 plain-text lines of at most 120 characters.</td></tr>
+</tbody>
+</table>
+
+<h3>An annotated example</h3>
+<p>The shape is taken from the published canary manifest. The hashes are shortened and the URLs trimmed, so this is an illustration and not a file to verify. Comments after <code>//</code> are not part of JSON.</p>
+<pre class="json"><code>{
+  "format": 2,                       // required, must be 2
+  "channel": "canary",               // must equal the channel the client asked for
+  "version": "0.1.0-canary.9",       // the form of the channel
+  "sequence": 3,                     // must be higher than the last applied on this channel
+  "issued": 1795521981,              // Unix seconds, not in the future
+  "expires": 1798113981,             // 30 days later: the canary maximum
+  "files": [],                       // data files: path, sha256, size, url, mirrors[]
+  "platforms": {
+    "linux-x86_64": { "client": { "sha256": "1b318184...", "size": 7814888, "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-9/..." } },
+    "win64":        { "client": { "sha256": "0cb0e106...", "size": 5125632, "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-9/..." } }
+  },
+  "remove": [],
+  "packages": [ { "name": "...", "sha256": "...", "size": 0, "url": "..." } ]   // for the download page only
+}</code></pre>
+<p>The matching <code>update.json.sig</code> of that manifest begins <code>kog-update-sig-v1 1cb978aa d7465f8c...</code>.</p>
+
+<h2 id="signature">Signature file and key ids</h2>
+<p><code>update.json.sig</code> is one line:</p>
+<pre class="text"><code>kog-update-sig-v1 KEYID SIGNATURE</code></pre>
+<ul>
+<li><code>kog-update-sig-v1</code> is the format tag.</li>
+<li><code>SIGNATURE</code> is Ed25519 over the <strong>exact bytes</strong> of <code>update.json</code>, 128 hex characters. It is checked with Monocypher.</li>
+<li><code>KEYID</code> is the first 8 hex characters of the public key, so a verifier can see which key was used.</li>
+</ul>
+<p>The stable channel will have a second signature, <code>update.json.sigb</code>, in OpenSSH format (<code>ssh-keygen -Y sign -n kog-client-release</code>, key type <code>sk-ssh-ed25519@openssh.com</code>) made with a hardware key. The client checks the application, that the key was touched (user presence), the namespace and the signature. See <a href="/technical/release-signing/">release signing</a>.</p>
+
+<h2 id="keys">Per-channel keys and rotation</h2>
+<p>Each channel has two CI keys, a and b, compiled into the client in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/src/engine/client/kog_update_pubkey.h">kog_update_pubkey.h</a> (<code>KOG_&lt;CHANNEL&gt;_CI_KEYS</code>). A key of one channel cannot sign another channel, and the channel name is part of the signed text.</p>
+<p>To replace a CI key without leaving installed clients behind, the client always ships both slots and the signing side holds one active key:</p>
+<ol>
+<li>The client in the field already trusts the key that will be used next, because a and b are always shipped.</li>
+<li>The active slot is switched to the other one.</li>
+<li>The retired slot gets a fresh key; its public half goes into the client through a reviewed change.</li>
+<li>A client release with that change is shipped before the next rotation. Only then may the slot that was just filled become active.</li>
+</ol>
+<p>A key that is not shipped in a client release is never made active. For stable, the owner's hardware keys (<code>KOG_STABLE_OWNER_KEYS</code>) and an offline backup CI key (<code>KOG_STABLE_BACKUP_CI_KEYS</code>) are separate from the CI keys. The stable keys in the client are still placeholders (<code>KOG_UPDATE_KEYS_PLACEHOLDER_STABLE 1</code>): a channel with placeholder keys does not update.</p>
+
+<h2 id="client-checks">How the client verifies an update</h2>
+<!-- diagram update-flow -->
+<ol>
+<li><strong>Fetch.</strong> The manifest and its signature come from <code>https://client.kog.tw/CHANNEL/update.json</code>, then, if that fails, from the fallback host. The fallback has another name because GitHub redirects <code>github.io</code> to the custom domain. Offline or unreachable is quiet; the settings show the last check and its result.</li>
+<li><strong>Signature.</strong> Checked against the public keys of <em>that channel only</em> (both signatures for stable). Trust never depends on the host or on TLS. The channel inside the payload must equal the configured one.</li>
+<li><strong>Rollback and replay protection.</strong> <code>sequence</code> is higher than the last one applied on that channel; the manifest has not expired and is not from the future; the version has the channel's form; a version older than the installed one is only applied after the user confirmed a channel switch; and a version the client rolled back from before (bad-version memory) is not tried again.</li>
+<li><strong>Policy fields.</strong> <code>halted</code>, the <code>rollout_percent</code> bucket and <code>min_version</code>.</li>
+<li><strong>Files.</strong> Paths and URLs must be on allow-lists: <code>github.com/KoG-teeworlds/kog-client/releases/download/</code> and <code>client.kog.tw</code>. Every file's SHA-256 and size are checked before it replaces anything, with enough free disk space, a per-file retry, then the next mirror.</li>
+<li><strong>Fail-safe.</strong> The previous version stays beside the new one (<code>.kogprev</code>), replaced atomically. A start marker is written on launch and removed when the start screen is reached; after 2 starts that did not reach it, the client restores the previous version and remembers the bad one. Settings are never replaced; a config backup is made when the version changes.</li>
+</ol>
+<p>What these checks do not cover is on the <a href="/technical/security/">security page</a>. To check a published manifest yourself, see <a href="/technical/verify/#verify-manifest">verify a download</a>.</p>
+
+<div class="callout note" role="note">
+<p>Not verified. The Windows free-disk check and the executable-bit handling were not run on Windows, and the updater has had little real-world use. Hardware-key signatures were tested with a software emulation of the OpenSSH format, not with a real security key.</p>
+</div>

@@ -14,10 +14,13 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_site  # noqa: E402
 
 SITE = ROOT / "site"
-PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(SITE.glob("*/index.html"))
+PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(p for p in SITE.rglob("index.html") if p != SITE / "index.html")
+DOC_PAGES = [SITE / name / "index.html" for name in build_site.DOCS_ORDER]
 RESERVED = ["stable", "canary", "dev", "base", "releases"]
-BUDGET_TOTAL = 150 * 1024
+BUDGET_TOTAL = 400 * 1024
 BUDGET_PAGE = 70 * 1024
+BUDGET_DOC_PAGE = 200 * 1024
+BUDGET_SCRIPT = 20 * 1024
 
 
 class Page(HTMLParser):
@@ -184,7 +187,7 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_expected_files_exist(self):
-        for name in ["robots.txt", "sitemap.xml", "CNAME", ".nojekyll", "favicon.svg", "404.html", "assets/style.css", "assets/app.js", "assets/manifest.js", "assets/kog-logo.svg", "assets/og.png"]:
+        for name in ["robots.txt", "sitemap.xml", "CNAME", ".nojekyll", "favicon.svg", "404.html", "assets/style.css", "assets/app.js", "assets/manifest.js", "assets/kog-logo.svg", "assets/og.png", "assets/docs.js", "assets/search-index.json"]:
             self.assertTrue((SITE / name).exists(), name)
 
     def test_cname_and_robots(self):
@@ -311,7 +314,7 @@ class PageTests(unittest.TestCase):
         source = (ROOT / "scripts" / "build_site.py").read_text()
         self.assertEqual(source.count("It exists to demonstrate and test new features"), 1)
         self.assertEqual(source.count("The KoG client is a reference implementation."), 1)
-        for path in (ROOT / "content").glob("*.html"):
+        for path in (ROOT / "content").rglob("*.html"):
             self.assertNotIn("It exists to demonstrate", path.read_text(), path.name)
             self.assertNotIn("The KoG client is a reference implementation", path.read_text(), path.name)
         self.assertIn("reference implementation", build_site.DISCLAIMER)
@@ -352,8 +355,8 @@ class PageTests(unittest.TestCase):
             "https://kog.tw/",
             "https://kog.tw/clients",
             "https://github.com/KoG-teeworlds/kog-client",
-            "technical/#verify",
-            "technical/#login",
+            "technical/verify/",
+            "technical/login/",
             "privacy/",
         ]:
             self.assertIn(needed, hrefs)
@@ -387,7 +390,8 @@ class PageTests(unittest.TestCase):
             self.assertNotIn("kog.tw/account", text)
 
 
-# Every command on the technical page, and the files of kog-client it names. Checked in both directions.
+# Every command on the technical pages (the blocks marked class="sh"), in the order of the pages, and the files of
+# kog-client they name. Checked in both directions.
 COMMANDS = [
     "sha256sum KoG-Client-linux.tar.xz",
     "shasum -a 256 KoG-Client-macOS.dmg",
@@ -402,18 +406,49 @@ COMMANDS = [
     "scripts/kog/verify_published.sh canary",
     "git clone https://github.com/KoG-teeworlds/kog-client",
     "cd kog-client",
+    "git submodule update --init --recursive",
+    "sudo apt-get install -y cmake glslang-tools libavcodec-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libswresample-dev libswscale-dev libvulkan-dev libwavpack-dev libx264-dev ninja-build pkg-config spirv-tools zlib1g-dev",
     "mkdir build",
     "cd build",
     "cmake .. -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF -DCMAKE_BUILD_TYPE=Release",
     "cmake --build . --target game-client",
+    "brew install ffmpeg molten-vk ninja pkg-config sdl2",
+    "cmake .. -A x64 -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF",
+    "cmake --build . --config Release --target game-client",
+    "cmake .. -DDOWNLOAD_GTEST=ON",
+    "cmake --build . --target run_tests",
 ]
 KOG_CLIENT_FILES = [
     "scripts/kog/kogsign.c",
     "scripts/kog/keys_from_header.py",
     "scripts/kog/verify_published.sh",
+    "scripts/kog/verify_release.sh",
+    "scripts/kog/approve_release.sh",
+    "scripts/kog/publish_signed.sh",
+    "scripts/kog/smoke_test.sh",
     "src/engine/external/monocypher/monocypher.c",
     "src/engine/external/monocypher/monocypher-ed25519.c",
     "src/engine/client/kog_update_pubkey.h",
+    "src/engine/client/kog_keystore.cpp",
+    "src/engine/client/updater.cpp",
+    "src/engine/client/updater.h",
+    "src/engine/shared/kog_update.cpp",
+    "src/engine/shared/kog_update.h",
+    "src/engine/shared/kog_failsafe.cpp",
+    "src/engine/shared/kog_login.cpp",
+    "src/engine/shared/kog_protocol.h",
+    "src/engine/shared/config_variables_kog.h",
+    "src/engine/shared/http_curl.cpp",
+    "src/engine/http.h",
+    "src/game/client/components/kog/kog_login.cpp",
+    "src/game/client/components/kog/kog_hello.cpp",
+    "src/game/client/components/menus_settings_ddnet.cpp",
+    "src/test/kog_update_test.cpp",
+    "src/test/kog_login_test.cpp",
+    "src/test/kog_failsafe_test.cpp",
+    "datasrc/network.py",
+    ".github/workflows/kog-build.yml",
+    ".github/workflows/kog-package.yml",
     "docs/UPDATE_CHANNEL.md",
     "docs/LOGIN.md",
     "docs/PRIVACY.md",
@@ -425,21 +460,26 @@ KOG_CLIENT_FILES = [
 
 
 def technical_commands():
-    text = (SITE / "technical" / "index.html").read_text()
     lines = []
-    for block in re.findall(r"<pre><code>(.*?)</code></pre>", text, re.S):
-        lines.extend(line for line in htmllib.unescape(block).split("\n") if line.strip())
+    for path in DOC_PAGES:
+        for block in re.findall(r'<pre class="sh"[^>]*><code>(.*?)</code></pre>', path.read_text(), re.S):
+            lines.extend(line for line in htmllib.unescape(block).split("\n") if line.strip())
     return lines
 
 
+def doc_text(path):
+    return htmllib.unescape(path.read_text())
+
+
 class TechnicalPageTests(unittest.TestCase):
-    def test_commands_on_the_page_are_exactly_the_fixture_list(self):
+    def test_commands_on_the_pages_are_exactly_the_fixture_list(self):
         self.assertEqual(technical_commands(), COMMANDS)
 
     def test_files_named_in_commands_and_text_are_in_the_fixture(self):
-        text = htmllib.unescape((SITE / "technical" / "index.html").read_text())
-        named = set(re.findall(r"(?<![\w/.-])((?:scripts|src|docs)/[\w./-]+\.(?:c|py|sh|h|md))", " ".join(COMMANDS)))
-        named |= set(re.findall(r"(?<![\w/.-])(scripts/kog/[\w.-]+)", text))
+        named = set(re.findall(r"(?<![\w/.-])((?:scripts|src|docs)/[\w./-]+\.(?:c|py|sh|h|md|cpp))", " ".join(COMMANDS)))
+        for path in DOC_PAGES:
+            named |= set(re.findall(r"(?<![\w/.-])(scripts/kog/[\w.-]+)", doc_text(path)))
+            named |= set(re.findall(r"<code>(src/[\w./-]+\.(?:c|cpp|h))</code>", doc_text(path)))
         self.assertTrue(named)
         for name in named:
             self.assertIn(name, KOG_CLIENT_FILES)
@@ -456,27 +496,239 @@ class TechnicalPageTests(unittest.TestCase):
         for name in re.findall(r"KoG-Client-[\w.]+", " ".join(COMMANDS)):
             self.assertIn(name, script)
 
-    def test_sections_and_table_of_contents(self):
-        page = parse(SITE / "technical" / "index.html")
-        text = (SITE / "technical" / "index.html").read_text()
-        toc = re.findall(r'<nav class="toc".*?</nav>', text, re.S)[0]
-        targets = re.findall(r'href="#([\w-]+)"', toc)
-        self.assertGreaterEqual(len(targets), 12)
-        for target in targets:
-            self.assertIn(target, page.ids)
-        for needed in ["what", "channels", "manifest", "verify", "endpoints", "login", "privacy", "messages", "repro", "build", "signing", "security", "license"]:
-            self.assertIn(needed, targets)
-
     def test_planned_things_are_labelled_planned(self):
-        text = (SITE / "technical" / "index.html").read_text()
-        for thing in ["builds/allowlist.json", "Join proof", "kog_hello", "kog_telemetry", "master server"]:
-            around = text[max(0, text.index(thing) - 300): text.index(thing) + 600]
-            self.assertIn("planned", around, thing)
-        self.assertIn("not reproducible yet", " ".join(parse(SITE / "technical" / "index.html").text))
+        for page, things in {
+            "technical/protocol": ["kog_hello", "kog_telemetry"],
+            "technical/roadmap": ["builds/allowlist.json", "Join proof", "Federated login", "Code signing"],
+            "technical/index": ["builds/allowlist.json", "kog_hello", "kog_telemetry"],
+        }.items():
+            path = SITE / (page + "/index.html" if page != "technical/index" else "technical/index.html")
+            text = path.read_text()
+            for thing in things:
+                around = text[max(0, text.index(thing) - 400): text.index(thing) + 800].lower()
+                self.assertTrue("planned" in around or "partly built" in around, "%s: %s" % (page, thing))
+        self.assertIn("not reproducible yet", " ".join(parse(SITE / "technical" / "build" / "index.html").text))
+        self.assertIn("No such statement proves that a client is unmodified", " ".join(parse(SITE / "technical" / "roadmap" / "index.html").text))
 
     def test_old_urls_still_exist(self):
         for name in ["verify", "install", "updates", "faq", "changelog", "privacy"]:
             self.assertTrue((SITE / name / "index.html").exists(), name)
+
+    def test_old_redirects_point_into_the_new_pages(self):
+        expected = {"verify": "/technical/verify/", "updates": "/technical/update-channel/", "changelog": "/technical/roadmap/#history"}
+        for name, target in expected.items():
+            self.assertEqual(redirect_target(parse(SITE / name / "index.html")), "https://client.kog.tw" + target)
+
+
+class DocsTests(unittest.TestCase):
+    def pager(self, path):
+        text = path.read_text()
+        prev = re.findall(r'<a class="pager-prev" rel="prev" href="([^"]+)"', text)
+        following = re.findall(r'<a class="pager-next" rel="next" href="([^"]+)"', text)
+        return prev, following
+
+    def test_every_technical_page_is_in_the_documentation_order(self):
+        on_disk = {p for p in SITE.rglob("index.html") if p.relative_to(SITE).parts[0] == "technical"}
+        redirects = {p for p in on_disk if redirect_target(parse(p))}
+        self.assertEqual(on_disk - redirects, set(DOC_PAGES))
+        self.assertEqual(len(build_site.DOCS_ORDER), len(set(build_site.DOCS_ORDER)))
+
+    def test_pagination_links_form_one_chain_through_all_pages(self):
+        names = build_site.DOCS_ORDER
+        by_url = {}
+        for name in names:
+            path = SITE / name / "index.html"
+            prev, following = self.pager(path)
+            by_url[url_of(path)] = (prev, following)
+            self.assertLessEqual(len(prev), 1)
+            self.assertLessEqual(len(following), 1)
+            for href in prev + following:
+                self.assertTrue(target_file(resolve(url_of(path), href).path).exists(), href)
+        order = [url_of(SITE / name / "index.html") for name in names]
+        self.assertEqual(by_url[order[0]][0], [])
+        self.assertEqual(by_url[order[-1]][1], [])
+        walked, current = [], order[0]
+        while current:
+            self.assertNotIn(current, walked, "cycle at " + current)
+            walked.append(current)
+            following = by_url[current][1]
+            current = resolve(current, following[0]).path if following else None
+        self.assertEqual(walked, order)
+        for position, url in enumerate(order):
+            prev = by_url[url][0]
+            if position:
+                self.assertEqual(resolve(url, prev[0]).path, order[position - 1])
+                self.assertEqual(resolve(order[position - 1], by_url[order[position - 1]][1][0]).path, url)
+
+    def test_pager_cards_carry_the_titles_of_the_neighbours(self):
+        order = build_site.DOCS_ORDER
+        for position, name in enumerate(order):
+            text = (SITE / name / "index.html").read_text()
+            nav = re.search(r'<nav class="docs-nav".*?</nav>', text, re.S).group(0)
+            titles = {href: label for href, label in re.findall(r'<a href="[^"]*?(technical(?:/[\w-]+)?)/"[^>]*>([^<]*)</a>', nav)}
+            for rel, step in (("prev", -1), ("next", 1)):
+                card = re.search(r'rel="%s" href="[^"]+"><span class="pager-label">[^<]*</span><span class="pager-title">([^<]*)</span>' % rel, text)
+                if 0 <= position + step < len(order):
+                    self.assertEqual(htmllib.unescape(card.group(1)), htmllib.unescape(titles[order[position + step]]))
+                else:
+                    self.assertIsNone(card)
+
+    def test_every_page_has_the_sidebar_with_every_page_and_marks_its_own(self):
+        expected = {url_of(p) for p in DOC_PAGES}
+        for path in DOC_PAGES:
+            with self.subTest(page=url_of(path)):
+                text = path.read_text()
+                nav = re.search(r'<nav class="docs-nav".*?</nav>', text, re.S).group(0)
+                hrefs = {resolve(url_of(path), h).path for h in re.findall(r'<a href="([^"]+)"', nav)}
+                self.assertEqual(hrefs, expected)
+                current = re.findall(r'<a href="([^"]+)" aria-current="page"', nav)
+                self.assertEqual([resolve(url_of(path), h).path for h in current], [url_of(path)])
+                self.assertIn('<summary>Contents</summary>', nav)
+
+    def test_breadcrumb_toc_edit_link_and_skip_target(self):
+        for path in DOC_PAGES:
+            with self.subTest(page=url_of(path)):
+                text = path.read_text()
+                self.assertIn('<nav class="crumbs" aria-label="Breadcrumb">', text)
+                self.assertEqual(text.count('aria-current="page">'), text.count('<li aria-current="page">') + len(re.findall(r'<a href="[^"]+" aria-current="page"', text)))
+                self.assertIn('<main id="main" class="doc">', text)
+                edit = re.search(r'<a href="(https://github\.com/KoG-teeworlds/kog-client-updates/edit/main/([^"]+))">Edit this page on GitHub', text)
+                self.assertIsNotNone(edit)
+                self.assertTrue((ROOT / edit.group(2)).exists(), edit.group(2))
+                page = parse(path)
+                if "<h2" in text and len(re.findall(r"<h[23]", text)) >= 2:
+                    toc = re.search(r'<aside class="docs-toc".*?</aside>', text, re.S).group(0)
+                    for target in re.findall(r'href="#([^"]+)"', toc):
+                        self.assertIn(target, page.ids)
+
+    def test_headings_have_anchor_links_to_existing_ids(self):
+        for path in DOC_PAGES:
+            with self.subTest(page=url_of(path)):
+                page = parse(path)
+                text = path.read_text()
+                for ident in re.findall(r'<h[23] [^>]*id="([^"]+)"[^>]*>.*?<a class="anchor" href="#([^"]+)"', text, re.S):
+                    self.assertEqual(ident[0], ident[1])
+                    self.assertIn(ident[0], page.ids)
+                self.assertEqual(len(re.findall(r"<h[23]", text)), len(re.findall(r'class="anchor"', text)))
+
+    def test_tables_are_in_scrolling_regions_and_code_blocks_are_focusable(self):
+        for path in DOC_PAGES:
+            text = path.read_text()
+            self.assertEqual(text.count("<table"), text.count('<div class="table-scroll"'), path)
+            for tag in re.findall(r"<pre[^>]*>", text):
+                self.assertIn('tabindex="0"', tag)
+
+    def test_diagram_figures_have_text_alternatives_and_sources(self):
+        used = set()
+        for path in DOC_PAGES:
+            text = path.read_text()
+            for figure in re.findall(r'<figure class="diagram".*?</figure>', text, re.S):
+                alt = re.search(r'<img src="([^"]+)" alt="([^"]+)" width="(\d+)" height="(\d+)"', figure)
+                self.assertIsNotNone(alt, figure[:200])
+                self.assertGreater(len(alt.group(2)), 40)
+                self.assertIn("<figcaption>", figure)
+                self.assertIn('<details class="diagram-src"><summary>', figure)
+                self.assertIn('<pre class="mermaid-src" tabindex="0"><code>', figure)
+                dark = re.search(r'<source media="\(prefers-color-scheme: dark\)" srcset="([^"]+)"', figure).group(1)
+                for ref in (alt.group(1), dark):
+                    file = target_file(resolve(url_of(path), ref).path)
+                    self.assertTrue(file.exists(), ref)
+                    used.add(file.name.rsplit("-", 1)[0])
+        self.assertEqual(used, {p.stem for p in (ROOT / "diagrams").glob("*.mmd")})
+        for name in used:
+            self.assertGreaterEqual(len(used), 6)
+
+    def test_the_six_wanted_diagrams_exist_on_their_pages(self):
+        wanted = {
+            "technical/architecture": "architecture",
+            "technical/update-channel": "update-flow",
+            "technical/login": "login",
+            "technical/release-signing": "release-signing",
+            "technical/protocol": None,
+        }
+        for page, diagram in wanted.items():
+            if diagram:
+                self.assertIn("figure-" + diagram, (SITE / page / "index.html").read_text())
+        self.assertIn("figure-join-proof", (SITE / "technical/login/index.html").read_text())
+        self.assertIn("figure-channel-keys", (SITE / "technical/update-channel/index.html").read_text())
+
+    def test_diagram_files_are_safe_current_and_in_both_themes(self):
+        result = subprocess.run([sys.executable, str(ROOT / "scripts" / "render_diagrams.py"), "--check"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for source in (ROOT / "diagrams").glob("*.mmd"):
+            for theme in ("light", "dark"):
+                text = (SITE / "assets" / "diagrams" / ("%s-%s.svg" % (source.stem, theme))).read_text()
+                self.assertTrue(text.startswith("<svg"))
+                self.assertNotIn("<script", text)
+                self.assertNotIn("onload", text)
+                self.assertIsNone(re.search(r"(href|src)=\"https?://", text))
+                self.assertNotIn("foreignObject", text)
+            self.assertNotEqual((SITE / "assets" / "diagrams" / (source.stem + "-light.svg")).read_text(), (SITE / "assets" / "diagrams" / (source.stem + "-dark.svg")).read_text())
+
+    def test_search_index_covers_every_page_and_its_headings(self):
+        import json
+
+        index = json.loads((SITE / "assets" / "search-index.json").read_text())
+        self.assertEqual([e["u"] for e in index], [url_of(p) for p in DOC_PAGES])
+        for entry, path in zip(index, DOC_PAGES):
+            ids = parse(path).ids
+            self.assertTrue(entry["t"] and entry["d"])
+            for ident, text in entry["h"]:
+                self.assertIn(ident, ids)
+                self.assertTrue(text)
+        self.assertLess((SITE / "assets" / "search-index.json").stat().st_size, 16 * 1024)
+
+    def test_the_overview_maps_every_page_with_a_status(self):
+        text = (SITE / "technical" / "index.html").read_text()
+        for name in build_site.DOCS_ORDER[1:]:
+            self.assertIn('href="/%s/"' % name, text, name)
+        for state in ("built", "partial", "planned"):
+            self.assertIn('class="state %s"' % state, text)
+
+    def test_old_single_page_anchors_are_mapped_by_the_script(self):
+        script = (SITE / "assets" / "docs.js").read_text()
+        for old in ["verify", "login", "privacy", "messages", "repro", "build", "signing", "security", "history", "manifest", "channels", "endpoints"]:
+            self.assertRegex(script, r"\b%s:|\"%s\":" % (old, old))
+        self.assertIn('data-overview=""', (SITE / "technical" / "index.html").read_text())
+
+
+# Words that must not appear on a public page of this site: it documents the client only. An exception goes in
+# ALLOWED below with the reason, never into the list or the page.
+DENY = [
+    "kog-2.0-server", "backend", "gateway", "edgeservice", "rabbitmq", "redis", "mariadb", "haproxy", "argo", "kubernetes",
+    "hetzner", "protobuf", "message bus", "web2", "antibot", "teehistorian", "rcon", "infra-github", "opentofu", "master server",
+    "temp_backend", "cloudflare",
+]
+ALLOWED = {
+    # (path relative to site/, word): reason
+}
+
+
+class ClientOnlyTests(unittest.TestCase):
+    def texts(self):
+        for path in SITE.rglob("*"):
+            if path.is_file() and path.suffix in (".html", ".js", ".json", ".svg", ".xml", ".txt", ".css"):
+                yield path.relative_to(SITE).as_posix(), path.read_text()
+        for path in (ROOT / "diagrams").glob("*.mmd"):
+            yield "diagrams/" + path.name, path.read_text()
+
+    def test_no_server_implementation_is_mentioned_on_any_page(self):
+        for name, text in self.texts():
+            for word in DENY:
+                if (name, word) in ALLOWED:
+                    continue
+                with self.subTest(file=name, word=word):
+                    self.assertIsNone(re.search(r"(?<![\w-])" + re.escape(word) + r"(?![\w])", text, re.I), "%s mentions %s" % (name, word))
+
+    def test_no_private_repository_is_linked(self):
+        for name, text in self.texts():
+            for repo in re.findall(r"github\.com/KoG-teeworlds/([\w.-]+)", text):
+                with self.subTest(file=name, repo=repo):
+                    self.assertIn(repo, ("kog-client", "kog-client-updates"))
+            self.assertNotRegex(text, r"/pull/\d+")
+
+    def test_the_deny_list_itself_is_not_weakened(self):
+        self.assertEqual(ALLOWED, {})
 
 
 class WeightTests(unittest.TestCase):
@@ -486,25 +738,36 @@ class WeightTests(unittest.TestCase):
 
     def test_one_page_load_stays_under_budget(self):
         base = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "kog-logo.svg"])
-        scripts = sum((SITE / "assets" / name).stat().st_size for name in ["manifest.js", "app.js"])
         for path in PAGES:
-            with self.subTest(page=path.name):
-                loaded = parse(path).scripts
-                self.assertLess(path.stat().st_size + base + (scripts if loaded else 0), BUDGET_PAGE)
+            with self.subTest(page=url_of(path)):
+                scripts = sum((path.parent / ref).resolve().stat().st_size for ref in parse(path).scripts)
+                if path in DOC_PAGES:
+                    text = path.read_text()
+                    pictures = sum(
+                        max((SITE / ("assets/diagrams/%s-%s.svg" % (name, theme))).stat().st_size for theme in ("light", "dark"))
+                        for name in re.findall(r'id="figure-([\w-]+)"', text)
+                    )
+                    self.assertLess(path.stat().st_size + base + scripts + pictures, BUDGET_DOC_PAGE)
+                else:
+                    self.assertLess(path.stat().st_size + base + scripts, BUDGET_PAGE)
+
+    def test_no_script_is_a_library(self):
+        for name in ["app.js", "manifest.js", "docs.js"]:
+            self.assertLess((SITE / "assets" / name).stat().st_size, BUDGET_SCRIPT, name)
 
 
 class ScriptTests(unittest.TestCase):
     FORBIDDEN = [r"\.innerHTML", r"\.outerHTML", r"insertAdjacentHTML", r"\beval\s*\(", r"new\s+Function", r"document\.write", r"setTimeout\s*\(\s*[\"']", r"setInterval\s*\(\s*[\"']", r"\.srcdoc", r"createContextualFragment", r"importScripts", r"XMLHttpRequest", r"localStorage", r"sessionStorage", r"document\.cookie"]
 
     def test_scripts_use_no_dangerous_apis(self):
-        for name in ["app.js", "manifest.js"]:
+        for name in ["app.js", "manifest.js", "docs.js"]:
             code = (SITE / "assets" / name).read_text()
             for pattern in self.FORBIDDEN:
                 with self.subTest(file=name, pattern=pattern):
                     self.assertIsNone(re.search(pattern, code))
 
     def test_scripts_make_no_third_party_requests(self):
-        for name in ["app.js", "manifest.js"]:
+        for name in ["app.js", "manifest.js", "docs.js"]:
             code = (SITE / "assets" / name).read_text()
             for url in re.findall(r"https?://[^\"'\s)]+", code):
                 with self.subTest(file=name, url=url):
@@ -513,14 +776,16 @@ class ScriptTests(unittest.TestCase):
     def test_home_page_loads_only_the_two_local_scripts(self):
         self.assertEqual(parse(SITE / "index.html").scripts, ["assets/manifest.js", "assets/app.js"])
         for path in PAGES:
-            if path.name != "index.html" or path.parent != SITE:
+            if path in DOC_PAGES:
+                self.assertEqual(parse(path).scripts, [("../" * (len(path.relative_to(SITE).parts) - 1)) + "assets/docs.js"], path)
+            elif path.name != "index.html" or path.parent != SITE:
                 self.assertEqual(parse(path).scripts, [], path)
 
 
 class StyleTests(unittest.TestCase):
     def test_text_contrast_meets_aa_in_both_themes(self):
         light, dark = theme_variables()
-        pairs = [("fg", "bg"), ("fg", "surface"), ("muted", "bg"), ("muted", "surface"), ("link", "bg"), ("link", "surface"), ("link", "warn-bg"), ("fg", "warn-bg"), ("btn-fg", "btn-bg"), ("fg", "code-bg"), ("link", "code-bg"), ("muted", "code-bg"), ("head-fg", "head-bg"), ("head-link", "head-bg"), ("badge-fg", "badge-bg"), ("muted", "warn-bg"), ("link", "surface")]
+        pairs = [("fg", "bg"), ("fg", "surface"), ("muted", "bg"), ("muted", "surface"), ("link", "bg"), ("link", "surface"), ("link", "warn-bg"), ("fg", "warn-bg"), ("btn-fg", "btn-bg"), ("fg", "code-bg"), ("link", "code-bg"), ("muted", "code-bg"), ("head-fg", "head-bg"), ("head-link", "head-bg"), ("badge-fg", "badge-bg"), ("muted", "warn-bg"), ("link", "surface"), ("partial-fg", "partial-bg"), ("fg", "note-bg"), ("link", "note-bg"), ("muted", "note-bg"), ("fg", "code-bg")]
         for name, theme in (("light", light), ("dark", dark)):
             for foreground, background in pairs:
                 with self.subTest(theme=name, pair=foreground + "/" + background):

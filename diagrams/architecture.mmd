@@ -1,0 +1,28 @@
+%% alt: Diagram of the KoG client on your computer and the public places it talks to. Inside the client, the settings menus start the updater and the login component. Both use one HTTP layer. The updater reads signed manifests from client.kog.tw and files from GitHub releases, and checks them against public keys compiled into the client. The login component talks to the KoG account service at kog.tw through the HTTP layer and through your web browser, and keeps the device key in the operating system key store. A dashed arrow marks the planned join proof towards game servers.
+%% caption: The KoG client and the public addresses it talks to. Solid lines exist today; the dashed line is planned.
+flowchart LR
+  subgraph PC["Your computer: the KoG client"]
+    UI["Settings and menus"]
+    UPD["Updater<br/>checks against compiled-in<br/>public keys"]
+    LOG["Login component"]
+    STORE["Key store<br/>OS keychain or key file"]
+    HTTP["HTTP layer"]
+  end
+  BR["Your web browser"]
+  CT["client.kog.tw<br/>signed manifests"]
+  GH["github.com<br/>release files"]
+  ACC["KoG account service<br/>kog.tw"]
+  SRV["Game servers"]
+  UI --> UPD
+  UI --> LOG
+  UPD --> HTTP
+  LOG --> HTTP
+  LOG --> STORE
+  HTTP -->|"manifest, signature"| CT
+  HTTP -->|"files, checked by hash"| GH
+  HTTP -->|"token, public device key"| ACC
+  LOG <-->|"login page, loopback callback"| BR
+  BR <-->|"you log in"| ACC
+  LOG -.->|"planned: join proof"| SRV
+  classDef planned stroke-dasharray:6 4
+  class SRV planned

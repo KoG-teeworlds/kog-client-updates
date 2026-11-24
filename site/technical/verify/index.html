@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Verify a download | KoG Client technical documentation</title>
+<meta name="description" content="How to check a KoG client download: the SHA-256 hash, the GitHub build attestation, and the signature of the update manifest with kogsign, with commands you can run.">
+<link rel="canonical" href="https://client.kog.tw/technical/verify/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Verify a download | KoG Client technical documentation">
+<meta property="og:description" content="How to check a KoG client download: the SHA-256 hash, the GitHub build attestation, and the signature of the update manifest with kogsign, with commands you can run.">
+<meta property="og:url" content="https://client.kog.tw/technical/verify/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/" aria-current="page">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#verify-hash">1. File hash</a>
+</li>
+<li><a href="#verify-attestation">2. Build attestation</a>
+</li>
+<li><a href="#verify-manifest">3. Manifest signature</a>
+<ul>
+<li><a href="#verify-all">Everything in one go</a></li>
+</ul></li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Verify a download</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Updates and trust</p>
+<h1>Verify a download <span class="state built">Built</span></h1>
+<p class="lead">Three independent checks. Replace the file name with the one you downloaded. Commands for the checks that need the source are run from a checkout of <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
+</header>
+<h2 id="verify-hash">1. File hash <a class="anchor" href="#verify-hash" aria-label="Link to this section: 1. File hash">#</a></h2>
+<p>The start page shows the SHA-256 of each package, read from the signed manifest. Compare it with the output of the command for your system.</p>
+<p>Linux:</p>
+<pre class="sh" tabindex="0"><code>sha256sum KoG-Client-linux.tar.xz</code></pre>
+<p>macOS:</p>
+<pre class="sh" tabindex="0"><code>shasum -a 256 KoG-Client-macOS.dmg</code></pre>
+<p>Windows PowerShell:</p>
+<pre class="sh" tabindex="0"><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
+<p>If the hash differs, delete the file and download it again. A matching hash only shows that you have the file the manifest names. It does not show that the manifest is genuine: that is what check 3 is for.</p>
+
+<h2 id="verify-attestation">2. Build attestation <a class="anchor" href="#verify-attestation" aria-label="Link to this section: 2. Build attestation">#</a></h2>
+<p>GitHub keeps a signed statement of which workflow and commit built each file. With the <a href="https://cli.github.com/">GitHub CLI</a>:</p>
+<pre class="sh" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
+
+<h2 id="verify-manifest">3. Manifest signature <a class="anchor" href="#verify-manifest" aria-label="Link to this section: 3. Manifest signature">#</a></h2>
+<p>Check the signature yourself with <code>kogsign</code>, the small verifier the signing job uses. It is built from a few files of the repository, with Monocypher for Ed25519:</p>
+<pre class="sh" tabindex="0"><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
+cd kog-client
+cc -O2 -o kogsign scripts/kog/kogsign.c src/engine/external/monocypher/monocypher.c src/engine/external/monocypher/monocypher-ed25519.c -Isrc/engine/external/monocypher
+curl -fsSO https://client.kog.tw/canary/update.json
+curl -fsSO https://client.kog.tw/canary/update.json.sig
+for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign verify "$k" update.json update.json.sig; done</code></pre>
+<p>Two public keys are tried. One prints <code>ok</code>; the other prints <code>malformed signature file or wrong key id</code>, because the key id in the signature file names the key that signed. If neither prints <code>ok</code>, do not trust the manifest.</p>
+<p>The keys come from the client's own header, <code>src/engine/client/kog_update_pubkey.h</code>: the same keys the client has built in. Read how a manifest is built on the <a href="/technical/update-channel/">update channel page</a>.</p>
+
+<h3 id="verify-all">Everything in one go <a class="anchor" href="#verify-all" aria-label="Link to this section: Everything in one go">#</a></h3>
+<p>Both hosts, signatures, expiry, and the hash of every file in the manifest. It needs <code>curl</code>, <code>python3</code>, <code>ssh-keygen</code> and a C compiler:</p>
+<pre class="sh" tabindex="0"><code>scripts/kog/verify_published.sh canary</code></pre>
+<p>Use <code>dev</code> or <code>stable</code> instead of <code>canary</code> once those channels are published.</p>
+
+<div class="callout note" role="note">
+<p>What was run. The attestation, manifest and <code>verify_published.sh</code> commands were run against the published canary build before the previous version of this page was written. The hash commands for Windows and Linux and the build commands were not run for it. These pages were reorganised afterwards, and the commands were not run again.</p>
+</div>
+<div class="callout warning" role="note">
+<p>Warning. None of these checks proves that a build is free of bugs or of unwanted behaviour. They show who built the file, from which commit, and that it was not changed on the way to you. Builds are not code-signed for Windows or macOS yet, which is why those systems warn when you start them.</p>
+</div>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/release-signing/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Release signing</span></a>
+<a class="pager-next" rel="next" href="../../technical/login/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Login</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/verify.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

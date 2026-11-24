@@ -1,0 +1,25 @@
+%% alt: Sequence diagram of the browser login. The client reads the discovery document of the KoG account service, starts a listener on a random loopback port and opens the login page in the web browser with a PKCE challenge and a random state. After you log in, the browser is redirected to the loopback listener with a code. The client exchanges the code and the PKCE verifier for an access token, reads the account name, makes an Ed25519 key pair, stores the private key in the OS key store, registers the public key and a device name with the account service, and discards the token.
+%% caption: The login of the client with PKCE. The private key is made on your computer and never leaves it. Only the public key is registered.
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant B as Web browser
+  participant A as KoG account service (kog.tw)
+  participant K as OS key store
+  C->>A: GET discovery document
+  A-->>C: authorize, token and user info endpoints
+  Note over C: Endpoints must be https and on an allowed origin
+  Note over C: Listen on 127.0.0.1, random port, at most 3 minutes
+  C->>B: Open authorize URL (PKCE S256, random state)
+  B->>A: You log in and agree
+  A-->>B: Redirect to the loopback port with code and state
+  B->>C: GET /callback
+  Note over C: Exact path and state, else ignored
+  C->>A: POST token (code and code_verifier, no redirects followed)
+  A-->>C: Access token
+  C->>A: GET user info (account name for the settings)
+  Note over C: Make Ed25519 key pair
+  C->>K: Store the private key
+  C->>A: POST device (device name, public key)
+  A-->>C: 201 device id
+  Note over C: Discard the access token

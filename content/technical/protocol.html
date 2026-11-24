@@ -1,0 +1,36 @@
+@title Protocol | KoG Client technical documentation
+@description What the KoG client adds to the game connection: nothing is built yet. The planned KoG messages and capabilities, the compatibility rule, and a placeholder for the protocol reference.
+@nav Protocol
+@status planned
+@lead The KoG client plays on any DDNet or Teeworlds server, and a KoG server can be joined by any DDNet client. This page says what the KoG client adds on top of the game connection. Today that is nothing; what is planned is described from the client's side.
+
+<h2 id="built">What is built</h2>
+<p>As built, the KoG client defines <strong>no new network message types</strong>: its protocol definition (<code>datasrc/network.py</code>) has no KoG entry, and the client sends no KoG message. What exists in the source is preparation:</p>
+<ul>
+<li><code>src/engine/shared/kog_protocol.h</code> reserves a message name for the hello (<code>kog-client-hello@kog.tw</code>) and a few capability flags. The header says it holds names only: "the messages are registered together with their handlers".</li>
+<li>The client announces <strong>no capability</strong>: <code>CKogHello::Capabilities()</code> returns <code>KOG_CAP_NONE</code>.</li>
+<li>The console command <code>kog_version</code> prints the client name, version and what it is based on. It is local.</li>
+<li>The settings <code>kog_hello</code> and <code>kog_telemetry</code> exist, are off, and say "not implemented yet".</li>
+<li>The version string the client sends when joining a server names this client instead of TClient, as any DDNet client sends one.</li>
+</ul>
+
+<div class="callout note" role="note">
+<p>The compatibility rule (a design rule, not a test). A client feature must not change what is sent on the wire to servers that do not know about it. Stock DDNet servers and clients keep working unchanged.</p>
+</div>
+
+<h2 id="planned">What is planned</h2>
+<table>
+<thead><tr><th>Feature</th><th>From the client's side</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>Hello with capabilities</td><td>The client would tell a server which KoG features it understands, if <code>kog_hello</code> is on. The setting exists but nothing is implemented.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Join proof</td><td>The client answers a challenge with a signature from its device key. The signing code exists; see <a href="/technical/login/#join-proof">login</a>.</td><td><span class="state partial">Partly built</span> no transport</td></tr>
+<tr><td>Network statistics</td><td>Opt-in, off by default (<code>kog_telemetry</code>), only to servers that ask for them. Nothing is sent today.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Integrity statement</td><td>A statement about which build the client is. It can never prove that the client is unmodified; see <a href="/technical/roadmap/#integrity">roadmap</a>.</td><td><span class="state planned">Planned</span></td></tr>
+</tbody>
+</table>
+<p>None of these has a wire format that is decided. Their descriptions will be added to this documentation when they are built and approved for publication.</p>
+
+<h2 id="reference">Protocol reference</h2>
+<div class="callout planned" role="note">
+<p>Planned. This section will list one page per feature of the KoG additions: the message, its fields, when the client sends it, and its switch. No such page exists yet, because no feature is built, so nothing is listed. A feature appears here only when the owner has decided that its description is public.</p>
+</div>

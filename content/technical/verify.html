@@ -1,0 +1,43 @@
+@title Verify a download | KoG Client technical documentation
+@description How to check a KoG client download: the SHA-256 hash, the GitHub build attestation, and the signature of the update manifest with kogsign, with commands you can run.
+@nav Verify a download
+@status built
+@lead Three independent checks. Replace the file name with the one you downloaded. Commands for the checks that need the source are run from a checkout of <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.
+
+<h2 id="verify-hash">1. File hash</h2>
+<p>The start page shows the SHA-256 of each package, read from the signed manifest. Compare it with the output of the command for your system.</p>
+<p>Linux:</p>
+<pre class="sh"><code>sha256sum KoG-Client-linux.tar.xz</code></pre>
+<p>macOS:</p>
+<pre class="sh"><code>shasum -a 256 KoG-Client-macOS.dmg</code></pre>
+<p>Windows PowerShell:</p>
+<pre class="sh"><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
+<p>If the hash differs, delete the file and download it again. A matching hash only shows that you have the file the manifest names. It does not show that the manifest is genuine: that is what check 3 is for.</p>
+
+<h2 id="verify-attestation">2. Build attestation</h2>
+<p>GitHub keeps a signed statement of which workflow and commit built each file. With the <a href="https://cli.github.com/">GitHub CLI</a>:</p>
+<pre class="sh"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
+
+<h2 id="verify-manifest">3. Manifest signature</h2>
+<p>Check the signature yourself with <code>kogsign</code>, the small verifier the signing job uses. It is built from a few files of the repository, with Monocypher for Ed25519:</p>
+<pre class="sh"><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
+cd kog-client
+cc -O2 -o kogsign scripts/kog/kogsign.c src/engine/external/monocypher/monocypher.c src/engine/external/monocypher/monocypher-ed25519.c -Isrc/engine/external/monocypher
+curl -fsSO https://client.kog.tw/canary/update.json
+curl -fsSO https://client.kog.tw/canary/update.json.sig
+for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign verify "$k" update.json update.json.sig; done</code></pre>
+<p>Two public keys are tried. One prints <code>ok</code>; the other prints <code>malformed signature file or wrong key id</code>, because the key id in the signature file names the key that signed. If neither prints <code>ok</code>, do not trust the manifest.</p>
+<p>The keys come from the client's own header, <code>src/engine/client/kog_update_pubkey.h</code>: the same keys the client has built in. Read how a manifest is built on the <a href="/technical/update-channel/">update channel page</a>.</p>
+
+<h3 id="verify-all">Everything in one go</h3>
+<p>Both hosts, signatures, expiry, and the hash of every file in the manifest. It needs <code>curl</code>, <code>python3</code>, <code>ssh-keygen</code> and a C compiler:</p>
+<pre class="sh"><code>scripts/kog/verify_published.sh canary</code></pre>
+<p>Use <code>dev</code> or <code>stable</code> instead of <code>canary</code> once those channels are published.</p>
+
+<div class="callout note" role="note">
+<p>What was run. The attestation, manifest and <code>verify_published.sh</code> commands were run against the published canary build before the previous version of this page was written. The hash commands for Windows and Linux and the build commands were not run for it. These pages were reorganised afterwards, and the commands were not run again.</p>
+</div>
+<div class="callout warning" role="note">
+<p>Warning. None of these checks proves that a build is free of bugs or of unwanted behaviour. They show who built the file, from which commit, and that it was not changed on the way to you. Builds are not code-signed for Windows or macOS yet, which is why those systems warn when you start them.</p>
+</div>

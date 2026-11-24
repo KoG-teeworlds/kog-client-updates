@@ -25,14 +25,16 @@ def write(base, files):
 class AllowlistTest(unittest.TestCase):
     def test_site_files_are_allowed(self):
         for path in ["index.html", "404.html", "CNAME", ".nojekyll", "favicon.svg", "robots.txt", "sitemap.xml",
-                     "assets/style.css", "assets/sub/x.js", "faq/index.html", "verify/index.html"]:
+                     "assets/style.css", "assets/sub/x.js", "faq/index.html", "verify/index.html", "technical/index.html",
+                     "technical/login/index.html", "assets/diagrams/login-light.svg", "assets/search-index.json"]:
             self.assertTrue(publish_site.allowed(path, NAMES), path)
 
     def test_release_data_is_not_allowed(self):
         for path in ["canary/update.json", "canary/update.json.sig", "canary/releases/0.1.0/update.json", "dev/update.json",
                      "stable/update.json.sigb", "builds/x.zip", "releases.json", "base/update.json", "releases/index.html",
                      "canary/index.html", "assets/../canary/update.json", "../index.html", "/index.html", ".git/config",
-                     "unknown.txt", "faq/other.html", "faq/deeper/index.html", "unknown/index.html"]:
+                     "unknown.txt", "faq/other.html", "faq/deeper/index.html", "unknown/index.html", "technical/other.html",
+                     "technical/login/deeper/index.html", "technical/unknown/index.html", "technical/login/update.json"]:
             self.assertFalse(publish_site.allowed(path, NAMES), path)
 
     def test_every_page_of_the_site_is_allowed(self):

@@ -1,0 +1,79 @@
+@title Login | KoG Client technical documentation
+@description How the KoG client logs in: OAuth 2.0 authorization code with PKCE in your system browser, a loopback listener, an Ed25519 device key in the OS keychain, what is sent where, revocation, and the planned join proof.
+@nav Login
+@status partial
+@lead The client logs in to your KoG account through your browser and then holds a device key pair. Nothing that could be replayed travels over the game connection, and nothing is sent in chat. This page describes what is built and what is not.
+
+<div class="callout note" role="note">
+<p>Source of truth: <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/LOGIN.md">docs/LOGIN.md</a>. The client treats the KoG account service at <code>https://kog.tw</code> as a black box that speaks OAuth 2.0 and OpenID Connect discovery and has two device endpoints. This page does not describe how that service works inside.</p>
+</div>
+
+<h2 id="settings">Switches</h2>
+<table>
+<thead><tr><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>cl_kog_login</code></td><td>on in canary and dev builds, off in stable</td><td>Off: no browser flow and no automatic login. The <code>/login &lt;code&gt;</code> chat command keeps working.</td></tr>
+<tr><td><code>cl_kog_auto_login</code></td><td>off</td><td>Prove this device to servers when joining. Has no effect until the join protocol exists (see below).</td></tr>
+<tr><td><code>cl_kog_account_url</code></td><td><code>https://kog.tw</code></td><td>Base URL of the account service, for staging. https only.</td></tr>
+<tr><td><code>cl_kog_account_extra_origins</code></td><td>empty</td><td>Origins besides the account URL's own and <code>*.kog.tw</code> that its login description may name, <code>https://host[:port]</code> separated by spaces.</td></tr>
+<tr><td><code>cl_kog_device_name</code></td><td>empty</td><td>Name of this device on your account, at most 40 characters. Empty means <code>KoG Client (macOS)</code>, <code>(Windows)</code> or <code>(Linux)</code>: the host name is never sent unless you type it.</td></tr>
+<tr><td><code>cl_kog_account_name</code></td><td>empty</td><td>The account name shown in the settings. Not a secret.</td></tr>
+</tbody>
+</table>
+
+<h2 id="flow">The flow</h2>
+<!-- diagram login -->
+<ol>
+<li>The client reads the <strong>discovery document</strong> of the account service (<code>/.well-known/openid-configuration</code> below <code>cl_kog_account_url</code>) and checks its endpoints (see <a href="#hosts">which hosts</a>).</li>
+<li>It listens on a random port on the loopback address (<code>127.0.0.1</code> or <code>[::1]</code>), for at most 3 minutes, and opens the authorize URL in your <strong>system browser</strong>, with a PKCE challenge (S256), a random <code>state</code> and the device name. The password is typed in the browser, never in the game.</li>
+<li>You log in and agree. The browser is redirected to <code>/callback</code> on the loopback port. The client accepts only the exact path and the right <code>state</code>, answers "You can close this tab" and closes the listener.</li>
+<li>The client exchanges the code and the PKCE verifier for an access token, reads the account name for the settings, makes an <strong>Ed25519 key pair</strong> and registers the public half and the device name (<code>POST /api/client/device</code>, answered with <code>201</code> and a device id).</li>
+<li>The private key goes into the key store. The access token is discarded.</li>
+</ol>
+
+<h2 id="hosts">Which hosts the login talks to</h2>
+<p>The discovery document is only a hint where the account service lives, so its three endpoints (authorize, token, user info) are checked before anything is sent to them. An endpoint must be https and have</p>
+<ol>
+<li>the same origin (scheme, host and port) as <code>cl_kog_account_url</code>, or</li>
+<li>a host that ends in <code>.kog.tw</code>, on https and the default port, or</li>
+<li>an origin listed in <code>cl_kog_account_extra_origins</code>, for a staging setup.</li>
+</ol>
+<p>Everything else (another domain, <code>kog.tw.evil.example</code>, <code>kog.tw@evil.example</code>, another port, plain http) makes the login fail with "unusable login description" before the browser is opened. The device calls go to <code>cl_kog_account_url</code> only. The token, user info, device and removal requests <strong>do not follow redirects</strong>: a 307 or 308 would send the code and the verifier again to a place you never chose. There is no certificate pinning; TLS is verified normally.</p>
+
+<h2 id="key-store">The device key</h2>
+<table>
+<thead><tr><th>System</th><th>Where the private key lives</th></tr></thead>
+<tbody>
+<tr><td>macOS</td><td>Keychain, item accessible <code>WhenUnlockedThisDeviceOnly</code>: not in backups, not synced.</td></tr>
+<tr><td>Windows</td><td>Credential Manager, <code>CRED_PERSIST_LOCAL_MACHINE</code>: it survives log-off, stays on this PC and is readable by this Windows user only.</td></tr>
+<tr><td>Linux and others</td><td>A file <code>kog_device.key</code> with mode 0600 in the save directory, written as a new temporary file (<code>O_EXCL</code>, <code>O_NOFOLLOW</code>), synced and renamed over the old one, so a link planted at either name is never followed. libsecret is not used: it is a heavy dependency.</td></tr>
+</tbody>
+</table>
+<p>A process running as the same user can still ask the keychain or read the file. This is the same protection as an SSH key. The key is never in the config, logs, screenshots or crash reports, and memory buffers are wiped after use.</p>
+
+<h2 id="sent">What is sent where</h2>
+<p>Nothing leaves your computer except requests to the account service (<code>kog.tw</code> by default): the discovery document, the token exchange, user info, device registration and removal. For registration the client sends the OAuth code and the PKCE verifier, the device name and the <strong>public</strong> half of the device key. The private key, the password and the access token never go anywhere else. The browser link is logged by host only, never with its query, and requests are not logged.</p>
+
+<h2 id="revocation">Log out and revocation</h2>
+<p>Log out on this device wipes the private key <strong>at once</strong>. The account service only accepts the removal of a device with a token, so the client runs the browser step again and sends <code>DELETE /api/client/device/{id}</code>. If that is cancelled or fails, the key is gone anyway and the device stays listed on kog.tw until you remove it there. Only <code>200</code> and <code>204</code> count as removed; a <code>404</code> means the browser was signed in to a different account than the one that owns the device, and the client says so instead of claiming success.</p>
+<p>If your computer is stolen, remove the device on kog.tw. After that, the device is no longer listed on your account.</p>
+
+<h2 id="threats">Threats considered</h2>
+<table>
+<thead><tr><th>Threat</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>Someone captures game traffic</td><td>No password, key or token travels in chat or on the game connection.</td></tr>
+<tr><td>Another local process on the loopback port</td><td>The port is random per login, open for at most 3 minutes, on loopback only (and exclusive on Windows). Up to 4 connections are served at once and each has 5 seconds to send its request line. The first request with the exact path and the right state wins; others are answered with an error. A process that wins the race learns only an authorization code that is useless without the PKCE verifier, which never leaves the client's memory. A forged callback cannot match the 192-bit random state.</td></tr>
+<tr><td>Another local process reads the key</td><td>See <a href="#key-store">the device key</a>: same user can, other users cannot.</td></tr>
+<tr><td>The access token leaks</td><td>It is held only in memory, wiped together with the code, the verifier and the request copies, and never written to disk.</td></tr>
+<tr><td>A fake account service</td><td>TLS is verified, the discovery document is accepted only from the configured https base URL, and its endpoints must be on an allowed origin.</td></tr>
+</tbody>
+</table>
+
+<h2 id="join-proof">Join proof <span class="state planned">Planned</span></h2>
+<p>The client can already sign a challenge with the device key: the signing code binds the <strong>server address</strong>, a nonce, the device id and a session id, each length-prefixed, so a challenge cannot be reused on another server, with another nonce, by another device or in another session. The decision whether to answer at all is in the client: only if <code>cl_kog_login</code> and <code>cl_kog_auto_login</code> are on, a key exists, the server is listed for the <code>kog</code> community in the server list (which a server cannot claim for itself), you did not already use <code>/login</code> in this join, and at most once per join. Other servers never get an answer.</p>
+<p>The wire format that would carry the challenge is not decided and not built. The transport in the client is a stub that sends nothing, which is why <code>cl_kog_auto_login</code> is off. Today, nothing of this reaches any server.</p>
+<!-- diagram join-proof -->
+
+<h2 id="tests">Tests</h2>
+<p><code>src/test/kog_login_test.cpp</code> covers the RFC 7636 PKCE vector, the RFC 8032 Ed25519 vectors, callback parsing, the listener, the allowed endpoint origins, the challenge bytes and signature, the neutral device name, the wiping of request bodies and a 307 that the token request must not follow. <strong>Not tested automatically:</strong> the HTTP steps of the flow, the key store, the key file and the settings box, which need a running account service or a desktop session.</p>

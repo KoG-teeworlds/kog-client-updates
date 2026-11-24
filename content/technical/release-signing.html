@@ -1,0 +1,60 @@
+@title Release signing | KoG Client technical documentation
+@description How a KoG client release is built, attested and signed: the CI signature, the planned second signature with a hardware key for stable, channels, rollback and the emergency stop.
+@nav Release signing
+@status partial
+@lead A release only reaches players after public checks and a signature the client can verify itself. Canary and dev are signed by a CI key. Stable, which does not exist yet, will need a second signature from a hardware key as well.
+
+<h2 id="model">The two-signature model</h2>
+<!-- diagram release-signing -->
+<table>
+<thead><tr><th>Channel</th><th>Signatures the client requires</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><code>canary</code></td><td>One: the channel's CI key (<code>update.json.sig</code>)</td><td><span class="state built">Built</span> published</td></tr>
+<tr><td><code>dev</code></td><td>One: the channel's CI key</td><td><span class="state built">Built</span> nothing published yet</td></tr>
+<tr><td><code>stable</code></td><td>Two: a CI key (A) and the owner's hardware key (B, <code>update.json.sigb</code>)</td><td><span class="state planned">Planned</span> keys are placeholders, no release</td></tr>
+</tbody>
+</table>
+<p>Because the client requires both signatures for stable, neither a stolen GitHub account nor a stolen CI secret alone can publish a stable update: the second signature is made on a hardware security key, after the owner verified the release on their own machine and touched the key.</p>
+
+<h2 id="steps">What happens to a release</h2>
+<h3>Canary and dev</h3>
+<ol>
+<li>A public workflow builds the client files from <code>main</code> (canary) or <code>dev</code> (dev). It never builds for forks or pull requests. It attests the files (GitHub build provenance) and makes a draft manifest.</li>
+<li>A check job <strong>without secrets</strong> verifies the attestations, the hashes and that the commit is on <code>main</code>, and makes the manifest.</li>
+<li>A separate job signs only that manifest with the channel's CI key.</li>
+<li>The signed manifest is published to the branch <code>published</code>, which is what client.kog.tw serves. The commit message holds the manifest SHA-256, the source commit and a link to the run.</li>
+</ol>
+<h3>Stable <span class="state planned">Planned</span></h3>
+<ol>
+<li>The owner pushes a signed version tag. The release workflow refuses unless the tag's commit is the head of <code>main</code>, the required checks passed and the version matches the client's version. It builds the client only (no server, no tools), fails if a server is inside a package, attests the files and makes an immutable prerelease.</li>
+<li>The verify step checks every asset with <code>gh attestation verify</code> against the release workflow and the tag, checks the hashes, that the release is immutable, that the version is higher than the published one and that the commit is on <code>main</code>.</li>
+<li>The owner runs a script that verifies the release again on their own machine, rebuilds the manifest and compares it byte for byte with CI's, prints a summary, asks for the version, and signs with the hardware key.</li>
+<li>Publishing happens only with both signatures, checked against the pinned public keys.</li>
+</ol>
+<p>The public scripts are in <code>scripts/kog/</code> of the client repository (<code>verify_release.sh</code>, <code>approve_release.sh</code>, <code>publish_signed.sh</code>, <code>verify_published.sh</code>). The stable path has not been run for a real release.</p>
+
+<h2 id="rollback">Rollback protection</h2>
+<p>Rollback means making clients install an older, known-bad version. The client defends against it in four ways, all checked locally after the signature: the <strong>sequence</strong> must rise per channel; the manifest has an <strong>expiry</strong> (14, 30 or 90 days by channel), so an old manifest stops working and a freeze ends; a version <strong>older than the installed one</strong> is applied only after you confirmed a channel switch; and a version the client <strong>rolled back from</strong> is remembered and not tried again. Details: <a href="/technical/update-channel/#client-checks">update channel</a>.</p>
+
+<h2 id="halt">Emergency stop</h2>
+<p>For stable there is a script that signs a copy of the current manifest with <code>halted: true</code> and a higher sequence, using the hardware key and the offline backup CI key, and publishes it without waiting for CI. A client that sees it does not update. A halt withdraws an update from clients that have not applied it; it does not remove a version already installed.</p>
+
+<h2 id="keys">Keys</h2>
+<table>
+<thead><tr><th>Key</th><th>Held by</th><th>Where the client has it</th></tr></thead>
+<tbody>
+<tr><td>CI keys a and b, per channel (6 keys)</td><td>Automation. The private halves are never in the client.</td><td><code>KOG_&lt;CHANNEL&gt;_CI_KEYS</code> in <code>kog_update_pubkey.h</code></td></tr>
+<tr><td>Owner hardware keys (stable, signature B)</td><td>The owner's security keys, never exported</td><td><code>KOG_STABLE_OWNER_KEYS</code> (empty today)</td></tr>
+<tr><td>Offline backup CI key (stable)</td><td>The owner, offline</td><td><code>KOG_STABLE_BACKUP_CI_KEYS</code> (empty today)</td></tr>
+</tbody>
+</table>
+<p>Rotation of the CI keys is described on the <a href="/technical/update-channel/#keys">update channel page</a>. After a loss of the CI keys, the backup key still signs together with the hardware key, and a client release replaces the CI keys.</p>
+
+<h2 id="weak-points">Known weak points</h2>
+<ul>
+<li>The CI private keys are held by automation. Anyone who could change that automation and read the keys could sign a canary or dev manifest. For stable that is not enough, because signature B is needed. For canary and dev, the people exposed are the testers who opted in.</li>
+<li>With one maintainer, the person who approves a signing run can approve their own run. A second maintainer should replace that.</li>
+<li>A release of a data file reuses the hash of an earlier verified release; the earlier verification is trusted.</li>
+<li>The workflows have had little time in production. They were checked with actionlint and shellcheck. Hardware-key signatures were checked with a software emulation of the format against OpenSSH, not with a real security key.</li>
+</ul>
+<p>The client's full threat table is on the <a href="/technical/security/">security page</a>.</p>

@@ -6,7 +6,7 @@
   if (!Manifest || !box) return;
 
   var RELEASES_URL = "https://github.com/KoG-teeworlds/kog-client/releases";
-  var VERIFY_URL = "technical/#verify";
+  var VERIFY_URL = "technical/verify/";
   var select = document.getElementById("channel");
   var unstable = document.getElementById("unstable");
   var token = 0;

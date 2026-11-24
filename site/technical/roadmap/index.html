@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Roadmap | KoG Client technical documentation</title>
+<meta name="description" content="Planned features of the KoG client, described from the client&#x27;s side, what they will and will not prove, and the history of the project so far.">
+<link rel="canonical" href="https://client.kog.tw/technical/roadmap/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Roadmap | KoG Client technical documentation">
+<meta property="og:description" content="Planned features of the KoG client, described from the client&#x27;s side, what they will and will not prove, and the history of the project so far.">
+<meta property="og:url" content="https://client.kog.tw/technical/roadmap/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="docs-page">
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../../">Download</a></li>
+<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></nav>
+</div>
+</header>
+<div class="wrap">
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentation">
+<details class="nav-toggle"><summary>Contents</summary>
+<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<ul class="groups">
+<li><details class="group" open><summary>Start</summary><ul>
+<li><a href="../../technical/">Overview</a></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Network</summary><ul>
+<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Data and building</summary><ul>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Security</summary><ul>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Project</summary><ul>
+<li><a href="../../technical/roadmap/" aria-current="page">Roadmap</a> <span class="state planned">Planned</span></li>
+<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+</ul></details></li>
+</ul>
+</details>
+</nav>
+<aside class="docs-toc" aria-label="On this page">
+<details class="toc-toggle" open><summary>On this page</summary>
+<ul>
+<li><a href="#planned">Planned features</a>
+</li>
+<li><a href="#integrity">Integrity checks: what they can never prove</a>
+</li>
+<li><a href="#history">History</a>
+<ul>
+<li><a href="#history-2026-11">November 2026, before the first release</a></li>
+</ul></li>
+</ul>
+</details>
+</aside>
+<main id="main" class="doc">
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Roadmap</li></ol></nav>
+<header class="doc-head">
+<p class="eyebrow">Project</p>
+<h1>Roadmap <span class="state planned">Planned</span></h1>
+<p class="lead">What may come next, and what has happened so far. Everything in the first part is <strong>planned</strong>: an idea or a design, not a promise and not a schedule. This is a volunteer project.</p>
+</header>
+<div class="callout planned" role="note">
+<p>Planned. Nothing on this page is built unless it says so. Order and scope can change, and items can be dropped. The owner decides which of them are built.</p>
+</div>
+
+<h2 id="planned">Planned features <a class="anchor" href="#planned" aria-label="Link to this section: Planned features">#</a></h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<thead><tr><th>Feature</th><th>What the client would do</th><th>Today</th></tr></thead>
+<tbody>
+<tr><td>Stable channel</td><td>Install updates only with two signatures: a CI key and the owner's hardware key. See <a href="/technical/release-signing/">release signing</a>.</td><td><span class="state planned">Planned</span> keys are placeholders</td></tr>
+<tr><td>Join proof</td><td>Prove its account to servers that support it, with a signature from the device key. See <a href="/technical/login/#join-proof">login</a>.</td><td><span class="state partial">Partly built</span> signing code only, nothing is sent</td></tr>
+<tr><td>Hello</td><td>Announce which KoG features it supports (<code>kog_hello</code>). See <a href="/technical/protocol/">protocol</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Opt-in statistics</td><td>Send client-side network statistics to servers that ask for them, only if you switch it on (<code>kog_telemetry</code>).</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Signed list of known builds</td><td>Read <code>builds/allowlist.json</code>, a signed list of released build hashes and recalls, to tell you that your build is known or withdrawn.</td><td><span class="state planned">Planned</span> nothing is served</td></tr>
+<tr><td>Federated login</td><td>Possibly prove the account to servers that are not run by KoG. Nothing about how is decided.</td><td><span class="state planned">Planned</span> an idea</td></tr>
+<tr><td>Code signing</td><td>Builds signed for Windows and notarised for macOS, so the systems stop warning.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Reproducible builds</td><td>A documented way to rebuild a release byte for byte. See <a href="/technical/build/#repro">build</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Second maintainer for signing</td><td>So that nobody approves their own signing run. See <a href="/technical/security/#weak-points">security</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Asset licence check</td><td>Clear the licence of inherited fonts and artwork before a first release. See the <a href="/technical/#license">overview</a>.</td><td><span class="state planned">Open item</span></td></tr>
+</tbody>
+</table></div>
+
+<h2 id="integrity">Integrity checks: what they can never prove <a class="anchor" href="#integrity" aria-label="Link to this section: Integrity checks: what they can never prove">#</a></h2>
+<p>A possible later feature is a statement about the client build, such as its hash compared with a list of known builds. It is useful to the extent that it detects an <em>accidental</em> or <em>careless</em> mismatch: an old build, a repackaged download, a withdrawn version.</p>
+<div class="callout warning" role="note">
+<p>Warning. <strong>No such statement proves that a client is unmodified.</strong> The program that makes the statement runs on a computer controlled by the player. Someone who modifies the client can modify the part that makes the statement, or answer with a statement copied from an honest client. Hardware-backed keys prove that a particular key exists in a particular device, not what code is using it. The statement would be a tripwire for mistakes, never a guarantee against cheating, and the client will not be described as secure against its own user.</p>
+</div>
+<p>The device key of the <a href="/technical/login/">login</a> has the same limit: it shows an account holder's key was used, not that the client was honest.</p>
+
+<h2 id="history">History <a class="anchor" href="#history" aria-label="Link to this section: History">#</a></h2>
+<p>There is no stable release yet. Testing builds are on the <a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases page</a>.</p>
+<h3 id="history-2026-11">November 2026, before the first release <a class="anchor" href="#history-2026-11" aria-label="Link to this section: November 2026, before the first release">#</a></h3>
+<ul>
+<li>Forked from TClient 10.9.0 (DDNet 20.1).</li>
+<li>Added a notice, a README, contributor files and issue templates.</li>
+<li>Removed the ChaiScript scripting engine, chat translation and the committed Steam library, and stopped contacting TClient's servers.</li>
+<li>Added the KoG version identity, an updater that verifies signed manifests, and the browser login.</li>
+<li>Added release signing and upstream sync scripts, and build, release, spelling and security-scan workflows.</li>
+<li>Published the first canary builds.</li>
+<li>Made this documentation, with diagrams and a page per topic.</li>
+</ul>
+<nav class="pager" aria-label="Pagination">
+<a class="pager-prev" rel="prev" href="../../technical/security/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Security</span></a>
+<a class="pager-next" rel="next" href="../../technical/glossary/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Glossary</span></a>
+</nav>
+<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/roadmap.html">Edit this page on GitHub</a></p>
+</main>
+</div>
+</div>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://kog.tw/">kog.tw</a></li>
+<li><a href="https://kog.tw/clients">Approved clients</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
+<li><a href="../../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
+</ul>
+<p>This page is published automatically when a change is merged.</p>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

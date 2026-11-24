@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import html
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -29,6 +31,22 @@ NAV = [
     (None, "Approved clients", CLIENTS),
 ]
 
+SOURCE = "https://github.com/KoG-teeworlds/kog-client-updates"
+DIAGRAMS = ROOT / "diagrams"
+
+# The documentation under /technical/: groups of the sidebar, and with them the order of the Previous and Next links.
+DOCS = [
+    ("Start", ["technical", "technical/architecture"]),
+    ("Updates and trust", ["technical/update-channel", "technical/release-signing", "technical/verify"]),
+    ("Account", ["technical/login"]),
+    ("Network", ["technical/protocol"]),
+    ("Data and building", ["technical/privacy", "technical/build"]),
+    ("Security", ["technical/security"]),
+    ("Project", ["technical/roadmap", "technical/glossary"]),
+]
+DOCS_ORDER = [name for _, names in DOCS for name in names]
+STATUS = {"built": "Built", "partial": "Partly built", "planned": "Planned"}
+
 CSP = (
     "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; "
     "connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'"
@@ -36,7 +54,7 @@ CSP = (
 
 
 def read_page(path):
-    meta, body = {}, []
+    meta = {}
     lines = path.read_text().split("\n")
     index = 0
     while index < len(lines) and lines[index].startswith("@"):
@@ -45,6 +63,20 @@ def read_page(path):
         index += 1
     body = "\n".join(lines[index:]).strip("\n")
     return meta, body
+
+
+def page_name(path):
+    rel = path.relative_to(CONTENT).with_suffix("").as_posix()
+    return rel[: -len("/index")] if rel.endswith("/index") else rel
+
+
+def source_file(name):
+    nested = CONTENT / name / "index.html"
+    return nested if nested.exists() else CONTENT / (name + ".html")
+
+
+def is_doc(name):
+    return name in DOCS_ORDER
 
 
 def output_path(name):
@@ -68,10 +100,227 @@ def prefix(name):
         return ""
     if name == "404":
         return "/"
-    return "../"
+    return "../" * (name.count("/") + 1)
 
 
-def render(name, meta, body, marker=None):
+def slug(text):
+    text = re.sub(r"<[^>]+>", "", html.unescape(text)).lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
+    return text or "section"
+
+
+def strip_tags(text):
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", "", text)).split())
+
+
+HEADING = re.compile(r"<h([23])((?:\s[^>]*)?)>(.*?)</h\1>", re.S)
+
+
+def add_heading_anchors(body):
+    """Gives every h2 and h3 an id and a link to itself. Returns the new body and the list of (level, id, text)."""
+    used = set(re.findall(r'\bid="([^"]+)"', body))
+    taken = set()
+    found = []
+
+    def one(match):
+        level, attrs, inner = match.group(1), match.group(2), match.group(3)
+        given = re.search(r'\bid="([^"]+)"', attrs)
+        if given:
+            ident = given.group(1)
+        else:
+            base = slug(inner)
+            ident, number = base, 2
+            while ident in used or ident in taken:
+                ident = "%s-%d" % (base, number)
+                number += 1
+            attrs += ' id="%s"' % ident
+        taken.add(ident)
+        found.append((int(level), ident, strip_tags(inner)))
+        link = '<a class="anchor" href="#%s" aria-label="Link to this section: %s">#</a>' % (ident, html.escape(strip_tags(inner), quote=True))
+        return "<h%s%s>%s %s</h%s>" % (level, attrs, inner, link, level)
+
+    return HEADING.sub(one, body), found
+
+
+def wrap_tables(body):
+    body = re.sub(r"<table(?![^>]*\bdata-wrapped)", '<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table', body)
+    return body.replace("</table>", "</table></div>")
+
+
+def focusable_pre(body):
+    return re.sub(r"<pre(?![^>]*tabindex)([^>]*)>", r'<pre\1 tabindex="0">', body)
+
+
+def svg_size(path):
+    match = re.search(r'viewBox="-?[\d.]+ -?[\d.]+ ([\d.]+) ([\d.]+)"', path.read_text())
+    return round(float(match.group(1))), round(float(match.group(2)))
+
+
+def diagram_meta(name):
+    text = (DIAGRAMS / (name + ".mmd")).read_text()
+    meta = {}
+    for key in ("alt", "caption"):
+        found = re.search("^%% " + key + ": (.*)$", text, re.M)
+        if not found:
+            raise SystemExit("diagrams/%s.mmd has no '%%%% %s: ...' line" % (name, key))
+        meta[key] = found.group(1).strip()
+    return text, meta
+
+
+def diagram_figure(name, base):
+    source, meta = diagram_meta(name)
+    light = "assets/diagrams/%s-light.svg" % name
+    dark = "assets/diagrams/%s-dark.svg" % name
+    for rel in (light, dark):
+        if not (SITE / rel).exists():
+            raise SystemExit("%s is missing: run scripts/render_diagrams.py" % rel)
+    width, height = svg_size(SITE / light)
+    text = "\n".join(line for line in source.split("\n") if not line.startswith("%% "))
+    return (
+        '<figure class="diagram" id="figure-%s">\n'
+        '<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways">'
+        '<picture><source media="(prefers-color-scheme: dark)" srcset="%s%s">'
+        '<img src="%s%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></picture></div>\n'
+        "<figcaption>%s <a href=\"%s%s\">Open the diagram alone</a></figcaption>\n"
+        '<details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary>'
+        '<pre class="mermaid-src" tabindex="0"><code>%s</code></pre></details>\n'
+        "</figure>"
+        % (
+            name, base, dark, base, light, html.escape(meta["alt"], quote=True), width, height,
+            html.escape(meta["caption"]), base, light, html.escape(text.strip("\n")),
+        )
+    )
+
+
+def expand_diagrams(body, base):
+    return re.sub(r"<!--\s*diagram\s+([\w-]+)\s*-->", lambda m: diagram_figure(m.group(1), base), body)
+
+
+def nav_title(name, pages):
+    return pages[name][0].get("nav") or pages[name][0]["title"]
+
+
+def docs_sidebar(name, pages, base):
+    groups = []
+    for label, members in DOCS:
+        items = []
+        for member in members:
+            current = ' aria-current="page"' if member == name else ""
+            badge = pages[member][0].get("status")
+            mark = ' <span class="state %s">%s</span>' % (badge, STATUS[badge]) if badge else ""
+            items.append('<li><a href="%s%s/"%s>%s</a>%s</li>' % (base, member, current, html.escape(nav_title(member, pages)), mark))
+        groups.append(
+            '<li><details class="group" open><summary>%s</summary><ul>\n%s\n</ul></details></li>' % (html.escape(label), "\n".join(items))
+        )
+    index = base + "assets/search-index.json"
+    return (
+        '<nav class="docs-nav" aria-label="Documentation">\n'
+        '<details class="nav-toggle"><summary>Contents</summary>\n'
+        '<div class="search" data-index="%s" hidden></div>\n'
+        '<ul class="groups">\n%s\n</ul>\n</details>\n</nav>' % (index, "\n".join(groups))
+    )
+
+
+def docs_toc(headings):
+    if len(headings) < 2:
+        return ""
+    out = []
+    depth = 0
+    for level, ident, text in headings:
+        if level == 2:
+            if depth == 3:
+                out.append("</ul></li>")
+            elif depth == 2:
+                out.append("</li>")
+            out.append('<li><a href="#%s">%s</a>' % (ident, html.escape(text)))
+            depth = 2
+        else:
+            if depth == 2:
+                out.append("<ul>")
+            elif depth == 0:
+                out.append("<li>")
+            out.append('<li><a href="#%s">%s</a></li>' % (ident, html.escape(text)))
+            depth = 3
+    if depth == 3:
+        out.append("</ul></li>")
+    elif depth == 2:
+        out.append("</li>")
+    return (
+        '<aside class="docs-toc" aria-label="On this page">\n<details class="toc-toggle" open><summary>On this page</summary>\n'
+        '<ul>\n%s\n</ul>\n</details>\n</aside>' % "\n".join(out)
+    )
+
+
+def docs_pager(name, pages, base):
+    position = DOCS_ORDER.index(name)
+    cards = []
+    for label, rel, target, css in (("Previous", "prev", position - 1, "pager-prev"), ("Next", "next", position + 1, "pager-next")):
+        if 0 <= target < len(DOCS_ORDER):
+            other = DOCS_ORDER[target]
+            arrow = ("&#8592; " if rel == "prev" else "") + label + (" &#8594;" if rel == "next" else "")
+            cards.append(
+                '<a class="%s" rel="%s" href="%s%s/"><span class="pager-label">%s</span><span class="pager-title">%s</span></a>'
+                % (css, rel, base, other, arrow, html.escape(nav_title(other, pages)))
+            )
+        else:
+            cards.append('<span class="pager-none"></span>')
+    source = source_file(name).relative_to(ROOT).as_posix()
+    return (
+        '<nav class="pager" aria-label="Pagination">\n%s\n</nav>\n'
+        '<p class="edit"><a href="%s/edit/main/%s">Edit this page on GitHub</a></p>' % ("\n".join(cards), SOURCE, source)
+    )
+
+
+def docs_breadcrumb(name, pages, base):
+    items = ['<li><a href="%s">KoG Client</a></li>' % (base or "./")]
+    if name == "technical":
+        items.append('<li aria-current="page">Technical</li>')
+    else:
+        items.append('<li><a href="%stechnical/">Technical</a></li>' % base)
+        items.append('<li aria-current="page">%s</li>' % html.escape(nav_title(name, pages)))
+    return '<nav class="crumbs" aria-label="Breadcrumb"><ol>%s</ol></nav>' % "".join(items)
+
+
+def docs_group(name):
+    for label, members in DOCS:
+        if name in members:
+            return label
+    return ""
+
+
+def docs_main(name, meta, body, pages, base):
+    body, headings = add_heading_anchors(body)
+    body = expand_diagrams(wrap_tables(focusable_pre(body)), base)
+    status = meta.get("status")
+    badge = ' <span class="state %s">%s</span>' % (status, STATUS[status]) if status else ""
+    lead = '<p class="lead">%s</p>\n' % meta["lead"] if meta.get("lead") else ""
+    return (
+        '<div class="docs">\n%s\n%s\n<main id="main" class="doc">\n%s\n<header class="doc-head">\n<p class="eyebrow">%s</p>\n'
+        "<h1>%s%s</h1>\n%s</header>\n%s\n%s\n</main>\n</div>"
+        % (
+            docs_sidebar(name, pages, base), docs_toc(headings), docs_breadcrumb(name, pages, base), html.escape(docs_group(name)),
+            html.escape(meta.get("heading") or nav_title(name, pages)), badge, lead, body, docs_pager(name, pages, base),
+        )
+    )
+
+
+def search_index(pages):
+    entries = []
+    for name in DOCS_ORDER:
+        meta, body = pages[name]
+        _, headings = add_heading_anchors(body)
+        entries.append(
+            {
+                "u": url_path(name),
+                "t": nav_title(name, pages),
+                "d": meta["description"],
+                "h": [[ident, text] for _, ident, text in headings],
+            }
+        )
+    return json.dumps(entries, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+def render(name, meta, body, marker=None, pages=None):
     base = prefix(name)
     title = meta["title"]
     description = meta["description"]
@@ -79,7 +328,8 @@ def render(name, meta, body, marker=None):
     nav = []
     for key, label, target in NAV:
         external = target.startswith("https://")
-        current = ' aria-current="page"' if key == name else ""
+        here = key is not None and (key == name or name.startswith(key + "/"))
+        current = ' aria-current="page"' if here else ""
         arrow = '<span aria-hidden="true"> &#8599;</span>' if external else ""
         nav.append('<li><a href="%s"%s>%s%s</a></li>' % (target if external else base + target, current, label, arrow))
     disclaimer = (
@@ -96,6 +346,14 @@ def render(name, meta, body, marker=None):
     script = ""
     if name == "index":
         script = '<script src="assets/manifest.js"></script>\n<script src="assets/app.js"></script>\n'
+    docs = is_doc(name)
+    if docs:
+        script = '<script src="%sassets/docs.js" defer></script>\n' % base
+        main = docs_main(name, meta, body, pages, base)
+        main = '<div class="wrap">\n%s\n</div>' % main
+    else:
+        main = '<main id="main">\n<div class="wrap">\n%s\n</div>\n</main>' % body
+    body_class = (' class="docs-page"' + (' data-overview=""' if name == "technical" else "")) if docs else ""
     build_meta = '<meta name="kog-site-build" content="%s">\n' % html.escape(marker, quote=True) if marker else ""
     return f"""<!doctype html>
 <html lang="en">
@@ -120,7 +378,7 @@ def render(name, meta, body, marker=None):
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="{base}assets/style.css">
 </head>
-<body>
+<body{body_class}>
 {disclaimer}<a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap">
@@ -130,11 +388,7 @@ def render(name, meta, body, marker=None):
 </ul></nav>
 </div>
 </header>
-<main id="main">
-<div class="wrap">
-{body}
-</div>
-</main>
+{main}
 <footer class="site">
 <div class="wrap">
 <p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
@@ -166,14 +420,20 @@ def sitemap(names):
 def build(marker=None):
     outputs = {}
     names = []
-    for path in sorted(CONTENT.glob("*.html")):
-        name = path.stem
-        meta, body = read_page(path)
-        outputs[output_path(name)] = render(name, meta, body, marker)
+    pages = {}
+    for path in sorted(CONTENT.rglob("*.html")):
+        pages[page_name(path)] = read_page(path)
+    missing = [n for n in DOCS_ORDER if n not in pages]
+    extra = sorted(n for n in pages if n.startswith("technical") and n not in DOCS_ORDER and "redirect" not in pages[n][0])
+    if missing or extra:
+        raise SystemExit("DOCS and content/technical differ: missing %s, not in DOCS %s" % (missing, extra))
+    for name, (meta, body) in pages.items():
+        outputs[output_path(name)] = render(name, meta, body, marker, pages)
         if "redirect" not in meta:
             names.append(name)
     names.sort(key=lambda n: (n != "index", n))
     outputs[SITE / "sitemap.xml"] = sitemap(names)
+    outputs[SITE / "assets" / "search-index.json"] = search_index(pages)
     return outputs
 
 
