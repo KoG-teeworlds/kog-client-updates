@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="426c5533c6d40ee9c101431bfaf193cda845e603">
+<meta name="kog-site-build" content="ea4d20644ecee91c589bc73540e4fa09a8835f55">
 <title>Privacy | KoG Client</title>
 <meta name="description" content="What the KoG client sends and to whom, read from its source code: update checks, the DDNet server list, player name and skin downloads.">
 <link rel="canonical" href="https://client.kog.tw/privacy/">
@@ -26,7 +26,7 @@
 <aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
-<div class="wrap">
+<div class="wrap bar">
 <a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
 <nav class="main" aria-label="Main"><ul>
 <li><a href="../">Download</a></li>
@@ -37,8 +37,8 @@
 </ul></nav>
 </div>
 </header>
-<main id="main">
 <div class="wrap">
+<main id="main" class="page prose">
 <h1>Privacy</h1>
 <p class="lead">In short: the client sends what the DDNet client sends. On top of that it can look for new versions, and it talks to kog.tw when you log in. It has no tracking, statistics or crash reports. Every host you connect to sees your IP address.</p>
 <p class="small">The list below comes from reading the source code (<a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">PRIVACY.md</a>), before the first stable release. For the technical view see <a href="../technical/privacy/">Technical: what is sent where</a>.</p>
@@ -71,8 +71,8 @@
 <p>This site has no analytics, no cookies, no third-party scripts, fonts or images, and it loads nothing from other sites. It is hosted by GitHub Pages, so GitHub processes the requests to it: see <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>. The download section fetches the release information from this site only.</p>
 
 <p class="note">You can check the list above yourself: search the source for web addresses with <code>grep -rn "https://" src</code>. If you find a request that is not listed here, please open an issue.</p>
-</div>
 </main>
+</div>
 <footer class="site">
 <div class="wrap">
 <p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
