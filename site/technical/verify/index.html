@@ -66,7 +66,7 @@
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
 </ul>
 </details>
@@ -112,7 +112,7 @@
 <pre class="sh" data-lang="Shell" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
 <p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
 </section>
-<section class="sec">
+<section class="sec long">
 <h2 id="verify-manifest">3. Manifest signature <a class="anchor" href="#verify-manifest" aria-label="Link to this section: 3. Manifest signature">#</a></h2>
 <p>Check the signature yourself with <code>kogsign</code>, the small verifier the signing job uses. It is built from a few files of the repository, with Monocypher for Ed25519:</p>
 <pre class="sh" data-lang="Shell" tabindex="0"><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
