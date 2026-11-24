@@ -1,10 +1,10 @@
-@font-face { font-family: "Saira"; font-style: normal; font-weight: 400 600; font-display: swap; src: url("fonts/saira-latin.woff2") format("woff2"); }
+@font-face { font-family: "Spline Sans Mono"; font-style: normal; font-weight: 500 600; font-display: swap; src: url("fonts/spline-mono-latin.woff2") format("woff2"); }
 @font-face { font-family: "Saira Condensed"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/saira-cond-700-latin.woff2") format("woff2"); }
 :root {
   color-scheme: light dark;
   --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
-  --sans: "Saira", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Spline Sans Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius: 0.5rem;
   --radius-sm: 0.3rem;
   --radius-lg: 0.65rem;
@@ -71,7 +71,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font: 1.0625rem/1.7 var(--sans);
+  font: 1.0625rem/1.65 var(--sans);
 }
 a { color: var(--link); text-underline-offset: 0.18em; }
 a:hover { text-decoration-thickness: 2px; }
@@ -107,7 +107,7 @@ h3 { font-size: 1.1rem; margin: 1.75rem 0 0.25rem; }
 p, ul, ol, dl, table, details, pre { margin: 0.8rem 0; }
 li { margin: 0.35rem 0; }
 .small { font-size: 0.92rem; color: var(--muted); }
-code, kbd, pre { font: 0.9em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+code, kbd, pre { font: 0.88em/1.55 var(--mono); }
 code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: var(--radius-sm); overflow-wrap: anywhere; }
 code.hash { display: block; padding: 0.4rem 0.6rem; user-select: all; font-size: 0.8rem; }
 td code.hash { display: inline; }
@@ -180,7 +180,7 @@ footer.site li a { display: inline-block; padding: 0.55rem 0; }
 [hidden] { display: none !important; }
 
 @media (min-width: 40rem) {
-  body { font-size: 1.125rem; line-height: 1.7; }
+  body { line-height: 1.65; }
   h1 { font-size: 2.6rem; }
   h2 { font-size: 1.55rem; }
   .download { padding: 1.75rem 2rem 1rem; }
@@ -390,7 +390,8 @@ main.prose { padding-top: 1.5rem; }
 main.prose > * { max-width: 80ch; }
 main.prose .table-scroll, main.prose table { max-width: none; }
 main.home p { max-width: 75ch; }
-h1, h2, h3 { text-wrap: balance; font-family: var(--display); font-weight: 700; }
+h1, h2, h3 { text-wrap: balance; font-weight: 700; }
+h1, h2 { font-family: var(--display); }
 h1 { letter-spacing: 0.005em; }
 p, li { margin-top: 0.7rem; margin-bottom: 0.7rem; }
 main.page h2 { font-size: clamp(1.7rem, 1.35rem + 1vw, 2.3rem); margin: 3.5rem 0 1rem; padding: 0; border: 0; text-transform: uppercase; letter-spacing: 0.03em; display: flex; align-items: center; gap: 0.6rem; }
@@ -410,103 +411,94 @@ main.page h2:first-child { margin-top: 0.5rem; }
 .state { border-radius: var(--radius-sm); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.03em; }
 
 /* Raised surfaces: a faint wash, a hairline, a top edge and a soft shadow. */
-.build-card, .stepper li, .info-cards li, .safe-card, .faq details, .map a, .pager a, .term, .glance, .diagram, .table-scroll, .tabs .panel { background-color: var(--surface); background-image: var(--wash); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow), var(--edge); }
+.build-card, .map a, .pager a, .term, .glance, .diagram, .table-scroll { background-color: var(--surface); background-image: var(--wash); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow), var(--edge); }
 
-.home-hero { position: relative; display: grid; gap: 2rem 3rem; padding: 2.75rem 0 1rem; align-items: start; }
+/* Download page: the essentials first, then quiet sections with more air and fewer boxes. */
+.home-hero { display: grid; gap: 2rem 4rem; padding: 3rem 0 1.5rem; align-items: start; }
 .home-hero h1 { display: flex; align-items: center; gap: 1rem; font-size: clamp(3rem, 1.7rem + 4.4vw, 5.6rem); line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; margin: 0.3rem 0 1rem; }
 .hero-logo { width: clamp(3.4rem, 2rem + 4vw, 5.5rem); height: auto; border-radius: var(--radius); box-shadow: var(--glow-shadow); }
-.home-hero .lead { font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.6rem); line-height: 1.45; margin: 0 0 0.5rem; max-width: 34rem; color: var(--muted); }
+.home-hero .lead { font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.55rem); line-height: 1.45; margin: 0 0 0.75rem; max-width: 30rem; color: var(--muted); }
 .home-hero .lead strong { color: var(--fg); }
-.home-hero .download { background: none; border: 0; box-shadow: none; padding: 1.25rem 0 0; margin: 0; }
-.home-hero .main-download { margin: 0; }
-.home-hero .button.big { width: 100%; max-width: 30rem; margin: 0; }
-.file-line { margin: 0.6rem 0 0; text-align: left; color: var(--muted); font-family: var(--mono); font-size: 0.9rem; }
-.home-hero .other { text-align: left; margin: 0.8rem 0; }
-.home-hero .choose { grid-template-columns: 1fr; max-width: 30rem; }
-.build-card { padding: 1.4rem 1.6rem; }
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
-main.page .card-title { font-size: 0.85rem; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0; display: block; }
-main.page .card-title::after { content: none; }
-.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.5rem; margin: 0.75rem 0 1rem; }
+.build-card { padding: 1.25rem 1.5rem 1.5rem; }
+.chan { margin-bottom: 0.25rem; }
+.tab-input { position: absolute; opacity: 0; pointer-events: none; }
+.tablist { display: inline-flex; gap: 0.25rem; padding: 0.25rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); max-width: 100%; }
+.tablist label { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; padding: 0 1.25rem; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; color: var(--muted); transition: background-color 0.15s, color 0.15s; }
+.tablist label:hover { color: var(--fg); }
+.chans { display: flex; width: 100%; }
+.chans label { flex: 1 1 0; }
+.tablist label.yours::after { content: "Your system"; margin-left: 0.6rem; font: 600 0.62rem var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--badge-fg); background: var(--badge-bg); border-radius: var(--radius-sm); padding: 0.1rem 0.4rem; }
+#ch-stable:checked ~ .tablist label[for="ch-stable"], #ch-canary:checked ~ .tablist label[for="ch-canary"], #ch-dev:checked ~ .tablist label[for="ch-dev"],
+#tab-windows:checked ~ #install .tablist label[for="tab-windows"], #tab-macos:checked ~ #install .tablist label[for="tab-macos"], #tab-linux:checked ~ #install .tablist label[for="tab-linux"] { background: var(--btn-bg); color: var(--btn-fg); }
+.tab-input:focus-visible ~ .tablist, .tab-input:focus-visible ~ #install .tablist { outline: 3px solid var(--focus); outline-offset: 2px; }
+.badge-row { margin: 0.9rem 0 0; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 1.5rem; margin: 0.6rem 0 1rem; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 600; font-family: var(--mono); font-size: 0.95rem; overflow-wrap: anywhere; }
-.build-card .warn { margin: 0.75rem 0; }
-.hashline { display: flex; gap: 0.5rem; align-items: stretch; margin: 0.4rem 0 0.8rem; }
+.build-card .button.big { width: 100%; margin: 0.75rem 0 0; }
+.build-card .other { margin: 0.9rem 0 0; }
+.build-card .small { margin: 0.4rem 0; }
+.build-card .empty { margin: 1rem 0; }
+.build-card .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.75rem 0 0; }
+.build-card .choose { grid-template-columns: 1fr; }
+.hashline { display: flex; gap: 0.5rem; align-items: stretch; margin: 0.4rem 0 0.6rem; }
 .hashline code.hash { flex: 1 1 auto; display: block; min-width: 0; overflow-wrap: anywhere; user-select: all; font-size: 0.78rem; }
 .copy-hash { font: inherit; font-size: 0.85rem; font-weight: 600; min-height: 2.75rem; padding: 0 1rem; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; }
 .copy-hash:hover { border-color: var(--link); color: var(--link); }
-.build-card .chooser { margin: 1rem 0 0; }
-.build-card .kinds { margin: 0.75rem 0 0; }
 
-/* Install: one segmented control, one panel at a time, all panels in the same cell so the height never jumps. */
-.tabs { margin: 1.25rem 0; }
-.tab-input { position: absolute; opacity: 0; pointer-events: none; }
-.tablist { display: inline-flex; gap: 0.25rem; padding: 0.25rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 1rem; max-width: 100%; }
-.tablist label { min-height: 2.75rem; display: inline-flex; align-items: center; padding: 0 1.4rem; border-radius: var(--radius-sm); cursor: pointer; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); transition: background-color 0.15s, color 0.15s; }
-.tablist label:hover { color: var(--fg); }
-.tablist label.yours::after { content: "Your system"; margin-left: 0.6rem; font: 600 0.62rem var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--badge-fg); background: var(--badge-bg); border-radius: var(--radius-sm); padding: 0.1rem 0.4rem; }
-#tab-windows:checked ~ .tablist label[for="tab-windows"], #tab-macos:checked ~ .tablist label[for="tab-macos"], #tab-linux:checked ~ .tablist label[for="tab-linux"] { background: var(--btn-bg); color: var(--btn-fg); }
-.tab-input:focus-visible ~ .tablist { outline: 3px solid var(--focus); outline-offset: 2px; }
-.panels { display: grid; }
-.panel { grid-area: 1 / 1; visibility: hidden; opacity: 0; padding: 1.5rem 1.75rem; transition: opacity 0.15s; }
-#tab-windows:checked ~ .panels #install-windows, #tab-macos:checked ~ .panels #install-macos, #tab-linux:checked ~ .panels #install-linux { visibility: visible; opacity: 1; }
-.stepper { list-style: none; counter-reset: step; display: grid; gap: 1rem; padding: 0; margin: 0 0 1rem; }
-.tabs .stepper li, .stepper li { counter-increment: step; position: relative; padding: 1rem 1.25rem 1rem 4.25rem; margin: 0; background-image: var(--wash); }
-.panel .stepper li { background: var(--surface-2); box-shadow: var(--edge); }
-.stepper li::before { content: counter(step); position: absolute; left: 1.1rem; top: 0.95rem; width: 2.4rem; height: 2.4rem; border-radius: var(--radius-sm); background: var(--btn-bg); color: var(--btn-fg); font-family: var(--display); font-weight: 700; font-size: 1.3rem; text-align: center; line-height: 2.4rem; }
-.stepper strong { display: block; font-family: var(--display); font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.04em; }
+/* Install: one segmented control; one panel at a time, all in the same grid cell so the height does not jump. */
+.tabs > section { margin-top: 3.5rem; }
+.tabs .tablist { margin: 0.25rem 0 1.25rem; }
+.panels, .vpanels { display: grid; }
+.panel, .vpanel { grid-area: 1 / 1; visibility: hidden; opacity: 0; transition: opacity 0.15s; }
+#tab-windows:checked ~ #install #install-windows, #tab-macos:checked ~ #install #install-macos, #tab-linux:checked ~ #install #install-linux,
+#tab-windows:checked ~ #safe .vpanel[data-os="windows"], #tab-macos:checked ~ #safe .vpanel[data-os="macos"], #tab-linux:checked ~ #safe .vpanel[data-os="linux"] { visibility: visible; opacity: 1; }
+.stepper { list-style: none; counter-reset: step; display: grid; gap: 1.5rem; padding: 0; margin: 0 0 1.25rem; }
+.stepper li { counter-increment: step; position: relative; padding: 0 0 0 3.5rem; margin: 0; background: none; border: 0; box-shadow: none; }
+.stepper li::before { content: counter(step); position: absolute; left: 0; top: 0.1rem; width: 2.4rem; height: 2.4rem; border-radius: var(--radius-sm); background: var(--btn-bg); color: var(--btn-fg); font-family: var(--display); font-weight: 700; font-size: 1.3rem; text-align: center; line-height: 2.4rem; }
+.stepper strong { display: block; font-size: 1.12rem; }
 .stepper span { color: var(--muted); display: block; }
-.panel .callout { margin: 0.5rem 0 0; }
-.info-cards { list-style: none; display: grid; gap: 1rem; padding: 0; margin: 1.5rem 0 0; }
-.info-cards li { margin: 0; padding: 1.1rem 1.25rem; display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.9rem; align-items: start; }
-.info-cards .icon { grid-row: span 2; color: var(--link); margin-top: 0.15rem; }
-.info-cards strong { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.1rem; }
-.info-cards span { color: var(--muted); }
-
-.safe-card { display: grid; gap: 1.5rem 3rem; padding: 1.75rem 2rem; margin: 3.5rem 0 0; }
-.safe-card h2 { margin: 0 0 0.5rem; font-size: clamp(1.7rem, 1.35rem + 1vw, 2.3rem); text-transform: uppercase; }
-.safe-card h2::after { content: none; }
-.safe-card .icon { width: 2rem; height: 2rem; color: var(--link); }
-.safe-card pre { margin: 0.5rem 0; white-space: pre-wrap; }
-.safe-card pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
-.faq { gap: 0.9rem; align-items: start; }
-.faq details { padding: 0 1.4rem; transition: border-color 0.15s; }
-.faq details:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
-.faq summary { min-height: 3.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 1.08rem; list-style: none; }
+.panel .note { max-width: 70ch; }
+.good { margin: 1.5rem 0 0; }
+.good summary { font-weight: 600; color: var(--link); }
+.good ul { color: var(--muted); max-width: 70ch; }
+#safe p { max-width: 75ch; }
+.vpanels .codeblock { max-width: 60rem; }
+.vpanels pre { white-space: pre-wrap; margin: 0.5rem 0; }
+.vpanels pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.faq { gap: 0 3rem; align-items: start; }
+.faq details { padding: 0; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.faq details:hover summary { color: var(--link); }
+.faq summary { min-height: 3.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 1.05rem; font-weight: 600; list-style: none; }
 .faq summary::-webkit-details-marker { display: none; }
 .faq summary::after { content: ""; width: 0.6rem; height: 0.6rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.2s; flex: none; margin-right: 0.3rem; }
 .faq details[open] summary::after { transform: rotate(-135deg); }
 .faq details[open] { padding-bottom: 0.8rem; }
 
 @media (min-width: 48rem) {
-  .info-cards { grid-template-columns: repeat(3, 1fr); }
+  .stepper { grid-template-columns: repeat(3, 1fr); gap: 2rem; }
 }
 @media (min-width: 60rem) {
-  .home-hero { grid-template-columns: minmax(0, 1.35fr) minmax(24rem, 1fr); padding: 3.75rem 0 2rem; }
-  .safe-card { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; }
+  .home-hero { grid-template-columns: minmax(0, 1.2fr) minmax(24rem, 1fr); padding: 4rem 0 2rem; }
   .faq { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stepper { grid-template-columns: repeat(3, 1fr); }
 }
 @media (min-width: 100rem) {
-  .home-hero { gap: 2rem 5rem; }
+  .home-hero { gap: 2rem 6rem; }
 }
 @media (max-width: 47.99rem) {
-  .panel { padding: 1rem; }
   .tablist { display: flex; }
-  .tablist label { flex: 1 1 0; justify-content: center; padding: 0 0.5rem; }
+  .tablist label { flex: 1 1 0; padding: 0 0.5rem; }
   .tablist label.yours::after { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .panel, .faq summary::after, .button, .tablist label { transition: none; }
+  .panel, .vpanel, .faq summary::after, .button, .tablist label { transition: none; }
 }
 @media print {
-  .home-hero, .safe-card, .stepper, .faq, .info-cards { display: block; }
-  .panel { visibility: visible; opacity: 1; grid-area: auto; }
-  .panels { display: block; }
+  .home-hero, .faq { display: block; }
+  .panel, .vpanel { visibility: visible; opacity: 1; grid-area: auto; }
+  .panels, .vpanels { display: block; }
   .tablist, .copy-hash { display: none; }
 }
-
-main.page .safe-card h2::after { content: none; }
-main.home .panel .callout, main.home .callout { max-width: none; }
-.doc-head h1, .doc h2, .doc h3 { letter-spacing: 0.01em; }
-.doc h2 { text-transform: uppercase; font-size: clamp(1.5rem, 1.25rem + 0.8vw, 2rem); }
+.vpanel { display: none; }
+#tab-windows:checked ~ #safe .vpanel[data-os="windows"], #tab-macos:checked ~ #safe .vpanel[data-os="macos"], #tab-linux:checked ~ #safe .vpanel[data-os="linux"] { display: block; }
+#faq { margin-top: 3.5rem; }
