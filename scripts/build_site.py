@@ -232,6 +232,9 @@ def nav_title(name, pages):
     return pages[name][0].get("nav") or pages[name][0]["title"]
 
 
+SHORT = {"built": "Built", "partial": "Partly", "planned": "Planned"}
+
+
 def docs_sidebar(name, pages, base):
     groups = []
     for label, members in DOCS:
@@ -239,23 +242,25 @@ def docs_sidebar(name, pages, base):
         for member in members:
             current = ' aria-current="page"' if member == name else ""
             badge = pages[member][0].get("status")
-            mark = ' <span class="state %s">%s</span>' % (badge, STATUS[badge]) if badge else ""
+            mark = ' <span class="state %s">%s</span>' % (badge, SHORT[badge]) if badge else ""
             inline = ""
             if member == name:
                 _, own = add_heading_anchors(pages[member][1])
                 tops = [h for h in own if h[0] == 2]
                 if len(tops) > 1:
-                    inline = '\n<ul class="inpage">%s</ul>' % "".join('<li><a href="#%s">%s</a></li>' % (i, html.escape(t)) for _, i, t in tops)
+                    links = "".join('<li><a href="#%s">%s</a></li>' % (i, html.escape(t)) for _, i, t in tops)
+                    inline = '\n<details class="inpage-d"><summary>On this page</summary><ul class="inpage">%s</ul></details>' % links
             items.append('<li><a href="%s%s/"%s>%s</a>%s%s</li>' % (base, member, current, html.escape(nav_title(member, pages)), mark, inline))
+        opened = " open" if name in members else ""
         groups.append(
-            '<li><details class="group" open><summary>%s</summary><ul>\n%s\n</ul></details></li>' % (html.escape(label), "\n".join(items))
+            '<li><details class="group"%s><summary>%s</summary><ul>\n%s\n</ul></details></li>' % (opened, html.escape(label), "\n".join(items))
         )
     index = base + "assets/search-index.json"
     return (
         '<nav class="docs-nav" aria-label="Documentation">\n'
-        '<details class="nav-toggle"><summary>Contents</summary>\n'
+        '<details class="nav-toggle"><summary><span class="dm">Docs menu</span><span class="cur">%s</span></summary>\n'
         '<button type="button" class="search-open side" data-index="%s" hidden><span>Search the documentation</span><kbd>/</kbd></button>\n'
-        '<ul class="groups">\n%s\n</ul>\n</details>\n</nav>' % (index, "\n".join(groups))
+        '<ul class="groups">\n%s\n</ul>\n</details>\n</nav>' % (html.escape(nav_title(name, pages)), index, "\n".join(groups))
     )
 
 

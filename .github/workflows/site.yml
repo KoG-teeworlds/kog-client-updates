@@ -20,6 +20,24 @@ jobs:
       - name: Page checks
         run: python3 -B -m unittest discover -s tests -v
 
+  layout:
+    # A real browser at ten widths on every page type: no sideways scroll, the docs sidebar is a closed drawer under
+    # 900 px, its rows are compact and their badges stay on one line (scripts/check_layout.mjs).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install puppeteer-core without a browser download
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+        run: npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/pp" puppeteer-core@23.11.1
+      - name: Layout check
+        env:
+          PUPPETEER_CORE: ${{ runner.temp }}/pp/node_modules/puppeteer-core/lib/esm/puppeteer/puppeteer-core.js
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node scripts/check_layout.mjs
+
   diagrams:
     # The SVGs of the diagrams are committed, so the site build and its tests need neither Node nor a browser. This job
     # shows that diagrams/*.mmd still render with the pinned Mermaid CLI and the Chrome of the runner, and that the lock

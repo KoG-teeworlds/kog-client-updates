@@ -609,7 +609,7 @@ class DocsTests(unittest.TestCase):
                 self.assertEqual(hrefs, expected)
                 current = re.findall(r'<a href="([^"]+)" aria-current="page"', nav)
                 self.assertEqual([resolve(url_of(path), h).path for h in current], [url_of(path)])
-                self.assertIn('<summary>Contents</summary>', nav)
+                self.assertIn('<summary><span class="dm">Docs menu</span><span class="cur">', nav)
 
     REFERENCE = ["technical", "technical/glossary"]
 
@@ -884,6 +884,39 @@ class NavigationTests(unittest.TestCase):
         self.assertEqual(nav.count('<ul class="inpage">'), 1)
         for path in DOC_PAGES + [SITE / "privacy" / "index.html"]:
             self.assertIn('<nav class="crumbs" aria-label="Breadcrumb">', path.read_text(), path)
+
+    def test_the_sidebar_is_a_closed_drawer_with_compact_rows_that_do_not_wrap(self):
+        css = (SITE / "assets" / "style.css").read_text()
+        text = (SITE / "technical" / "release-signing" / "index.html").read_text()
+        nav = re.search(r'<nav class="docs-nav".*?</nav>', text, re.S).group(0)
+        self.assertIn('<summary><span class="dm">Docs menu</span><span class="cur">Release signing</span></summary>', nav)
+        # only the group of the current page is open in the markup; the headings of the page are collapsed
+        self.assertEqual(len(re.findall(r'<details class="group" open>', nav)), 1)
+        self.assertIn('<details class="inpage-d"><summary>On this page</summary>', nav)
+        # short badge words on the same line as the label
+        for word in re.findall(r'<span class="state \w+">([^<]+)</span>', nav):
+            self.assertIn(word, ("Built", "Partly", "Planned"))
+        self.assertRegex(css, r"\.docs-nav li > a \{[^}]*text-overflow: ellipsis[^}]*\}")
+        self.assertRegex(css, r"\.docs-nav li > a \{[^}]*white-space: nowrap[^}]*\}")
+        self.assertRegex(css, r"\.docs-nav \.state \{[^}]*white-space: nowrap[^}]*\}")
+        # the drawer, the sidebar column and the folding top bar share one breakpoint (900 px)
+        self.assertIn("@media (min-width: 56.25rem) {\n  .docs { display: grid;", css)
+        self.assertIn("@media (max-width: 56.24rem) {\n  header.site { position: relative; }", css)
+        # the brand text gives way to Search and Menu on very small screens
+        self.assertRegex(css, r"@media \(max-width: 25rem\) \{\s*\.brand span \{ position: absolute;")
+        self.assertIn("grid-template-columns: minmax(0, 1fr); gap: 2rem 4rem", css)
+        self.assertIn("minmax(min(21rem, 100%), 1fr)", css)
+
+    def test_the_browser_layout_check_exists_and_runs_in_ci(self):
+        script = (ROOT / "scripts" / "check_layout.mjs").read_text()
+        for width in ("320", "360", "390", "414", "480", "600", "768", "900"):
+            self.assertIn(width, script)
+        self.assertIn("deviceScaleFactor: 2", script)
+        for page in ('"/"', '"/technical/"', "release-signing", "glossary", '"/privacy/"', "404.html"):
+            self.assertIn(page, script)
+        workflow = (ROOT / ".github" / "workflows" / "site.yml").read_text()
+        self.assertIn("node scripts/check_layout.mjs", workflow)
+        self.assertIn("puppeteer-core@23.11.1", workflow)
 
     def test_the_docs_landing_page_has_paths_by_audience(self):
         text = (SITE / "technical" / "index.html").read_text()
