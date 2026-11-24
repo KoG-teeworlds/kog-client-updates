@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Verify your download | KoG Client</title>
+<meta name="description" content="How to check that a KoG client download is genuine: build attestation, signed update manifest and file hashes.">
+<link rel="canonical" href="https://client.kog.tw/verify/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KoG Client">
+<meta property="og:title" content="Verify your download | KoG Client">
+<meta property="og:description" content="How to check that a KoG client download is genuine: build attestation, signed update manifest and file hashes.">
+<meta property="og:url" content="https://client.kog.tw/verify/">
+<meta property="og:image" content="https://client.kog.tw/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+<div class="wrap">
+<a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<nav aria-label="Main"><ul>
+<li><a href="../#download">Download</a></li>
+<li><a href="../verify/" aria-current="page">Verify</a></li>
+<li><a href="../install/">Install</a></li>
+<li><a href="../updates/">Updates</a></li>
+<li><a href="../privacy/">Privacy</a></li>
+<li><a href="../faq/">FAQ</a></li>
+<li><a href="../changelog/">Changelog</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source</a></li>
+</ul></nav>
+</div>
+</header>
+<div class="strip"><div class="wrap"><p><strong>Best effort only.</strong> Volunteer-maintained, no warranty or support guarantee. You do not need this client to play on KoG.</p></div></div>
+<main id="main">
+<div class="wrap">
+<h1>Verify your download</h1>
+<p class="lead">Downloads come from GitHub releases. These checks tell you that a file was built by the project's workflows and was not changed afterwards.</p>
+<p class="warn">There is no release yet, so there is nothing to verify today. The steps describe how it is set up; file names are examples.</p>
+
+<h2>1. Download from the release page only</h2>
+<p>Use the links in the <a href="../#download">download section</a> or the <a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases page</a>. Do not use copies from other sites.</p>
+
+<h2>2. Check the build attestation</h2>
+<p>The release workflow is written to attach a GitHub build attestation to every file: a signed statement of which workflow and which commit built it. It has not run yet, so this has not been tested on a real release. With the <a href="https://cli.github.com/">GitHub CLI</a> installed:</p>
+<pre><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<p>It prints the workflow and commit when the file matches, and fails if the file was changed. Use the name of the file you downloaded. This tells you where a file came from. It does not tell you that the source code is good.</p>
+
+<h2>3. Check the signed update manifest (advanced)</h2>
+<p>The in-app updater trusts only an Ed25519 public key that is compiled into the client. You can check the same signature by hand. You need the project's public key (it will be published in the <code>kog-client-updates</code> repository once the signing key has been generated), the manifest and its signature:</p>
+<pre><code>curl -O https://client.kog.tw/update.json
+curl -O https://client.kog.tw/update.json.sig
+
+# build the small verifier from the kog-client sources
+cc -O2 -o kogsign scripts/kog/kogsign.c \
+  src/engine/external/monocypher/monocypher.c \
+  src/engine/external/monocypher/monocypher-ed25519.c \
+  -Isrc/engine/external/monocypher
+
+./kogsign verify "$(cat keys/primary.pub)" update.json update.json.sig</code></pre>
+<p>These are the commands the signing job runs itself. A valid signature means the file list and hashes in the manifest come from the project: someone who takes over the website, the domain or the GitHub Pages branch cannot make a valid manifest.</p>
+<p>The manifest lists the files the in-app updater downloads, not the zip, tar and dmg packages. For packages, use step 2.</p>
+
+<h2>4. Compare file hashes</h2>
+<p>The <a href="../#download">download section</a> shows a SHA-256 for each file the updater downloads, read from the signed manifest. Compare it with:</p>
+<ul>
+<li>Linux: <code>sha256sum FILE</code></li>
+<li>macOS: <code>shasum -a 256 FILE</code></li>
+<li>Windows PowerShell: <code>Get-FileHash FILE</code></li>
+</ul>
+<p>Those hashes belong to the client program and data files used by the updater, not to the packages.</p>
+
+<h2>Two signatures <span class="planned">Planned</span></h2>
+<p>Today a manifest carries one signature, made by the project's signing key. The signing job is set up to need the maintainer's approval in GitHub. The plan is a second signature, made with a hardware key that only the maintainer holds. The client will then require both, so neither a stolen GitHub account nor a stolen CI secret alone can publish a malicious update. A script that checks everything in one go is planned too.</p>
+
+<h2>If a check fails</h2>
+<p>Do not run the file. Tell us in an <a href="https://github.com/KoG-teeworlds/kog-client/issues">issue</a>, or privately through <a href="https://github.com/KoG-teeworlds/kog-client/security/advisories/new">vulnerability reporting</a> if you think it is an attack.</p>
+</div>
+</main>
+<footer class="site">
+<div class="wrap">
+<p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
+<ul>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/security/advisories/new">Report a vulnerability</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Notice</a></li>
+</ul>
+<p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
+</div>
+</footer>
+</body>
+</html>
