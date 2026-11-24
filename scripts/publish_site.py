@@ -13,7 +13,7 @@ import sys
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parent.parent
-ROOT_FILES = {"index.html", "404.html", "CNAME", ".nojekyll", "favicon.svg", "robots.txt", "sitemap.xml"}
+ROOT_FILES = {"index.html", "404.html", "CNAME", ".nojekyll", "robots.txt", "sitemap.xml"}
 RESERVED = {"stable", "canary", "dev", "base", "releases", "builds", "releases.json"}
 
 

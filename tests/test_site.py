@@ -18,7 +18,7 @@ PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(p for p in SITE.rglob(
 DOC_PAGES = [SITE / name / "index.html" for name in build_site.DOCS_ORDER]
 RESERVED = ["stable", "canary", "dev", "base", "releases"]
 BUDGET_TOTAL = 400 * 1024
-BUDGET_PAGE = 90 * 1024
+BUDGET_PAGE = 100 * 1024
 BUDGET_DOC_PAGE = 200 * 1024
 BUDGET_SCRIPT = 20 * 1024
 
@@ -191,7 +191,7 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_expected_files_exist(self):
-        for name in ["robots.txt", "sitemap.xml", "CNAME", ".nojekyll", "favicon.svg", "404.html", "assets/style.css", "assets/app.js", "assets/manifest.js", "assets/kog-logo.svg", "assets/og.png", "assets/docs.js", "assets/search-index.json"]:
+        for name in ["robots.txt", "sitemap.xml", "CNAME", ".nojekyll", "404.html", "assets/style.css", "assets/app.js", "assets/manifest.js", "assets/brand/logo_short_white.svg", "assets/og.png", "assets/docs.js", "assets/search-index.json"]:
             self.assertTrue((SITE / name).exists(), name)
 
     def test_cname_and_robots(self):
@@ -394,7 +394,7 @@ class PageTests(unittest.TestCase):
                 self.assertIn("https://kog.tw/", hrefs)
 
     def test_external_links_go_to_known_hosts_only(self):
-        known = {"kog.tw", "github.com", "ddnet.org", "cli.github.com", "docs.github.com"}
+        known = {"kog.tw", "github.com", "ddnet.org", "cli.github.com", "docs.github.com", "creativecommons.org"}
         for path in PAGES:
             with self.subTest(page=path.name):
                 for tag, name, value, attrs in parse(path).refs:
@@ -786,7 +786,7 @@ class ClientOnlyTests(unittest.TestCase):
         for name, text in self.texts():
             for repo in re.findall(r"github\.com/KoG-teeworlds/([\w.-]+)", text):
                 with self.subTest(file=name, repo=repo):
-                    self.assertIn(repo, ("kog-client", "kog-client-updates"))
+                    self.assertIn(repo, ("kog-client", "kog-client-updates", "brand_and_media"))
             self.assertNotRegex(text, r"/pull/\d+")
 
     def test_the_deny_list_itself_is_not_weakened(self):
@@ -807,6 +807,65 @@ HOME_COMMANDS = {
         "echo \"$(curl -fsSL https://client.kog.tw/canary/update.json | grep -A1 '\"KoG-Client-linux.tar.xz\"' | grep -o '[0-9a-f]\\{64\\}')  KoG-Client-linux.tar.xz\" | sha256sum -c",
     ],
 }
+
+
+class BrandTests(unittest.TestCase):
+    """The logo is the official artwork, unmodified, with its licence stated."""
+
+    def pinned(self):
+        import fetch_brand
+
+        return fetch_brand
+
+    def test_the_committed_logo_files_are_the_pinned_originals(self):
+        brand = self.pinned()
+        self.assertEqual(brand.check(), [])
+        self.assertEqual(brand.COMMIT, "700f64d29bca1413a0c1fbab435852a5cc2e47c7")
+        self.assertEqual({p.name for p in (SITE / "assets" / "brand").glob("*.svg")}, set(brand.FILES))
+        for name, expected in brand.FILES.items():
+            self.assertEqual(len(expected), 64)
+
+    def test_the_old_derived_copies_are_gone(self):
+        self.assertFalse((SITE / "assets" / "kog-logo.svg").exists())
+        self.assertFalse((SITE / "favicon.svg").exists())
+
+    def test_the_notice_names_the_commit_and_the_licence(self):
+        notice = (SITE / "assets" / "brand" / "NOTICE.txt").read_text()
+        self.assertIn(self.pinned().COMMIT, notice)
+        self.assertIn("Attribution-NonCommercial-NoDerivatives 4.0", notice)
+        self.assertIn("not part of the licence", " ".join(notice.split()))
+        self.assertIn("unmodified", notice)
+
+    def test_every_page_credits_the_artwork_in_the_footer(self):
+        for path in PAGES:
+            text = path.read_text()
+            self.assertIn("official artwork of", text, path)
+            self.assertIn("CC BY-NC-ND 4.0", text, path)
+            self.assertIn("not part of the licence of the code", text, path)
+
+    def test_pages_use_only_the_brand_files_with_the_right_variant_per_theme(self):
+        css = (SITE / "assets" / "style.css").read_text()
+        for selector in (".brand img", ".hero-logo", ".brand-long"):
+            rule = re.search(re.escape(selector) + r" \{([^}]*)\}", css).group(1)
+            for effect in ("filter", "border-radius", "box-shadow", "opacity", "mask", "clip", "transform", "object-fit"):
+                self.assertNotIn(effect, rule, selector)
+        for path in PAGES:
+            text = path.read_text()
+            self.assertIn('<link rel="icon" href=', text)
+            self.assertRegex(text, r'logo_short_black\.svg" type="image/svg\+xml" media="\(prefers-color-scheme: light\)"')
+            self.assertRegex(text, r'logo_short_white\.svg" type="image/svg\+xml" media="\(prefers-color-scheme: dark\)"')
+            # the header is dark in both themes: the white logo, linked home with an accessible name
+            self.assertRegex(text, r'<a class="brand" href="[^"]*" aria-label="KoG Client, home page"><img src="[^"]*assets/brand/logo_short_white\.svg" alt=""')
+        home = (SITE / "index.html").read_text()
+        self.assertIn('<picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo_short_white.svg"><img class="hero-logo" src="assets/brand/logo_short_black.svg"', home)
+        not_found = (SITE / "404.html").read_text()
+        self.assertIn('srcset="/assets/brand/logo_long_white.svg"', not_found)
+        self.assertIn('src="/assets/brand/logo_long_black.svg" alt="KoG, King of Gores"', not_found)
+
+    def test_the_artwork_is_not_referenced_from_anywhere_else_or_edited_in_the_generator(self):
+        source = (ROOT / "scripts" / "build_site.py").read_text()
+        self.assertNotIn("kog-logo", source)
+        self.assertEqual(source.count("assets/brand/logo_short_white.svg"), 2)
 
 
 class HomeCheckTests(unittest.TestCase):
@@ -984,7 +1043,7 @@ class PerformanceTests(unittest.TestCase):
         for path in PAGES:
             text = path.read_text()
             page = parse(path)
-            files = ["assets/style.css", "assets/kog-logo.svg", "favicon.svg", "assets/fonts/saira-cond-700-latin.woff2"]
+            files = ["assets/style.css", "assets/brand/logo_short_white.svg", "assets/brand/logo_short_black.svg", "assets/fonts/saira-cond-700-latin.woff2"]
             files += [("../" * (len(path.relative_to(SITE).parts) - 1)).replace("../", "") + s for s in []]
             files += [s for s in (r[2].split("../")[-1].lstrip("/") for r in page.refs if r[0] == "script")]
             if "<code" in text or "facts" in text or path == SITE / "index.html":
@@ -1009,7 +1068,7 @@ class WeightTests(unittest.TestCase):
         self.assertLess(total, BUDGET_TOTAL)
 
     def test_one_page_load_stays_under_budget(self):
-        base = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "kog-logo.svg"])
+        base = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "brand/logo_short_white.svg", "brand/logo_short_black.svg"])
         for path in PAGES:
             with self.subTest(page=url_of(path)):
                 scripts = sum(script_file(path, ref).stat().st_size for ref in parse(path).scripts)
@@ -1110,7 +1169,7 @@ class StyleTests(unittest.TestCase):
         self.assertIn("prefers-color-scheme: dark", css)
 
     def test_svg_files_reference_nothing_external(self):
-        for name in ["favicon.svg", "assets/kog-logo.svg"]:
+        for name in ["assets/brand/logo_short_white.svg", "assets/brand/logo_short_black.svg"]:
             text = (SITE / name).read_text()
             self.assertNotIn("<script", text)
             self.assertIsNone(re.search(r"(href|src)=\"https?://", text))
