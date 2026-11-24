@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="31f3796410b9fd8cb5eccbc0410c2e704e36b299">
+<meta name="kog-site-build" content="189077dd67ab93d3c9aaae0b08342cb05714a6b8">
 <title>Login | KoG Client technical documentation</title>
 <meta name="description" content="How the KoG client logs in: OAuth 2.0 authorization code with PKCE in your system browser, a loopback listener, an Ed25519 device key in the OS keychain, what is sent where, revocation, and the planned join proof.">
 <link rel="canonical" href="https://client.kog.tw/technical/login/">
@@ -43,28 +43,28 @@
 <div class="wrap">
 <div class="docs">
 <nav class="docs-nav" aria-label="Documentation">
-<details class="nav-toggle"><summary>Contents</summary>
+<details class="nav-toggle"><summary><span class="dm">Docs menu</span><span class="cur">Login</span></summary>
 <button type="button" class="search-open side" data-index="../../assets/search-index.json" hidden><span>Search the documentation</span><kbd>/</kbd></button>
 <ul class="groups">
-<li><details class="group" open><summary>Start</summary><ul>
+<li><details class="group"><summary>Start</summary><ul>
 <li><a href="../../technical/">Overview</a></li>
-<li><a href="../../technical/architecture/">Architecture</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state partial">Partly</span></li>
 </ul></details></li>
-<li><details class="group" open><summary>Updates and trust</summary><ul>
+<li><details class="group"><summary>Updates and trust</summary><ul>
 <li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
-<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly</span></li>
 <li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
-<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly</span></li>
 </ul></details></li>
 <li><details class="group" open><summary>Account and data</summary><ul>
-<li><a href="../../technical/login/" aria-current="page">Login</a> <span class="state partial">Partly built</span>
-<ul class="inpage"><li><a href="#settings">Switches</a></li><li><a href="#flow">The flow</a></li><li><a href="#hosts">Which hosts the login talks to</a></li><li><a href="#key-store">The device key</a></li><li><a href="#sent">What is sent where</a></li><li><a href="#revocation">Log out and revocation</a></li><li><a href="#threats">Threats considered</a></li><li><a href="#join-proof">Join proof Planned</a></li><li><a href="#tests">Tests</a></li></ul></li>
+<li><a href="../../technical/login/" aria-current="page">Login</a> <span class="state partial">Partly</span>
+<details class="inpage-d"><summary>On this page</summary><ul class="inpage"><li><a href="#settings">Switches</a></li><li><a href="#flow">The flow</a></li><li><a href="#hosts">Which hosts the login talks to</a></li><li><a href="#key-store">The device key</a></li><li><a href="#sent">What is sent where</a></li><li><a href="#revocation">Log out and revocation</a></li><li><a href="#threats">Threats considered</a></li><li><a href="#join-proof">Join proof Planned</a></li><li><a href="#tests">Tests</a></li></ul></details></li>
 <li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
 </ul></details></li>
-<li><details class="group" open><summary>Build</summary><ul>
-<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
+<li><details class="group"><summary>Build</summary><ul>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly</span></li>
 </ul></details></li>
-<li><details class="group" open><summary>Project</summary><ul>
+<li><details class="group"><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
 <li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
