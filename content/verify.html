@@ -3,7 +3,7 @@
 
 <h1>Verify your download</h1>
 <p class="lead">Downloads come from GitHub releases. These checks tell you that a file was built by the project's workflows and was not changed afterwards.</p>
-<p class="warn">There is no release yet, so there is nothing to verify today. The steps describe how it is set up; file names are examples.</p>
+<p class="warn">There is no stable release yet. The steps work for canary builds; use the file names and channel of what you downloaded.</p>
 
 <h2>1. Download from the release page only</h2>
 <p>Use the links in the <a href="../#download">download section</a> or the <a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases page</a>. Do not use copies from other sites.</p>
@@ -15,8 +15,8 @@
 
 <h2>3. Check the signed update manifest (advanced)</h2>
 <p>The in-app updater trusts only an Ed25519 public key that is compiled into the client. You can check the same signature by hand. You need the project's public key (it will be published in the <code>kog-client-updates</code> repository once the signing key has been generated), the manifest and its signature:</p>
-<pre><code>curl -O https://client.kog.tw/update.json
-curl -O https://client.kog.tw/update.json.sig
+<pre><code>curl -O https://client.kog.tw/canary/update.json
+curl -O https://client.kog.tw/canary/update.json.sig
 
 # build the small verifier from the kog-client sources
 cc -O2 -o kogsign scripts/kog/kogsign.c \
@@ -26,16 +26,16 @@ cc -O2 -o kogsign scripts/kog/kogsign.c \
 
 ./kogsign verify "$(cat keys/primary.pub)" update.json update.json.sig</code></pre>
 <p>These are the commands the signing job runs itself. A valid signature means the file list and hashes in the manifest come from the project: someone who takes over the website, the domain or the GitHub Pages branch cannot make a valid manifest.</p>
-<p>The manifest lists the files the in-app updater downloads, not the zip, tar and dmg packages. For packages, use step 2.</p>
+<p>The signature covers the whole manifest, including the package hashes shown on the download cards.</p>
 
 <h2>4. Compare file hashes</h2>
-<p>The <a href="../#download">download section</a> shows a SHA-256 for each file the updater downloads, read from the signed manifest. Compare it with:</p>
+<p>The <a href="../#download">download section</a> shows a SHA-256 for each package, read from the manifest. Compare it with:</p>
 <ul>
 <li>Linux: <code>sha256sum FILE</code></li>
 <li>macOS: <code>shasum -a 256 FILE</code></li>
 <li>Windows PowerShell: <code>Get-FileHash FILE</code></li>
 </ul>
-<p>Those hashes belong to the client program and data files used by the updater, not to the packages.</p>
+<p>The "signed file hashes" under the cards belong to the program files the updater downloads, not to the packages.</p>
 
 <h2>Two signatures <span class="planned">Planned</span></h2>
 <p>Today a manifest carries one signature, made by the project's signing key. The signing job is set up to need the maintainer's approval in GitHub. The plan is a second signature, made with a hardware key that only the maintainer holds. The client will then require both, so neither a stolen GitHub account nor a stolen CI secret alone can publish a malicious update. A script that checks everything in one go is planned too.</p>

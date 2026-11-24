@@ -274,7 +274,7 @@ test("the page shows a valid manifest through text nodes and checked links only"
   assert.match(text, /Download for Windows/);
   assert.match(text, new RegExp(SHA));
   for (const [tag, name, value] of calls.attrs) {
-    if (name === "href") assert.ok(Manifest.allowedUrl(value) || value === "verify/" || value === "https://github.com/KoG-teeworlds/kog-client/releases", value);
+    if (name === "href") assert.ok(Manifest.allowedUrl(value) || ["verify/", "stable/update.json", "stable/update.json.sig"].includes(value) || value === "https://github.com/KoG-teeworlds/kog-client/releases", value);
     assert.notEqual(name.slice(0, 2), "on");
   }
   assert.equal(requested[0][1].credentials, "omit");
@@ -336,4 +336,52 @@ test("choosing another channel loads that channel's manifest", async () => {
   nodes.channel.listeners.change();
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.ok(!requested.some(([url]) => /nightly/.test(url)));
+});
+
+const PACKAGE_BASE = "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-6/";
+
+function withPackages() {
+  return {
+    packages: ["KoG-Client-windows.zip", "KoG-Client-linux.tar.xz", "KoG-Client-macOS.dmg"].map((name, index) => ({ name, sha256: String(index + 1).repeat(64), size: 1000 * (index + 1), url: PACKAGE_BASE + name })),
+  };
+}
+
+test("package sizes, hashes and links come from the manifest", () => {
+  const result = parse(manifest(withPackages()));
+  assert.deepEqual(result.data.packages.map((p) => [p.file, p.sha256[0], p.size, p.url.startsWith(PACKAGE_BASE)]), [
+    ["KoG-Client-windows.zip", "1", 1000, true],
+    ["KoG-Client-linux.tar.xz", "2", 2000, true],
+    ["KoG-Client-macOS.dmg", "3", 3000, true],
+  ]);
+});
+
+test("a package entry with a bad hash, size or url falls back to the plain link without a hash", () => {
+  const m = manifest(withPackages());
+  m.packages[0].sha256 = "xyz";
+  m.packages[1].size = -4;
+  m.packages[2].url = "https://evil.example/x.dmg";
+  const result = parse(m);
+  for (const item of result.data.packages) {
+    assert.equal(item.sha256, null);
+    assert.equal(item.size, null);
+    assert.ok(item.url.startsWith("https://github.com/KoG-teeworlds/kog-client/releases/download/v1.2.3/"));
+  }
+});
+
+test("the page shows size, hash and check command per package, and no invented numbers", async () => {
+  const body = liveManifest(withPackages());
+  const { nodes } = await runApp({ "update.json": { body } });
+  const text = nodes.release.textContent;
+  assert.match(text, /KoG-Client-windows\.zip \u00b7 /);
+  assert.match(text, new RegExp("1".repeat(64)));
+  assert.match(text, /Get-FileHash/);
+  assert.match(text, /sha256sum -c/);
+  assert.match(text, /shasum -a 256 -c/);
+  assert.doesNotMatch(text, /undefined|NaN|null/);
+});
+
+test("a stable channel without a release offers the canary channel politely", async () => {
+  const { nodes, calls } = await runApp({});
+  assert.match(nodes.release.textContent, /No stable release has been published yet/);
+  assert.match(nodes.release.textContent, /Show canary builds/);
 });

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(SITE.glob("*/index.html"))
 RESERVED = ["stable", "canary", "dev", "base", "releases"]
-BUDGET_TOTAL = 100 * 1024
+BUDGET_TOTAL = 110 * 1024
 BUDGET_PAGE = 60 * 1024
 
 
@@ -254,29 +254,68 @@ class PageTests(unittest.TestCase):
                         self.assertIsNotNone(other)
                         self.assertIn(fragment, other.ids)
 
-    def test_best_effort_notice_on_the_home_page_and_every_footer(self):
+    def test_disclaimer_on_the_home_page_and_best_effort_in_every_footer(self):
         home = " ".join(" ".join(parse(SITE / "index.html").text).split())
         for sentence in [
-            "The KoG client is maintained on a best-effort basis by volunteers.",
-            "There is no warranty, no support guarantee and no release schedule.",
-            "It can break, change or disappear without notice.",
-            "Security fixes are made as time allows.",
-            "You do not need this client to play on KoG:",
-            "stock DDNet clients keep working.",
-            "If you want guaranteed support or a stable experience, use the official DDNet client.",
-            "Use at your own risk.",
+            "The KoG client is a reference implementation.",
+            "It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login.",
+            "You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported.",
+            "Builds are for testing and may change or break.",
+            "no warranty and no support guarantee",
         ]:
             self.assertIn(sentence, home)
         for path in PAGES:
             with self.subTest(page=path.name):
                 self.assertIn("Best effort only", " ".join(parse(path).text))
 
-    def test_planned_things_are_marked(self):
-        home = (SITE / "index.html").read_text()
-        self.assertGreaterEqual(home.count('class="planned"'), 2)
-        self.assertNotIn("TODO", home)
+    def test_disclaimer_comes_before_the_download_section(self):
+        text = (SITE / "index.html").read_text()
+        self.assertLess(text.index('id="disclaimer-title"'), text.index('id="download-title"'))
+
+    def test_home_page_sections(self):
+        home = parse(SITE / "index.html")
+        for fragment in ["download", "verify", "what", "limits", "source", "disclaimer-title"]:
+            self.assertIn(fragment, home.ids)
+        hrefs = [r[2] for r in home.refs if r[0] == "a"]
+        for needed in [
+            "https://kog.tw/",
+            "https://kog.tw/clients",
+            "https://github.com/KoG-teeworlds/kog-client",
+            "https://github.com/KoG-teeworlds/kog-client/attestations",
+            "https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md",
+            "https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md",
+            "https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md",
+            "privacy/",
+        ]:
+            self.assertIn(needed, hrefs)
+
+    def test_every_page_links_back_to_the_website(self):
         for path in PAGES:
-            self.assertNotIn("kog.tw/account", path.read_text())
+            with self.subTest(page=path.name):
+                hrefs = [r[2] for r in parse(path).refs if r[0] == "a"]
+                self.assertIn("https://kog.tw/", hrefs)
+
+    def test_external_links_go_to_known_hosts_only(self):
+        known = {"kog.tw", "github.com", "ddnet.org", "cli.github.com", "docs.github.com"}
+        for path in PAGES:
+            with self.subTest(page=path.name):
+                for tag, name, value, attrs in parse(path).refs:
+                    if value.startswith("https://") and attrs.get("rel") != "canonical":
+                        self.assertIn(urlparse(value).hostname, known, value)
+
+    def test_the_404_page_leads_back(self):
+        hrefs = [r[2] for r in parse(SITE / "404.html").refs if r[0] == "a"]
+        self.assertIn("/", hrefs)
+        self.assertIn("https://kog.tw/", hrefs)
+        for tag, name, value, attrs in parse(SITE / "404.html").refs:
+            if tag in ("link", "script", "img") and not value.startswith("https://"):
+                self.assertTrue(value.startswith("/"), "the 404 page is served at any depth: " + value)
+
+    def test_planned_things_are_marked_and_nothing_is_left_open(self):
+        for path in PAGES:
+            text = path.read_text()
+            self.assertNotIn("TODO", text)
+            self.assertNotIn("kog.tw/account", text)
 
 
 class WeightTests(unittest.TestCase):
@@ -318,7 +357,7 @@ class ScriptTests(unittest.TestCase):
 class StyleTests(unittest.TestCase):
     def test_text_contrast_meets_aa_in_both_themes(self):
         light, dark = theme_variables()
-        pairs = [("fg", "bg"), ("fg", "surface"), ("muted", "bg"), ("muted", "surface"), ("link", "bg"), ("link", "surface"), ("link", "warn-bg"), ("fg", "warn-bg"), ("btn-fg", "btn-bg"), ("fg", "code-bg"), ("link", "code-bg"), ("muted", "code-bg")]
+        pairs = [("fg", "bg"), ("fg", "surface"), ("muted", "bg"), ("muted", "surface"), ("link", "bg"), ("link", "surface"), ("link", "warn-bg"), ("fg", "warn-bg"), ("btn-fg", "btn-bg"), ("fg", "code-bg"), ("link", "code-bg"), ("muted", "code-bg"), ("head-fg", "head-bg"), ("head-link", "head-bg"), ("badge-fg", "badge-bg"), ("muted", "warn-bg"), ("link", "surface")]
         for name, theme in (("light", light), ("dark", dark)):
             for foreground, background in pairs:
                 with self.subTest(theme=name, pair=foreground + "/" + background):

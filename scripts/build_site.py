@@ -9,6 +9,9 @@ SITE = ROOT / "site"
 ORIGIN = "https://client.kog.tw"
 REPO = "https://github.com/KoG-teeworlds/kog-client"
 
+WEBSITE = "https://kog.tw/"
+CLIENTS = "https://kog.tw/clients"
+
 NAV = [
     ("index", "Download", "#download"),
     ("verify", "Verify", "verify/"),
@@ -70,7 +73,6 @@ def render(name, meta, body):
     for key, label, target in NAV:
         current = ' aria-current="page"' if key == name else ""
         nav.append('<li><a href="%s"%s>%s</a></li>' % (base + target, current, label))
-    nav.append('<li><a href="%s">Source</a></li>' % REPO)
     strip = ""
     if name != "index":
         strip = (
@@ -111,6 +113,7 @@ def render(name, meta, body):
 <nav aria-label="Main"><ul>
 {chr(10).join(nav)}
 </ul></nav>
+<a class="back" href="{WEBSITE}">kog.tw<span aria-hidden="true"> &#8599;</span><span class="visually-hidden"> (back to the KoG website)</span></a>
 </div>
 </header>
 {strip}<main id="main">
@@ -122,11 +125,14 @@ def render(name, meta, body):
 <div class="wrap">
 <p><strong>Best effort only.</strong> The KoG client is maintained by volunteers, with no warranty and no support guarantee. Use at your own risk.</p>
 <ul>
+<li><a href="{WEBSITE}">kog.tw</a></li>
+<li><a href="{CLIENTS}">Approved clients</a></li>
 <li><a href="{REPO}">Source code</a></li>
 <li><a href="{REPO}/issues">Issues</a></li>
-<li><a href="{REPO}/security/advisories/new">Report a vulnerability</a></li>
+<li><a href="{base}privacy/">Privacy</a></li>
+<li><a href="{REPO}/blob/main/SECURITY.md">Security</a></li>
 <li><a href="{REPO}/blob/main/license.txt">Licence</a></li>
-<li><a href="{REPO}/blob/main/NOTICE_KOG.md">Notice</a></li>
+<li><a href="{REPO}/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
 </ul>
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
