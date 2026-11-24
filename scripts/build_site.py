@@ -397,7 +397,7 @@ def render(name, meta, body, marker=None, pages=None):
         main = docs_main(name, meta, body, pages, base)
         main = '<div class="wrap">\n%s\n</div>' % main
     else:
-        main = '<main id="main">\n<div class="wrap">\n%s\n</div>\n</main>' % body
+        main = '<div class="wrap">\n<main id="main" class="page %s">\n%s\n</main>\n</div>' % ("home" if name == "index" else "prose", body)
     body_class = (' class="docs-page"' + (' data-overview=""' if name == "technical" else "")) if docs else ""
     build_meta = '<meta name="kog-site-build" content="%s">\n' % html.escape(marker, quote=True) if marker else ""
     return f"""<!doctype html>
@@ -426,7 +426,7 @@ def render(name, meta, body, marker=None, pages=None):
 <body{body_class}>
 {disclaimer}<a class="skip" href="#main">Skip to content</a>
 <header class="site">
-<div class="wrap">
+<div class="wrap bar">
 <a class="brand" href="{base or './'}"><img src="{base}assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
 <nav class="main" aria-label="Main"><ul>
 {chr(10).join(nav)}

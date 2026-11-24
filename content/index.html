@@ -1,13 +1,13 @@
 @title KoG Client: a test client for King of Gores
 @description A reference implementation for testing new KoG features such as the KoG login. You do not need it to play on KoG. Test builds for Windows, macOS and Linux.
 
-<section class="hero">
+<section class="home-hero">
+<div class="hero-text">
+<p class="eyebrow">Test version</p>
 <h1>KoG Client</h1>
-<p class="lead">A test version of the game client for <a href="https://kog.tw/">King of Gores</a>. Developers use it to try out new features. You can play KoG without it.</p>
-</section>
-
-<section id="download" class="download" aria-labelledby="download-title">
-<h2 id="download-title" class="visually-hidden">Download</h2>
+<p class="lead">A test version of the game client for <a href="https://kog.tw/">King of Gores</a>. Developers use it to try out new features.</p>
+<p class="lead"><strong>You can play KoG without it.</strong></p>
+<div id="download" class="download" role="region" aria-label="Download">
 <div id="release" aria-live="polite">
 <p class="small">Choose your system. This opens the GitHub page with all builds: pick the file with this name.</p>
 <ul class="choose">
@@ -17,6 +17,11 @@
 </ul>
 </div>
 <p class="small">For Windows, macOS and Linux computers. There is no version for phones or tablets.</p>
+</div>
+</div>
+<aside class="build-card" aria-labelledby="build-title">
+<h2 id="build-title" class="card-title">This build</h2>
+<div id="build-info" aria-live="polite"><p class="small">Looking for the newest build…</p></div>
 <div id="unstable" class="chooser" hidden>
 <label for="channel">Kind of build</label>
 <select id="channel"><option value="stable">Stable (none yet)</option><option value="canary">Testing builds (canary)</option><option value="dev">Development builds (dev)</option></select>
@@ -32,11 +37,17 @@
 <dd>A finished version for everyone. There is none yet.</dd>
 </dl>
 </details>
+</aside>
 </section>
 
 <section id="install" aria-labelledby="install-title">
 <h2 id="install-title">Install and start</h2>
 <p>It takes three steps. The program is called <strong>KoG-Client</strong>.</p>
+<ol class="stepper">
+<li><strong>Download</strong><span>the file for your system.</span></li>
+<li><strong>Extract or open it</strong><span>in a folder of your own.</span></li>
+<li><strong>Start it</strong><span>and look at the notes for your system below.</span></li>
+</ol>
 <div class="os-list">
 <details id="install-windows" class="os" open>
 <summary>Windows</summary>
@@ -69,10 +80,17 @@
 <p><strong>Good to know.</strong> The client keeps its own settings folder and does not touch the one of DDNet. To reuse your DDNet settings, copy <code>settings_ddnet.cfg</code> over by hand. To remove the client, delete the program folder (on macOS the app). Your settings stay behind in the folder named in the <a href="#faq-replace">FAQ</a>, and you can delete that too.</p>
 </section>
 
-<section id="safe" aria-labelledby="safe-title">
+<section id="safe" class="safe-card" aria-labelledby="safe-title">
+<div>
 <h2 id="safe-title">Is it safe?</h2>
-<p>We try to make it easy to check instead of asking you to trust us. The code is open, the files are built by public GitHub workflows, and every download can be checked against a signed list. Still, this is a new project run by volunteers. Nobody outside the project has reviewed it, and it comes without a warranty. If you are unsure, do not use it.</p>
+<p><strong>Check it instead of trusting us.</strong> The code is open, the files are built by public GitHub workflows, and every download can be checked against a signed list.</p>
+<p>Still, this is a new project run by volunteers. Nobody outside the project has reviewed it, and it comes without a warranty. <strong>If you are unsure, do not use it.</strong></p>
 <p><a class="button secondary" href="technical/verify/">How to check your download</a></p>
+</div>
+<div class="safe-check">
+<p class="small">One of the three checks, with the GitHub CLI:</p>
+<pre class="sh" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+</div>
 </section>
 
 <section id="faq" aria-labelledby="faq-title">
