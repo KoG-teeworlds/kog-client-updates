@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="189077dd67ab93d3c9aaae0b08342cb05714a6b8">
+<meta name="kog-site-build" content="6e6a458a306d176ee01133929cdb73bfe64ffba0">
 <title>KoG Client: a test client for King of Gores</title>
 <meta name="description" content="A reference implementation for testing new KoG features such as the KoG login. You do not need it to play on KoG. Test builds for Windows, macOS and Linux.">
 <link rel="canonical" href="https://client.kog.tw/">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/logo_short_black.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
+<link rel="icon" href="assets/brand/logo_short_white.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KoG Client">
 <meta property="og:title" content="KoG Client: a test client for King of Gores">
@@ -28,7 +29,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap bar">
-<a class="brand" href="./"><img src="assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
+<a class="brand" href="./" aria-label="KoG Client, home page"><img src="assets/brand/logo_short_white.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
 <nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 <li><a href="" aria-current="page">Download</a></li>
 <li><a href="technical/">Docs</a></li>
@@ -45,7 +46,7 @@
 <section id="download" class="home-hero" aria-labelledby="home-title">
 <div class="hero-text">
 <p class="eyebrow">Test version for King of Gores</p>
-<h1 id="home-title"><img class="hero-logo" src="assets/kog-logo.svg" alt="" width="72" height="72"><span>KoG Client</span></h1>
+<h1 id="home-title"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo_short_white.svg"><img class="hero-logo" src="assets/brand/logo_short_black.svg" alt="" width="72" height="72"></picture><span>KoG Client</span></h1>
 <p class="lead">Try new KoG features in a test version of the game client. <strong>You can play KoG without it.</strong></p>
 <p class="small">For Windows, macOS and Linux computers. There is no version for phones or tablets.</p>
 </div>
@@ -189,6 +190,7 @@ if ($have -eq $want) { 'OK: the file matches the list' } else { 'DIFFERENT: do n
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
 </ul>
 <p>This page is published automatically when a change is merged.</p>
+<p>The KoG logo files are the official artwork of <a href="https://github.com/KoG-teeworlds/brand_and_media">KoG-teeworlds/brand_and_media</a>, used unmodified under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>. They are not part of the licence of the code.</p>
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
 </footer>

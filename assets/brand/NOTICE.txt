@@ -1,0 +1,10 @@
+The logo_short_*.svg and logo_long_*.svg files in this folder are the official King of Gores artwork. They are
+copied unmodified from https://github.com/KoG-teeworlds/brand_and_media (path brand/logo/) at commit
+700f64d29bca1413a0c1fbab435852a5cc2e47c7. scripts/fetch_brand.py fetches them from that commit and checks their
+SHA-256; a test fails if a file differs.
+
+Licence: Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International
+(https://creativecommons.org/licenses/by-nc-nd/4.0/), as in the LICENSE of that repository. The artwork is not part
+of the licence of this website or of the KoG client code. It must not be altered, recoloured, cropped, redrawn or
+used to make another mark, and the owners of the brand have approved this use. The black variants are used on light
+backgrounds and the white variants on dark backgrounds.
