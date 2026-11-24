@@ -778,6 +778,22 @@ class ClientOnlyTests(unittest.TestCase):
         self.assertEqual(ALLOWED, {})
 
 
+class VerifyCommandTests(unittest.TestCase):
+    def test_the_command_of_the_safety_card_follows_the_chosen_system(self):
+        home = (SITE / "index.html").read_text()
+        self.assertIn('<code>gh attestation verify <span id="verify-file">KoG-Client-linux.tar.xz</span> -R KoG-teeworlds/kog-client</code>', home)
+        script = (SITE / "assets" / "app.js").read_text()
+        packages = set(re.findall(r"KoG-Client-[\w.]+", (SITE / "assets" / "manifest.js").read_text()))
+        shown = set(re.findall(r'"(KoG-Client-[\w.]+)"', script.split("VERIFY_FILES")[1].split("}")[0]))
+        self.assertEqual(shown, {"KoG-Client-windows.zip", "KoG-Client-macOS.dmg", "KoG-Client-linux.tar.xz"})
+        self.assertTrue(shown <= packages, shown - packages)
+        for system in ("windows", "macos", "linux"):
+            self.assertIn('id="tab-%s"' % system, home)
+            self.assertIn('"tab-" + id', script)
+        self.assertIn("showVerifyFile(os)", script)
+        self.assertIn('typeof text === "function"', script)
+
+
 class WeightTests(unittest.TestCase):
     def test_total_weight_of_html_css_and_js_stays_under_budget(self):
         total = sum(p.stat().st_size for p in SITE.rglob("*") if p.is_file() and p.suffix in (".html", ".css", ".js"))
