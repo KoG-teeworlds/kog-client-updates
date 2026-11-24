@@ -14,7 +14,7 @@
 <tbody>
 <tr><td>Stable channel</td><td>Install updates only with two signatures: a CI key and the owner's hardware key. See <a href="/technical/release-signing/">release signing</a>.</td><td><span class="state planned">Planned</span> keys are placeholders</td></tr>
 <tr><td>Join proof</td><td>Prove its account to servers that support it, with a signature from the device key. See <a href="/technical/login/#join-proof">login</a>.</td><td><span class="state partial">Partly built</span> signing code only, nothing is sent</td></tr>
-<tr><td>Hello</td><td>Announce which KoG features it supports (<code>kog_hello</code>). See <a href="/technical/protocol/">protocol</a>.</td><td><span class="state planned">Planned</span></td></tr>
+<tr><td>Hello</td><td>Announce which KoG features it supports (<code>kog_hello</code>). See <a href="/technical/architecture/#protocol">protocol</a>.</td><td><span class="state planned">Planned</span></td></tr>
 <tr><td>Opt-in statistics</td><td>Send client-side network statistics to servers that ask for them, only if you switch it on (<code>kog_telemetry</code>).</td><td><span class="state planned">Planned</span></td></tr>
 <tr><td>Signed list of known builds</td><td>Read <code>builds/allowlist.json</code>, a signed list of released build hashes and recalls, to tell you that your build is known or withdrawn.</td><td><span class="state planned">Planned</span> nothing is served</td></tr>
 <tr><td>Federated login</td><td>Possibly prove the account to servers that are not run by KoG. Nothing about how is decided.</td><td><span class="state planned">Planned</span> an idea</td></tr>

@@ -28,42 +28,39 @@
 <header class="site">
 <div class="wrap bar">
 <a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav class="main" aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 <li><a href="../../">Download</a></li>
-<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="../../technical/" aria-current="page">Docs</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
-<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
 <li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
-</ul></nav>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></details></nav>
+<button type="button" class="search-open" data-index="../../assets/search-index.json" hidden><span>Search</span><kbd>/</kbd></button>
 </div>
 </header>
 <div class="wrap">
 <div class="docs no-toc">
 <nav class="docs-nav" aria-label="Documentation">
 <details class="nav-toggle"><summary>Contents</summary>
-<div class="search" data-index="../../assets/search-index.json" hidden></div>
+<button type="button" class="search-open side" data-index="../../assets/search-index.json" hidden><span>Search the documentation</span><kbd>/</kbd></button>
 <ul class="groups">
 <li><details class="group" open><summary>Start</summary><ul>
 <li><a href="../../technical/">Overview</a></li>
-<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/architecture/">Architecture</a> <span class="state partial">Partly built</span></li>
 </ul></details></li>
 <li><details class="group" open><summary>Updates and trust</summary><ul>
 <li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
 <li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
 <li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Account</summary><ul>
-<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Network</summary><ul>
-<li><a href="../../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Data and building</summary><ul>
-<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
-<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Security</summary><ul>
 <li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account and data</summary><ul>
+<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Build</summary><ul>
+<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
@@ -74,7 +71,7 @@
 </nav>
 
 <main id="main" class="doc">
-<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Glossary</li></ol></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Docs</a></li><li aria-current="page">Glossary</li></ol></nav>
 <header class="doc-head">
 <div>
 <p class="eyebrow">Project</p>
@@ -180,7 +177,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../../privacy/">Privacy</a></li>
-<li><a href="../../technical/">Technical</a></li>
+<li><a href="../../technical/">Docs</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
@@ -190,5 +187,6 @@
 </div>
 </footer>
 <script src="../../assets/docs.js" defer></script>
+<script src="../../assets/nav.js" defer></script>
 </body>
 </html>

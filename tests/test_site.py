@@ -118,6 +118,10 @@ class Page(HTMLParser):
                 self.disclaimer_text.append(data)
 
 
+def script_file(path, ref):
+    return SITE / ref.lstrip("/") if ref.startswith("/") else (path.parent / ref).resolve()
+
+
 def squash(text):
     return " ".join(text.split())
 
@@ -226,6 +230,7 @@ class ShellTests(unittest.TestCase):
                 header = re.search(r'<header class="site">.*?</header>', text, re.S).group(0)
                 header = re.sub(r'(href|src)="(?:\.{1,2}/)*/?', r'\1="', header)
                 header = header.replace(' aria-current="page"', "")
+                header = re.sub(r'data-index="[^"]*"', 'data-index=""', header)
                 headers.add(header)
                 order = [text.index(marker) for marker in ('<aside class="disclaimer"', '<a class="skip"', '<header class="site">', '<footer class="site">')]
                 self.assertEqual(order, sorted(order))
@@ -349,7 +354,7 @@ class PageTests(unittest.TestCase):
 
     def test_redirect_pages_show_the_banner_and_a_link(self):
         redirects = [p for p in PAGES if redirect_target(parse(p))]
-        self.assertEqual(sorted(p.parent.name for p in redirects), ["changelog", "faq", "install", "updates", "verify"])
+        self.assertEqual(sorted(p.parent.name for p in redirects), ["changelog", "faq", "install", "protocol", "updates", "verify"])
         for path in redirects:
             with self.subTest(page=path.parent.name):
                 page = parse(path)
@@ -519,7 +524,7 @@ class TechnicalPageTests(unittest.TestCase):
 
     def test_planned_things_are_labelled_planned(self):
         for page, things in {
-            "technical/protocol": ["kog_hello", "kog_telemetry"],
+            "technical/architecture": ["kog_hello", "kog_telemetry"],
             "technical/roadmap": ["builds/allowlist.json", "Join proof", "Federated login", "Code signing"],
             "technical/index": ["builds/allowlist.json", "kog_hello", "kog_telemetry"],
         }.items():
@@ -620,7 +625,7 @@ class DocsTests(unittest.TestCase):
             else:
                 self.assertRegex(head, r'<h1>[^<]*<span class="state', name)
                 self.assertRegex(head, r"<dt>Status</dt>", name)
-        for name in ["architecture", "update-channel", "release-signing", "verify", "login", "protocol", "privacy", "build", "security", "roadmap"]:
+        for name in ["architecture", "update-channel", "release-signing", "verify", "login", "privacy", "build", "security", "roadmap"]:
             self.assertIn("technical/" + name, build_site.DOCS_ORDER)
             self.assertNotIn("technical/" + name, self.REFERENCE)
 
@@ -691,7 +696,6 @@ class DocsTests(unittest.TestCase):
             "technical/update-channel": "update-flow",
             "technical/login": "login",
             "technical/release-signing": "release-signing",
-            "technical/protocol": None,
         }
         for page, diagram in wanted.items():
             if diagram:
@@ -716,8 +720,19 @@ class DocsTests(unittest.TestCase):
         import json
 
         index = json.loads((SITE / "assets" / "search-index.json").read_text())
-        self.assertEqual([e["u"] for e in index], [url_of(p) for p in DOC_PAGES])
-        for entry, path in zip(index, DOC_PAGES):
+        urls = [e["u"] for e in index]
+        self.assertEqual([u for u in urls if u in {url_of(p) for p in DOC_PAGES}], [url_of(p) for p in DOC_PAGES])
+        self.assertIn("/", urls)
+        self.assertIn("/privacy/", urls)
+        self.assertNotIn("/technical/protocol/", urls)
+        self.assertNotIn("/404.html", urls)
+        by_url = {e["u"]: e for e in index}
+        for path in PAGES:
+            if redirect_target(parse(path)) or path.name == "404.html":
+                continue
+            self.assertIn(url_of(path), by_url, url_of(path))
+        for path in [SITE / "index.html", SITE / "privacy" / "index.html"] + DOC_PAGES:
+            entry = by_url[url_of(path)]
             ids = parse(path).ids
             self.assertTrue(entry["t"] and entry["d"])
             for ident, text in entry["h"]:
@@ -832,6 +847,59 @@ class HomeCheckTests(unittest.TestCase):
             self.assertIn("try {", before)
 
 
+class NavigationTests(unittest.TestCase):
+    def test_the_top_bar_has_the_six_entries_in_order_and_marks_the_section(self):
+        expected = [("Download", "/"), ("Docs", "/technical/"), ("Privacy", "/privacy/")]
+        for path in PAGES:
+            if redirect_target(parse(path)):
+                continue
+            text = path.read_text()
+            nav = re.search(r'<nav class="main".*?</nav>', text, re.S).group(0)
+            labels = re.findall(r"<li><a href=\"[^\"]*\"[^>]*>([^<]+)", nav)
+            self.assertEqual([l.strip() for l in labels], ["Download", "Docs", "Privacy", "Source", "Approved clients", "kog.tw"], path)
+            current = re.findall(r'<a href="([^"]*)" aria-current="page">([^<]+)', nav)
+            url = url_of(path)
+            want = [label for label, prefix in expected if (prefix == "/" and url == "/") or (prefix != "/" and url.startswith(prefix))]
+            self.assertEqual([c[1] for c in current], want, path)
+
+    def test_the_menu_works_without_script_and_the_search_button_needs_it(self):
+        for path in PAGES:
+            text = path.read_text()
+            self.assertIn('<details class="menu"><summary>Menu</summary>', text)
+            self.assertRegex(text, r'<button type="button" class="search-open" data-index="[^"]+" hidden>')
+
+    def test_the_palette_is_keyboard_first_and_loads_its_index_on_first_use(self):
+        script = (SITE / "assets" / "nav.js").read_text()
+        for needle in ('"ArrowDown"', '"ArrowUp"', '"Enter"', "showModal", "metaKey", "ctrlKey", '"/"', "aria-activedescendant", "IntersectionObserver", "prefers-reduced-motion"):
+            self.assertIn(needle, script)
+        # the index is fetched inside loadIndex only, never at load
+        self.assertEqual(script.count("fetch("), 1)
+        self.assertLess(script.index("function loadIndex"), script.index("fetch("))
+        self.assertLess((SITE / "assets" / "nav.js").stat().st_size, 20 * 1024)
+
+    def test_the_sidebar_opens_the_headings_of_the_current_page_and_breadcrumbs_are_everywhere(self):
+        text = (SITE / "technical" / "update-channel" / "index.html").read_text()
+        nav = re.search(r'<nav class="docs-nav".*?</nav>', text, re.S).group(0)
+        self.assertIn('<ul class="inpage">', nav)
+        self.assertEqual(nav.count('<ul class="inpage">'), 1)
+        for path in DOC_PAGES + [SITE / "privacy" / "index.html"]:
+            self.assertIn('<nav class="crumbs" aria-label="Breadcrumb">', path.read_text(), path)
+
+    def test_the_docs_landing_page_has_paths_by_audience(self):
+        text = (SITE / "technical" / "index.html").read_text()
+        block = re.search(r'<ul class="map paths">(.*?)</ul>', text, re.S).group(1)
+        hrefs = re.findall(r'href="([^"]+)"', block)
+        self.assertEqual(hrefs, ["/#install", "/technical/verify/", "/technical/build/", "/technical/architecture/"])
+        for label in ("I just want to play", "I want to check a download", "I want to build it", "I want to understand how it works"):
+            self.assertIn(label, block)
+
+    def test_the_merged_protocol_page_redirects_and_its_section_exists(self):
+        old = SITE / "technical" / "protocol" / "index.html"
+        self.assertEqual(redirect_target(parse(old)), "https://client.kog.tw/technical/architecture/#protocol")
+        self.assertIn("protocol", parse(SITE / "technical" / "architecture" / "index.html").ids)
+        self.assertEqual(len(build_site.DOCS_ORDER), 11)
+
+
 class PerformanceTests(unittest.TestCase):
     """Checks that need no network: things that are known to make pages heavy or janky must not come back."""
 
@@ -884,7 +952,7 @@ class PerformanceTests(unittest.TestCase):
             page = parse(path)
             files = ["assets/style.css", "assets/kog-logo.svg", "favicon.svg", "assets/fonts/saira-cond-700-latin.woff2"]
             files += [("../" * (len(path.relative_to(SITE).parts) - 1)).replace("../", "") + s for s in []]
-            files += [s for s in (r[2].split("../")[-1] for r in page.refs if r[0] == "script")]
+            files += [s for s in (r[2].split("../")[-1].lstrip("/") for r in page.refs if r[0] == "script")]
             if "<code" in text or "facts" in text or path == SITE / "index.html":
                 files.append("assets/fonts/spline-mono-latin.woff2")
             figure = re.search(r'<img src="[^"]*assets/diagrams/([\w-]+-light\.svg)"', text)
@@ -910,7 +978,7 @@ class WeightTests(unittest.TestCase):
         base = sum((SITE / "assets" / name).stat().st_size for name in ["style.css", "kog-logo.svg"])
         for path in PAGES:
             with self.subTest(page=url_of(path)):
-                scripts = sum((path.parent / ref).resolve().stat().st_size for ref in parse(path).scripts)
+                scripts = sum(script_file(path, ref).stat().st_size for ref in parse(path).scripts)
                 if path in DOC_PAGES:
                     text = path.read_text()
                     pictures = sum(
@@ -946,12 +1014,14 @@ class ScriptTests(unittest.TestCase):
                     self.assertTrue(url == "https://github.com" or url.startswith("https://github.com/KoG-teeworlds/"), url)
 
     def test_home_page_loads_only_the_two_local_scripts(self):
-        self.assertEqual(parse(SITE / "index.html").scripts, ["assets/manifest.js", "assets/app.js"])
+        self.assertEqual(parse(SITE / "index.html").scripts, ["assets/manifest.js", "assets/app.js", "assets/nav.js"])
         for path in PAGES:
             if path in DOC_PAGES:
-                self.assertEqual(parse(path).scripts, [("../" * (len(path.relative_to(SITE).parts) - 1)) + "assets/docs.js"], path)
+                up = "../" * (len(path.relative_to(SITE).parts) - 1)
+                self.assertEqual(parse(path).scripts, [up + "assets/docs.js", up + "assets/nav.js"], path)
             elif path.name != "index.html" or path.parent != SITE:
-                self.assertEqual(parse(path).scripts, [], path)
+                up = "/" if path.name == "404.html" else "../" * (len(path.relative_to(SITE).parts) - 1)
+                self.assertEqual(parse(path).scripts, [up + "assets/nav.js"], path)
 
 
 class StyleTests(unittest.TestCase):

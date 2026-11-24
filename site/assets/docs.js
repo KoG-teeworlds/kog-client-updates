@@ -30,7 +30,7 @@
     manifest: "update-channel/#manifest", signature: "update-channel/#signature", "client-checks": "update-channel/#client-checks",
     rotation: "update-channel/#rotation", verify: "verify/", "verify-hash": "verify/#verify-hash",
     "verify-attestation": "verify/#verify-attestation", "verify-manifest": "verify/#verify-manifest", login: "login/",
-    privacy: "privacy/", messages: "protocol/", repro: "build/#repro", build: "build/", signing: "release-signing/",
+    privacy: "privacy/", messages: "architecture/#protocol", repro: "build/#repro", build: "build/", signing: "release-signing/",
     security: "security/", history: "roadmap/#history"
   };
   var overview = document.body.getAttribute("data-overview");
@@ -145,89 +145,5 @@
       });
     });
     for (var w = 0; w < scrollers.length; w++) watch.observe(scrollers[w]);
-  }
-
-  // Search over the titles and headings of the documentation.
-  var box = document.querySelector(".search");
-  if (box && window.fetch) {
-    var index = null;
-    var input = el("input", "");
-    input.type = "search";
-    input.id = "docs-search";
-    input.setAttribute("autocomplete", "off");
-    input.setAttribute("placeholder", "Search the documentation");
-    var label = el("label", "Search the documentation", "visually-hidden");
-    label.setAttribute("for", "docs-search");
-    var results = el("ul", "");
-    results.setAttribute("aria-label", "Search results");
-    var hint = el("p", "", "hint");
-    var idle = function () {
-      hint.textContent = "";
-      hint.appendChild(document.createTextNode("Press "));
-      hint.appendChild(el("kbd", "/"));
-      hint.appendChild(document.createTextNode(" to search from anywhere"));
-    };
-    idle();
-    box.appendChild(label);
-    box.appendChild(input);
-    box.appendChild(hint);
-    box.appendChild(results);
-    box.hidden = false;
-
-    var load = function (then) {
-      if (index) return then();
-      window.fetch(box.getAttribute("data-index"), { credentials: "omit" })
-        .then(function (response) { if (!response.ok) throw new Error("no index"); return response.json(); })
-        .then(function (data) { index = data; then(); })
-        .catch(function () { box.hidden = true; });
-    };
-
-    var show = function () {
-      var words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
-      results.textContent = "";
-      if (!words.length) { idle(); return; }
-      hint.textContent = "";
-      var found = [];
-      var matches = function (text) {
-        text = text.toLowerCase();
-        return words.every(function (word) { return text.indexOf(word) !== -1; });
-      };
-      var base = box.getAttribute("data-index").replace("assets/search-index.json", "");
-      for (var p = 0; p < index.length; p++) {
-        var page = index[p];
-        if (matches(page.t + " " + page.d)) found.push({ href: base + page.u.slice(1), text: page.t });
-        for (var h = 0; h < page.h.length; h++) {
-          if (matches(page.h[h][1])) found.push({ href: base + page.u.slice(1) + "#" + page.h[h][0], text: page.t + " › " + page.h[h][1] });
-        }
-      }
-      hint.textContent = found.length ? found.length + (found.length === 1 ? " result" : " results") : "Nothing found";
-      for (var r = 0; r < found.length && r < 10; r++) {
-        var item = el("li", "");
-        var link = el("a", found[r].text);
-        link.setAttribute("href", found[r].href);
-        item.appendChild(link);
-        results.appendChild(item);
-      }
-    };
-
-    document.addEventListener("keydown", function (event) {
-      var target = event.target;
-      var typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
-      if (event.key === "/" && !typing && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        event.preventDefault();
-        var nav = document.querySelector(".nav-toggle");
-        if (nav) nav.setAttribute("open", "");
-        input.focus();
-      }
-    });
-    input.addEventListener("focus", function () { load(function () {}); });
-    input.addEventListener("input", function () { load(show); });
-    input.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") { input.value = ""; show(); }
-      if (event.key === "Enter") {
-        var first = results.querySelector("a");
-        if (first) window.location.href = first.getAttribute("href");
-      }
-    });
   }
 })();

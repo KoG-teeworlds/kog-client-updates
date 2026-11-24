@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<title>Protocol | KoG Client technical documentation</title>
-<meta name="description" content="What the KoG client adds to the game connection: nothing is built yet. The planned KoG messages and capabilities, the compatibility rule, and a placeholder for the protocol reference.">
-<link rel="canonical" href="https://client.kog.tw/technical/protocol/">
+<meta http-equiv="refresh" content="0; url=https://client.kog.tw/technical/architecture/#protocol">
+<meta name="robots" content="noindex">
+<title>Protocol | KoG Client</title>
+<meta name="description" content="This page moved. The protocol section is now part of the architecture page.">
+<link rel="canonical" href="https://client.kog.tw/technical/architecture/#protocol">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KoG Client">
-<meta property="og:title" content="Protocol | KoG Client technical documentation">
-<meta property="og:description" content="What the KoG client adds to the game connection: nothing is built yet. The planned KoG messages and capabilities, the compatibility rule, and a placeholder for the protocol reference.">
-<meta property="og:url" content="https://client.kog.tw/technical/protocol/">
+<meta property="og:title" content="Protocol | KoG Client">
+<meta property="og:description" content="This page moved. The protocol section is now part of the architecture page.">
+<meta property="og:url" content="https://client.kog.tw/technical/architecture/#protocol">
 <meta property="og:image" content="https://client.kog.tw/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,119 +24,29 @@
 <link rel="preload" href="../../assets/fonts/saira-cond-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../../assets/style.css">
 </head>
-<body class="docs-page">
+<body>
 <aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap bar">
 <a class="brand" href="../../"><img src="../../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav class="main" aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 <li><a href="../../">Download</a></li>
-<li><a href="../../technical/" aria-current="page">Technical</a></li>
+<li><a href="../../technical/" aria-current="page">Docs</a></li>
+<li><a href="../../privacy/">Privacy</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
-<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
 <li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
-</ul></nav>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></details></nav>
+<button type="button" class="search-open" data-index="../../assets/search-index.json" hidden><span>Search</span><kbd>/</kbd></button>
 </div>
 </header>
 <div class="wrap">
-<div class="docs">
-<nav class="docs-nav" aria-label="Documentation">
-<details class="nav-toggle"><summary>Contents</summary>
-<div class="search" data-index="../../assets/search-index.json" hidden></div>
-<ul class="groups">
-<li><details class="group" open><summary>Start</summary><ul>
-<li><a href="../../technical/">Overview</a></li>
-<li><a href="../../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Updates and trust</summary><ul>
-<li><a href="../../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
-<li><a href="../../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
-<li><a href="../../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Account</summary><ul>
-<li><a href="../../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Network</summary><ul>
-<li><a href="../../technical/protocol/" aria-current="page">Protocol</a> <span class="state planned">Planned</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Data and building</summary><ul>
-<li><a href="../../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
-<li><a href="../../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Security</summary><ul>
-<li><a href="../../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Project</summary><ul>
-<li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a></li>
-</ul></details></li>
-</ul>
-</details>
-</nav>
-<aside class="docs-toc" aria-label="On this page">
-<details class="toc-toggle" open><summary>On this page</summary>
-<ul>
-<li><a href="#built">What is built</a>
-</li>
-<li><a href="#planned">What is planned</a>
-</li>
-<li><a href="#reference">Protocol reference</a>
-</li>
-</ul>
-</details>
-</aside>
-<main id="main" class="doc">
-<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Protocol</li></ol></nav>
-<header class="doc-head">
-<div>
-<p class="eyebrow">Network</p>
-<h1>Protocol <span class="state planned">Planned</span></h1>
-<p class="lead">The KoG client plays on any DDNet or Teeworlds server, and a KoG server can be joined by any DDNet client. This page says what the KoG client adds on top of the game connection. Today that is nothing; what is planned is described from the client's side.</p>
-</div>
-<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Planned</dd><dt>Section</dt><dd>Network</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
-</header>
-<section class="sec">
-<h2 id="built">What is built <a class="anchor" href="#built" aria-label="Link to this section: What is built">#</a></h2>
-<p>As built, the KoG client defines <strong>no new network message types</strong>: its protocol definition (<code>datasrc/network.py</code>) has no KoG entry, and the client sends no KoG message. What exists in the source is preparation:</p>
-<ul>
-<li><code>src/engine/shared/kog_protocol.h</code> reserves a message name for the hello (<code>kog-client-hello@kog.tw</code>) and a few capability flags. The header says it holds names only: "the messages are registered together with their handlers".</li>
-<li>The client announces <strong>no capability</strong>: <code>CKogHello::Capabilities()</code> returns <code>KOG_CAP_NONE</code>.</li>
-<li>The console command <code>kog_version</code> prints the client name, version and what it is based on. It is local.</li>
-<li>The settings <code>kog_hello</code> and <code>kog_telemetry</code> exist, are off, and say "not implemented yet".</li>
-<li>The version string the client sends when joining a server names this client instead of TClient, as any DDNet client sends one.</li>
-</ul>
-
-<div class="callout note" role="note">
-<p>The compatibility rule (a design rule, not a test). A client feature must not change what is sent on the wire to servers that do not know about it. Stock DDNet servers and clients keep working unchanged.</p>
-</div>
-</section>
-<section class="sec">
-<h2 id="planned">What is planned <a class="anchor" href="#planned" aria-label="Link to this section: What is planned">#</a></h2>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
-<thead><tr><th>Feature</th><th>From the client's side</th><th>State</th></tr></thead>
-<tbody>
-<tr><td>Hello with capabilities</td><td>The client would tell a server which KoG features it understands, if <code>kog_hello</code> is on. The setting exists but nothing is implemented.</td><td><span class="state planned">Planned</span></td></tr>
-<tr><td>Join proof</td><td>The client answers a challenge with a signature from its device key. The signing code exists; see <a href="/technical/login/#join-proof">login</a>.</td><td><span class="state partial">Partly built</span> no transport</td></tr>
-<tr><td>Network statistics</td><td>Opt-in, off by default (<code>kog_telemetry</code>), only to servers that ask for them. Nothing is sent today.</td><td><span class="state planned">Planned</span></td></tr>
-<tr><td>Integrity statement</td><td>A statement about which build the client is. It can never prove that the client is unmodified; see <a href="/technical/roadmap/#integrity">roadmap</a>.</td><td><span class="state planned">Planned</span></td></tr>
-</tbody>
-</table></div>
-<p>None of these has a wire format that is decided. Their descriptions will be added to this documentation when they are built and approved for publication.</p>
-</section>
-<section class="sec">
-<h2 id="reference">Protocol reference <a class="anchor" href="#reference" aria-label="Link to this section: Protocol reference">#</a></h2>
-<div class="callout planned" role="note">
-<p>Planned. This section will list one page per feature of the KoG additions: the message, its fields, when the client sends it, and its switch. No such page exists yet, because no feature is built, so nothing is listed. A feature appears here only when the owner has decided that its description is public.</p>
-</div>
-</section>
-<nav class="pager" aria-label="Pagination">
-<a class="pager-prev" rel="prev" href="../../technical/login/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Login</span></a>
-<a class="pager-next" rel="next" href="../../technical/privacy/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Privacy</span></a>
-</nav>
-<p class="edit"><a href="https://github.com/KoG-teeworlds/kog-client-updates/edit/main/content/technical/protocol.html">Edit this page on GitHub</a></p>
+<main id="main" class="page prose">
+<h1>This page moved</h1>
+<p class="lead">The protocol section is now in <a href="/technical/architecture/#protocol">Architecture: what the client adds to the game connection</a>.</p>
+<p class="small">You are sent there automatically. If nothing happens, use the link.</p>
 </main>
-</div>
 </div>
 <footer class="site">
 <div class="wrap">
@@ -145,7 +57,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../../privacy/">Privacy</a></li>
-<li><a href="../../technical/">Technical</a></li>
+<li><a href="../../technical/">Docs</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
@@ -154,6 +66,6 @@
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
 </footer>
-<script src="../../assets/docs.js" defer></script>
+<script src="../../assets/nav.js" defer></script>
 </body>
 </html>

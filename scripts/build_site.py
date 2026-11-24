@@ -25,10 +25,11 @@ DISCLAIMER_LINK = "Just want to play?"
 
 NAV = [
     ("index", "Download", ""),
-    ("technical", "Technical", "technical/"),
+    ("technical", "Docs", "technical/"),
+    ("privacy", "Privacy", "privacy/"),
     (None, "Source", REPO),
-    (None, "kog.tw", WEBSITE),
     (None, "Approved clients", CLIENTS),
+    (None, "kog.tw", WEBSITE),
 ]
 
 SOURCE = "https://github.com/KoG-teeworlds/kog-client-updates"
@@ -37,11 +38,9 @@ DIAGRAMS = ROOT / "diagrams"
 # The documentation under /technical/: groups of the sidebar, and with them the order of the Previous and Next links.
 DOCS = [
     ("Start", ["technical", "technical/architecture"]),
-    ("Updates and trust", ["technical/update-channel", "technical/release-signing", "technical/verify"]),
-    ("Account", ["technical/login"]),
-    ("Network", ["technical/protocol"]),
-    ("Data and building", ["technical/privacy", "technical/build"]),
-    ("Security", ["technical/security"]),
+    ("Updates and trust", ["technical/update-channel", "technical/release-signing", "technical/verify", "technical/security"]),
+    ("Account and data", ["technical/login", "technical/privacy"]),
+    ("Build", ["technical/build"]),
     ("Project", ["technical/roadmap", "technical/glossary"]),
 ]
 DOCS_ORDER = [name for _, names in DOCS for name in names]
@@ -119,7 +118,7 @@ def strip_tags(text):
 HEADING = re.compile(r"<h([23])((?:\s[^>]*)?)>(.*?)</h\1>", re.S)
 
 
-def add_heading_anchors(body):
+def add_heading_anchors(body, links=True):
     """Gives every h2 and h3 an id and a link to itself. Returns the new body and the list of (level, id, text)."""
     used = set(re.findall(r'\bid="([^"]+)"', body))
     taken = set()
@@ -140,6 +139,8 @@ def add_heading_anchors(body):
         taken.add(ident)
         found.append((int(level), ident, strip_tags(inner)))
         link = '<a class="anchor" href="#%s" aria-label="Link to this section: %s">#</a>' % (ident, html.escape(strip_tags(inner), quote=True))
+        if not links:
+            return "<h%s%s>%s</h%s>" % (level, attrs, inner, level)
         return "<h%s%s>%s %s</h%s>" % (level, attrs, inner, link, level)
 
     return HEADING.sub(one, body), found
@@ -239,7 +240,13 @@ def docs_sidebar(name, pages, base):
             current = ' aria-current="page"' if member == name else ""
             badge = pages[member][0].get("status")
             mark = ' <span class="state %s">%s</span>' % (badge, STATUS[badge]) if badge else ""
-            items.append('<li><a href="%s%s/"%s>%s</a>%s</li>' % (base, member, current, html.escape(nav_title(member, pages)), mark))
+            inline = ""
+            if member == name:
+                _, own = add_heading_anchors(pages[member][1])
+                tops = [h for h in own if h[0] == 2]
+                if len(tops) > 1:
+                    inline = '\n<ul class="inpage">%s</ul>' % "".join('<li><a href="#%s">%s</a></li>' % (i, html.escape(t)) for _, i, t in tops)
+            items.append('<li><a href="%s%s/"%s>%s</a>%s%s</li>' % (base, member, current, html.escape(nav_title(member, pages)), mark, inline))
         groups.append(
             '<li><details class="group" open><summary>%s</summary><ul>\n%s\n</ul></details></li>' % (html.escape(label), "\n".join(items))
         )
@@ -247,7 +254,7 @@ def docs_sidebar(name, pages, base):
     return (
         '<nav class="docs-nav" aria-label="Documentation">\n'
         '<details class="nav-toggle"><summary>Contents</summary>\n'
-        '<div class="search" data-index="%s" hidden></div>\n'
+        '<button type="button" class="search-open side" data-index="%s" hidden><span>Search the documentation</span><kbd>/</kbd></button>\n'
         '<ul class="groups">\n%s\n</ul>\n</details>\n</nav>' % (index, "\n".join(groups))
     )
 
@@ -305,9 +312,9 @@ def docs_pager(name, pages, base):
 def docs_breadcrumb(name, pages, base):
     items = ['<li><a href="%s">KoG Client</a></li>' % (base or "./")]
     if name == "technical":
-        items.append('<li aria-current="page">Technical</li>')
+        items.append('<li aria-current="page">Docs</li>')
     else:
-        items.append('<li><a href="%stechnical/">Technical</a></li>' % base)
+        items.append('<li><a href="%stechnical/">Docs</a></li>' % base)
         items.append('<li aria-current="page">%s</li>' % html.escape(nav_title(name, pages)))
     return '<nav class="crumbs" aria-label="Breadcrumb"><ol>%s</ol></nav>' % "".join(items)
 
@@ -351,15 +358,16 @@ def docs_main(name, meta, body, pages, base):
 
 def search_index(pages):
     entries = []
-    for name in DOCS_ORDER:
+    order = ["index"] + DOCS_ORDER + sorted(n for n in pages if n not in DOCS_ORDER and n not in ("index", "404") and "redirect" not in pages[n][0])
+    for name in order:
         meta, body = pages[name]
         _, headings = add_heading_anchors(body)
         entries.append(
             {
                 "u": url_path(name),
-                "t": nav_title(name, pages),
+                "t": "Download" if name == "index" else (nav_title(name, pages) if name in DOCS_ORDER else meta["title"].split(" | ")[0].split(":")[0]),
                 "d": meta["description"],
-                "h": [[ident, text] for _, ident, text in headings],
+                "h": [[ident, text] for level, ident, text in headings if level == 2],
             }
         )
     return json.dumps(entries, ensure_ascii=False, separators=(",", ":")) + "\n"
@@ -388,16 +396,21 @@ def render(name, meta, body, marker=None, pages=None):
         target = ORIGIN + redirect
         refresh = '<meta http-equiv="refresh" content="0; url=%s">\n<meta name="robots" content="noindex">\n' % html.escape(target, quote=True)
         canonical = target
-    script = ""
+    script = '<script src="%sassets/nav.js" defer></script>\n' % base
     if name == "index":
-        script = '<script src="assets/manifest.js"></script>\n<script src="assets/app.js"></script>\n'
+        script = '<script src="assets/manifest.js"></script>\n<script src="assets/app.js"></script>\n' + script
     docs = is_doc(name)
     if docs:
-        script = '<script src="%sassets/docs.js" defer></script>\n' % base
+        script = '<script src="%sassets/docs.js" defer></script>\n' % base + script
         main = docs_main(name, meta, body, pages, base)
         main = '<div class="wrap">\n%s\n</div>' % main
     else:
-        main = '<div class="wrap">\n<main id="main" class="page %s">\n%s\n</main>\n</div>' % ("home" if name == "index" else "prose", body)
+        crumbs = ""
+        if name != "404" and not redirect:
+            body = add_heading_anchors(body, links=False)[0]
+        if name not in ("index", "404") and not redirect:
+            crumbs = '<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="%s">KoG Client</a></li><li aria-current="page">%s</li></ol></nav>\n' % (base or "./", html.escape(meta.get("nav") or meta["title"].split(" | ")[0]))
+        main = '<div class="wrap">\n<main id="main" class="page %s">\n%s%s\n</main>\n</div>' % ("home" if name == "index" else "prose", crumbs, body)
     body_class = (' class="docs-page"' + (' data-overview=""' if name == "technical" else "")) if docs else ""
     build_meta = '<meta name="kog-site-build" content="%s">\n' % html.escape(marker, quote=True) if marker else ""
     return f"""<!doctype html>
@@ -429,9 +442,10 @@ def render(name, meta, body, marker=None, pages=None):
 <header class="site">
 <div class="wrap bar">
 <a class="brand" href="{base or './'}"><img src="{base}assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav class="main" aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 {chr(10).join(nav)}
-</ul></nav>
+</ul></details></nav>
+<button type="button" class="search-open" data-index="{base}assets/search-index.json" hidden><span>Search</span><kbd>/</kbd></button>
 </div>
 </header>
 {main}
@@ -444,7 +458,7 @@ def render(name, meta, body, marker=None, pages=None):
 <li><a href="{REPO}">Source code</a></li>
 <li><a href="{REPO}/issues">Issues</a></li>
 <li><a href="{base}privacy/">Privacy</a></li>
-<li><a href="{base}technical/">Technical</a></li>
+<li><a href="{base}technical/">Docs</a></li>
 <li><a href="{REPO}/blob/main/SECURITY.md">Security</a></li>
 <li><a href="{REPO}/blob/main/license.txt">Licence</a></li>
 <li><a href="{REPO}/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
