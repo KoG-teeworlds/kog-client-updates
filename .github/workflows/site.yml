@@ -19,3 +19,26 @@ jobs:
         run: python3 scripts/build_site.py --check
       - name: Page checks
         run: python3 -B -m unittest discover -s tests -v
+
+  diagrams:
+    # The SVGs of the diagrams are committed, so the site build and its tests need neither Node nor a browser. This job
+    # shows that diagrams/*.mmd still render with the pinned Mermaid CLI and the Chrome of the runner, and that the lock
+    # file of sources and configuration is the committed one. The SVG bytes are not compared: they depend on the fonts
+    # of the machine.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Render the diagrams with the system Chrome
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+        run: |
+          google-chrome --version
+          node --version
+          python3 scripts/render_diagrams.py
+      - name: The lock file is unchanged
+        run: git diff --exit-code -- diagrams/render.lock.json
+      - name: Every diagram has both themes
+        run: python3 scripts/render_diagrams.py --check
