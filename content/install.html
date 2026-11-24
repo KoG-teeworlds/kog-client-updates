@@ -1,0 +1,43 @@
+@title Install and first start | KoG Client
+@description How to install the KoG client on Windows, macOS and Linux, which warnings to expect, where its data lives and how to remove it.
+
+<h1>Install and first start</h1>
+<p class="warn">There is no release yet. This page describes what the packages are built to contain.</p>
+<p class="note">The program inside the packages is still called <code>DDNet</code> (<code>DDNet.exe</code> on Windows). It has not been renamed yet.</p>
+
+<h2>Windows</h2>
+<ol>
+<li>Download <code>KoG-Client-windows.zip</code> and <a href="../verify/">verify it</a>.</li>
+<li>Extract the whole zip into a folder. Do not run the program from inside the zip.</li>
+<li>Start <code>DDNet.exe</code>.</li>
+</ol>
+<p>The program is not code-signed, so Windows SmartScreen may say "Windows protected your PC". Choose "More info", then "Run anyway", but only after you have verified the download.</p>
+
+<h2>macOS</h2>
+<ol>
+<li>Download <code>KoG-Client-macOS.dmg</code> and <a href="../verify/">verify it</a>.</li>
+<li>Open the disk image and drag the app into Applications.</li>
+</ol>
+<p>The release workflow does not sign or notarise the macOS build. The build files have a signing option, but it is off. macOS will refuse to open the app on the first try. In Finder, Control-click the app and choose "Open", then "Open" again. Or open System Settings, then Privacy &amp; Security, and choose "Open Anyway" after the first attempt. There are no in-app updates on macOS yet: download new versions by hand.</p>
+
+<h2>Linux</h2>
+<ol>
+<li>Download <code>KoG-Client-linux.tar.xz</code> and <a href="../verify/">verify it</a>.</li>
+<li>Extract it, open the folder and start <code>./DDNet</code>.</li>
+</ol>
+<p>Only 64-bit x86 is built. The libraries it needs are the same as for DDNet. If it does not start, run it from a terminal and read the message.</p>
+
+<h2>Android and iOS</h2>
+<p>Not available.</p>
+
+<h2>Where your data lives</h2>
+<p>The client uses the DDNet data folder:</p>
+<ul>
+<li>Windows: <code>%APPDATA%\DDNet</code></li>
+<li>macOS: <code>~/Library/Application Support/DDNet</code></li>
+<li>Linux: <code>~/.local/share/ddnet</code></li>
+</ul>
+<p>Settings are kept in <code>settings_ddnet.cfg</code> and <code>settings_tclient.cfg</code>. So the client shares its settings, skins and maps with an installed DDNet, and with TClient. Back up the folder before the first start if you care about your settings. Programs can sit side by side, but do not run two of them at the same time.</p>
+
+<h2>Uninstall</h2>
+<p>Delete the program folder, or the app on macOS. Your data stays in the data folder above. Delete that folder too if you want to remove your settings; this also removes the settings of a DDNet install that uses the same folder.</p>
