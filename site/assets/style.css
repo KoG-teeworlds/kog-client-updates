@@ -274,7 +274,7 @@ h2:hover > .anchor, h3:hover > .anchor, .anchor:focus-visible { opacity: 1; }
 .callout.planned::before { content: "\25D4"; background: none; color: var(--muted); font: 1.4rem/1.5rem system-ui, sans-serif; }
 .callout p { margin: 0.65rem 0; }
 
-.table-scroll { overflow-x: auto; margin: 1.1rem 0; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(to right, var(--surface) 30%, transparent) left / 2rem 100% no-repeat local, linear-gradient(to left, var(--surface) 30%, transparent) right / 2rem 100% no-repeat local, linear-gradient(to right, var(--line), transparent) left / 0.75rem 100% no-repeat scroll, linear-gradient(to left, var(--line), transparent) right / 0.75rem 100% no-repeat scroll, var(--surface); }
+.table-scroll { overflow-x: auto; margin: 1.1rem 0; border: 1px solid var(--line); border-radius: var(--radius); background-color: var(--surface); box-shadow: var(--shadow), var(--edge); }
 .table-scroll table { margin: 0; min-width: 34rem; }
 .doc th { background: var(--code-bg); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .doc td, .doc th { overflow-wrap: break-word; min-width: 5.5rem; padding: 0.8rem 1rem; }
@@ -289,7 +289,7 @@ h2:hover > .anchor, h3:hover > .anchor, .anchor:focus-visible { opacity: 1; }
 .codeblock pre { margin: 0; padding-right: 5rem; }
 .copy { position: absolute; top: 0.45rem; right: 0.45rem; font: inherit; font-size: 0.8rem; font-weight: 600; min-height: 2rem; padding: 0 0.7rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; }
 .copy:hover { border-color: var(--link); }
-.doc pre { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.1rem; background: linear-gradient(to right, var(--code-bg) 30%, transparent) left / 2rem 100% no-repeat local, linear-gradient(to left, var(--code-bg) 30%, transparent) right / 2rem 100% no-repeat local, linear-gradient(to right, var(--line), transparent) left / 0.75rem 100% no-repeat scroll, linear-gradient(to left, var(--line), transparent) right / 0.75rem 100% no-repeat scroll, var(--code-bg); }
+.doc pre { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.1rem; background-color: var(--code-bg); }
 .doc pre[data-lang]::before { content: attr(data-lang); display: block; margin-bottom: 0.5rem; font: 700 0.7rem/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 pre code { user-select: text; white-space: pre; }
 .live { position: absolute; left: -999px; }
@@ -384,7 +384,8 @@ dl.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(21r
 /* The shell is the same on every page: banner, header, one container, footer. Pages differ only inside the container.
    The look follows the family of kog.tw: a dark lit room, hairline rules, raised surfaces with a top edge, squared
    condensed buttons, one orange accent. Styles only; nothing else is shared. */
-body { background-image: radial-gradient(1200px 560px at 50% -180px, color-mix(in srgb, var(--brand) var(--glow), transparent), transparent 62%), radial-gradient(820px 560px at 112% -120px, color-mix(in srgb, var(--focus) calc(var(--glow) * 0.6), transparent), transparent 56%); background-repeat: no-repeat; background-attachment: fixed; }
+body { position: relative; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(1200px 560px at 50% -180px, color-mix(in srgb, var(--brand) var(--glow), transparent), transparent 62%), radial-gradient(820px 560px at 112% -120px, color-mix(in srgb, var(--focus) calc(var(--glow) * 0.6), transparent), transparent 56%); background-repeat: no-repeat; }
 main.page { padding: 0 0 3rem; }
 main.prose { padding-top: 1.5rem; }
 main.prose > * { max-width: 80ch; }
@@ -502,3 +503,19 @@ main.page h2:first-child { margin-top: 0.5rem; }
 .vpanel { display: none; }
 #tab-windows:checked ~ #safe .vpanel[data-os="windows"], #tab-macos:checked ~ #safe .vpanel[data-os="macos"], #tab-linux:checked ~ #safe .vpanel[data-os="linux"] { display: block; }
 #faq { margin-top: 3.5rem; }
+
+/* Cheap rendering: long sections below the first one are laid out and painted when they come near the screen. */
+.doc > .sec ~ .sec, main.doc .sec + .sec { content-visibility: auto; contain-intrinsic-size: auto 700px; }
+.is-scrollable { box-shadow: inset -14px 0 10px -10px color-mix(in srgb, var(--fg) 28%, transparent); }
+.table-scroll.is-scrollable { box-shadow: var(--shadow), inset -14px 0 10px -10px color-mix(in srgb, var(--fg) 28%, transparent); }
+/* The build card keeps its height while the build is looked up, so nothing moves when it fills in. */
+#build-info { min-height: 19rem; }
+.skeleton { display: grid; gap: 0.9rem; margin: 1rem 0; }
+.skeleton i { display: block; height: 1rem; border-radius: var(--radius-sm); background: var(--surface-2); animation: pulse 1.4s ease-in-out infinite; }
+.skeleton i:nth-child(1) { width: 60%; }
+.skeleton i:nth-child(2) { width: 45%; }
+.skeleton i:nth-child(3) { height: 2.75rem; }
+.skeleton i:nth-child(4) { height: 4rem; }
+@keyframes pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
+@media print { .doc > .sec ~ .sec, main.doc .sec + .sec { content-visibility: visible; } }

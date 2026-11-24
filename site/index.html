@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="assets/fonts/saira-cond-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -54,8 +55,8 @@
 </div>
 <p class="badge-row"><span id="build-badge" class="state planned">Loading</span></p>
 <div id="build-info" aria-live="polite">
-<p class="empty">Looking for the newest build.</p>
-<p class="actions"><a class="button secondary" href="https://github.com/KoG-teeworlds/kog-client/releases">All builds on GitHub</a></p>
+<div class="skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<p class="small">Looking for the newest build. <a href="https://github.com/KoG-teeworlds/kog-client/releases">All builds on GitHub</a></p>
 </div>
 </aside>
 </section>
@@ -83,6 +84,7 @@
 <li><strong>Open it</strong><span>and drag <code>KoG-Client</code> onto Applications.</span></li>
 <li><strong>Start it</strong><span>The first time macOS refuses: hold Control, click the app, choose "Open", then "Open" again.</span></li>
 </ol>
+<p class="note"><strong>Apple Silicon Macs only.</strong> The disk image is built for Apple Silicon (M-series) Macs. There is no build for Intel Macs.</p>
 <p class="note"><strong>"macOS cannot check the app"?</strong> That is normal: Apple has not signed or checked it. Or open System Settings, Privacy &amp; Security, and click "Open Anyway" after the first try. Only do this if you got the file from this page.</p>
 </div>
 <div id="install-linux" class="panel">
