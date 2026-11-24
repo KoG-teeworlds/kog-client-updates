@@ -280,7 +280,7 @@ pre code { user-select: text; white-space: pre; }
 .diagram-scroll { overflow-x: auto; text-align: center; }
 .diagram img { max-width: 100%; min-width: min(100%, 36rem); height: auto; display: inline-block; }
 .diagram figcaption { color: var(--muted); font-size: 0.95rem; margin-top: 0.6rem; }
-.diagram.tall img { min-width: 0; width: auto; max-height: 38rem; }
+.diagram.tall img { min-width: 0; max-width: 100%; }
 .diagram-src { margin: 0.5rem 0 0; }
 .diagram-src pre { margin: 0.25rem 0; font-size: 0.85rem; }
 
