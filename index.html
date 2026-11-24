@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="682b1cf40d0d7dc27552befdf0ed3e2ab1db939f">
+<meta name="kog-site-build" content="6aca5dbaff32bf56d24c810bb5a097cf93655bfa">
 <title>KoG Client: a test client for King of Gores</title>
 <meta name="description" content="A reference implementation for testing new KoG features such as the KoG login. You do not need it to play on KoG. Test builds for Windows, macOS and Linux.">
 <link rel="canonical" href="https://client.kog.tw/">
@@ -128,7 +128,7 @@
 </div>
 <div class="safe-check">
 <p class="small">One of the three checks, with the GitHub CLI. It tells you where the file was built, not that the code is good:</p>
-<pre class="sh" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<pre class="sh" tabindex="0"><code>gh attestation verify <span id="verify-file">KoG-Client-linux.tar.xz</span> -R KoG-teeworlds/kog-client</code></pre>
 </div>
 </section>
 
