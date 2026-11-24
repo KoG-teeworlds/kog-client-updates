@@ -1,0 +1,69 @@
+name: Trust list mirror
+
+# The signed trust list of the client (list/<channel>/trust.json on client.kog.tw) is put on the branch published when the
+# website says it changed: a repository_dispatch event with the channel and the file, no timer. The list is signed, so this job
+# does not trust the sender: scripts/publish_trust.py publishes only a file that a committed anchor (trust/anchors.json) signed,
+# for the environment of the channel, not expired and newer than the one already there; it touches nothing else.
+# The push is a plain push; a rejected one (kog-client publishes to the same branch) is fetched and applied again, no force push.
+# Event: gh api repos/KoG-teeworlds/kog-client-updates/dispatches -f event_type=kog-trust -f 'client_payload[channel]=stable' -f 'client_payload[file]=<the file>'
+# The file has to fit the payload of an event (about 60 KB).
+
+on:
+  repository_dispatch:
+    types: [kog-trust]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Channel (stable, canary or dev); the file is the file trust/incoming.json of the branch the workflow runs on
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CHANNEL: ${{ github.event.client_payload.channel || inputs.channel }}
+      PAYLOAD_FILE: ${{ github.event.client_payload.file }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The list as it came
+        run: |
+          case "$CHANNEL" in stable | canary | dev) ;; *) echo "::error::unknown channel"; exit 1 ;; esac
+          if [ -n "$PAYLOAD_FILE" ]; then printf '%s' "$PAYLOAD_FILE" > "$RUNNER_TEMP/trust.json"; else cp trust/incoming.json "$RUNNER_TEMP/trust.json"; fi
+      - name: Put the list on the branch published
+        run: |
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::$header"
+          remote="https://github.com/$GITHUB_REPOSITORY"
+          pub="$RUNNER_TEMP/published"
+          for attempt in 1 2 3 4 5; do
+            rm -rf "$pub"
+            git -c "http.https://github.com/.extraheader=$header" clone --quiet --depth 1 --branch published "$remote" "$pub"
+            python3 scripts/publish_trust.py "$CHANNEL" "$RUNNER_TEMP/trust.json" "$pub"
+            if git -C "$pub" diff --cached --quiet; then
+              echo "the branch published has this list already"
+              exit 0
+            fi
+            git -C "$pub" -c user.name=kog-release -c user.email=kog-release@users.noreply.github.com \
+              commit --quiet -m "Trust list of $CHANNEL"
+            if git -c "http.https://github.com/.extraheader=$header" -C "$pub" push --quiet origin HEAD:published; then
+              echo "pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "::warning::push rejected on attempt $attempt, the branch published has a newer tip: again on top of it"
+            sleep $((attempt * 3))
+          done
+          echo "::error::the list could not be pushed in 5 attempts"
+          exit 1
