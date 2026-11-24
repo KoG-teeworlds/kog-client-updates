@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<meta name="kog-site-build" content="1e54064ab06def93a8670bf4094382c635116a04">
+<meta http-equiv="refresh" content="0; url=https://client.kog.tw/#install">
+<meta name="robots" content="noindex">
 <title>Install and first start | KoG Client</title>
-<meta name="description" content="How to install the KoG client on Windows, macOS and Linux, which warnings to expect, where its data lives and how to remove it.">
-<link rel="canonical" href="https://client.kog.tw/install/">
+<meta name="description" content="This page moved. Install and first start is now part of the start page, section Install and start.">
+<link rel="canonical" href="https://client.kog.tw/#install">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KoG Client">
 <meta property="og:title" content="Install and first start | KoG Client">
-<meta property="og:description" content="How to install the KoG client on Windows, macOS and Linux, which warnings to expect, where its data lives and how to remove it.">
-<meta property="og:url" content="https://client.kog.tw/install/">
+<meta property="og:description" content="This page moved. Install and first start is now part of the start page, section Install and start.">
+<meta property="og:url" content="https://client.kog.tw/#install">
 <meta property="og:image" content="https://client.kog.tw/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,65 +25,25 @@
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap">
 <a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav aria-label="Main"><ul>
-<li><a href="../#download">Download</a></li>
-<li><a href="../verify/">Verify</a></li>
-<li><a href="../install/" aria-current="page">Install</a></li>
-<li><a href="../updates/">Updates</a></li>
-<li><a href="../privacy/">Privacy</a></li>
-<li><a href="../faq/">FAQ</a></li>
-<li><a href="../changelog/">Changelog</a></li>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../">Download</a></li>
+<li><a href="../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
 </ul></nav>
-<a class="back" href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span><span class="visually-hidden"> (back to the KoG website)</span></a>
 </div>
 </header>
-<div class="strip"><div class="wrap"><p><strong>Best effort only.</strong> Volunteer-maintained, no warranty or support guarantee. You do not need this client to play on KoG.</p></div></div>
 <main id="main">
 <div class="wrap">
-<h1>Install and first start</h1>
-<p class="warn">There is no stable release yet. This page describes the packages of the canary builds.</p>
-<p class="note">The program inside the packages is still called <code>DDNet</code> (<code>DDNet.exe</code> on Windows). It has not been renamed yet.</p>
-
-<h2>Windows</h2>
-<ol>
-<li>Download <code>KoG-Client-windows.zip</code> and <a href="../verify/">verify it</a>.</li>
-<li>Extract the whole zip into a folder. Do not run the program from inside the zip.</li>
-<li>Start <code>DDNet.exe</code>.</li>
-</ol>
-<p>The program is not code-signed, so Windows SmartScreen may say "Windows protected your PC". Choose "More info", then "Run anyway", but only after you have verified the download.</p>
-
-<h2>macOS</h2>
-<ol>
-<li>Download <code>KoG-Client-macOS.dmg</code> and <a href="../verify/">verify it</a>.</li>
-<li>Open the disk image and drag the app into Applications.</li>
-</ol>
-<p>The release workflow does not sign or notarise the macOS build. The build files have a signing option, but it is off. macOS will refuse to open the app on the first try. In Finder, Control-click the app and choose "Open", then "Open" again. Or open System Settings, then Privacy &amp; Security, and choose "Open Anyway" after the first attempt. There are no in-app updates on macOS yet: download new versions by hand.</p>
-
-<h2>Linux</h2>
-<ol>
-<li>Download <code>KoG-Client-linux.tar.xz</code> and <a href="../verify/">verify it</a>.</li>
-<li>Extract it, open the folder and start <code>./DDNet</code>.</li>
-</ol>
-<p>Only 64-bit x86 is built. The libraries it needs are the same as for DDNet. If it does not start, run it from a terminal and read the message.</p>
-
-<h2>Android and iOS</h2>
-<p>Not available.</p>
-
-<h2>Where your data lives</h2>
-<p>The client uses the DDNet data folder:</p>
-<ul>
-<li>Windows: <code>%APPDATA%\DDNet</code></li>
-<li>macOS: <code>~/Library/Application Support/DDNet</code></li>
-<li>Linux: <code>~/.local/share/ddnet</code></li>
-</ul>
-<p>Settings are kept in <code>settings_ddnet.cfg</code> and <code>settings_tclient.cfg</code>. So the client shares its settings, skins and maps with an installed DDNet, and with TClient. Back up the folder before the first start if you care about your settings. Programs can sit side by side, but do not run two of them at the same time.</p>
-
-<h2>Uninstall</h2>
-<p>Delete the program folder, or the app on macOS. Your data stays in the data folder above. Delete that folder too if you want to remove your settings; this also removes the settings of a DDNet install that uses the same folder.</p>
+<h1>This page moved</h1>
+<p class="lead">Install and first start is now in <a href="/#install">the start page, section Install and start</a>.</p>
+<p class="small">You are sent there automatically. If nothing happens, use the link.</p>
 </div>
 </main>
 <footer class="site">
@@ -92,6 +55,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../privacy/">Privacy</a></li>
+<li><a href="../technical/">Technical</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>

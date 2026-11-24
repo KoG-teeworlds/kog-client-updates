@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<meta name="kog-site-build" content="1e54064ab06def93a8670bf4094382c635116a04">
+<meta http-equiv="refresh" content="0; url=https://client.kog.tw/technical/#channels">
+<meta name="robots" content="noindex">
 <title>Updates and channels | KoG Client</title>
-<meta name="description" content="How the KoG client updates itself, why a compromised download host cannot hurt you, and the planned stable, canary and dev channels.">
-<link rel="canonical" href="https://client.kog.tw/updates/">
+<meta name="description" content="This page moved. Updates and channels is now part of Technical: build channels and the signed manifest.">
+<link rel="canonical" href="https://client.kog.tw/technical/#channels">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KoG Client">
 <meta property="og:title" content="Updates and channels | KoG Client">
-<meta property="og:description" content="How the KoG client updates itself, why a compromised download host cannot hurt you, and the planned stable, canary and dev channels.">
-<meta property="og:url" content="https://client.kog.tw/updates/">
+<meta property="og:description" content="This page moved. Updates and channels is now part of Technical: build channels and the signed manifest.">
+<meta property="og:url" content="https://client.kog.tw/technical/#channels">
 <meta property="og:image" content="https://client.kog.tw/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,63 +25,25 @@
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
+<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>The KoG client is a reference implementation.</strong> It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login. You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported. Builds are for testing and may change or break. <a href="https://kog.tw/">Just want to play?<span aria-hidden="true"> &#8594;</span></a></p></div></aside>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap">
 <a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav aria-label="Main"><ul>
-<li><a href="../#download">Download</a></li>
-<li><a href="../verify/">Verify</a></li>
-<li><a href="../install/">Install</a></li>
-<li><a href="../updates/" aria-current="page">Updates</a></li>
-<li><a href="../privacy/">Privacy</a></li>
-<li><a href="../faq/">FAQ</a></li>
-<li><a href="../changelog/">Changelog</a></li>
+<nav class="main" aria-label="Main"><ul>
+<li><a href="../">Download</a></li>
+<li><a href="../technical/">Technical</a></li>
+<li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+<li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
 </ul></nav>
-<a class="back" href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span><span class="visually-hidden"> (back to the KoG website)</span></a>
 </div>
 </header>
-<div class="strip"><div class="wrap"><p><strong>Best effort only.</strong> Volunteer-maintained, no warranty or support guarantee. You do not need this client to play on KoG.</p></div></div>
 <main id="main">
 <div class="wrap">
-<h1>Updates and channels</h1>
-<p class="lead">How the client updates itself, and why a taken-over download host cannot push a bad update.</p>
-<p class="warn">The updater is not switched on in the builds made so far. This page describes the design that is in the source.</p>
-
-<h2>How an update works</h2>
-<ul>
-<li>Linux (64-bit) and Windows (64-bit) can update inside the app. On macOS you download new versions by hand.</li>
-<li>At start the client downloads two small files, <code>update.json</code> and <code>update.json.sig</code>, from <code>client.kog.tw</code>. The setting is <code>kog_check_updates</code> and it is on by default. Nothing is installed without asking.</li>
-<li>The client trusts only an Ed25519 public key compiled into it: not the host, not TLS, not GitHub. A manifest without a valid signature is ignored.</li>
-<li>After the signature it checks the format, the version number and the validity window (at most 90 days). Expired manifests are refused. A manifest with a lower sequence number than the last one seen is refused, so an old manifest cannot be replayed. The new version must be higher than the running one.</li>
-<li>Every file is checked against its SHA-256 and size. Downloads may only come from <code>github.com/KoG-teeworlds/kog-client/releases/download/</code> or <code>client.kog.tw</code>.</li>
-<li>Replaced files are backed up and put back if anything fails.</li>
-<li>If GitHub or <code>client.kog.tw</code> cannot be reached, the client keeps running the version you have.</li>
-</ul>
-
-<h2>Channels <span class="planned">Planned</span></h2>
-<p>Only the stable channel is described in the committed update documentation. Canary and dev are in progress.</p>
-<div class="table-scroll">
-<table>
-<thead><tr><th>Channel</th><th>What it is</th><th>Who it is for</th></tr></thead>
-<tbody>
-<tr><td>Stable</td><td>Tagged releases from the <code>main</code> branch</td><td>Everyone</td></tr>
-<tr><td>Canary</td><td>Builds of <code>main</code> after each merge</td><td>Testers</td></tr>
-<tr><td>Dev</td><td>Builds of the <code>dev</code> branch</td><td>Testers and developers</td></tr>
-</tbody>
-</table>
-</div>
-<ul>
-<li>Each channel has its own signing keys, and the client checks the channel name inside the signed manifest. A problem in a test channel cannot sign a stable release.</li>
-<li>You choose a channel in the client settings, never through a server message or a link. Going back to stable from a newer channel will be an explicit step that you confirm, because it installs an older version.</li>
-<li>Canary and dev builds can break. They may need a clean reinstall of the stable version.</li>
-</ul>
-
-<h2>When an update fails</h2>
-<p>If something goes wrong while files are being replaced, the old files are put back. <span class="planned">Planned</span> An automatic rollback when a new version fails to start twice in a row.</p>
-
-<h2>Who can publish an update</h2>
-<p>A release is signed in the public <code>kog-client-updates</code> repository by a job that needs the maintainer's approval. The private signing key is stored as a write-only secret there and is not in any repository or log. The full design and threat model are in the <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">update channel document</a>. You can check a manifest yourself: see <a href="../verify/">Verify your download</a>.</p>
+<h1>This page moved</h1>
+<p class="lead">Updates and channels is now in <a href="/technical/#channels">Technical: build channels and the signed manifest</a>.</p>
+<p class="small">You are sent there automatically. If nothing happens, use the link.</p>
 </div>
 </main>
 <footer class="site">
@@ -90,6 +55,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../privacy/">Privacy</a></li>
+<li><a href="../technical/">Technical</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
