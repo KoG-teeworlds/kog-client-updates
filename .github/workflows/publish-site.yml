@@ -1,0 +1,88 @@
+name: Publish site
+
+# A merged change of the page goes live by itself: the site is built, only the site files are put on top of the
+# newest tip of the branch published (scripts/publish_site.py refuses everything else: the manifests, canary/, dev/,
+# stable/, releases.json), and the live page is checked for the build marker of this commit.
+# kog-client publishes signed manifests to the same branch. The two never overwrite each other: a push that is not a
+# fast-forward is rejected by git, then this job fetches the newer tip and applies its files again. No force push.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - content/**
+      - site/**
+      - scripts/build_site.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The site is built from content/
+        run: |
+          python3 scripts/build_site.py --check
+          python3 -B -m unittest discover -s tests -v
+      - name: Build the site with the marker of this commit
+        run: |
+          mkdir "$RUNNER_TEMP/stage"
+          cp -R site/. "$RUNNER_TEMP/stage/"
+          python3 scripts/build_site.py --out "$RUNNER_TEMP/stage" --marker "$SHA"
+          grep -q "name=\"kog-site-build\" content=\"$SHA\"" "$RUNNER_TEMP/stage/index.html"
+      - name: Put the site files on the branch published
+        run: |
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          echo "::add-mask::$header"
+          remote="https://github.com/$GITHUB_REPOSITORY"
+          pub="$RUNNER_TEMP/published"
+          for attempt in 1 2 3 4 5; do
+            rm -rf "$pub"
+            git -c "http.https://github.com/.extraheader=$header" clone --quiet --depth 1 --branch published "$remote" "$pub"
+            python3 scripts/publish_site.py "$RUNNER_TEMP/stage" "$pub"
+            if git -C "$pub" diff --cached --quiet; then
+              echo "the branch published has this site already"
+              exit 0
+            fi
+            git -C "$pub" -c user.name=kog-release -c user.email=kog-release@users.noreply.github.com \
+              commit --quiet -m "Site from ${SHA:0:12}" -m "source commit: $SHA
+          run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            if git -c "http.https://github.com/.extraheader=$header" -C "$pub" push --quiet origin HEAD:published; then
+              date +%s > "$RUNNER_TEMP/pushed"
+              echo "pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "::warning::push rejected on attempt $attempt, the branch published has a newer tip: again on top of it"
+            sleep $((attempt * 3))
+          done
+          echo "::error::the site could not be pushed in 5 attempts"
+          exit 1
+      - name: The live page has this commit
+        run: |
+          url="https://client.kog.tw/?kog-site-build=$SHA"
+          for attempt in $(seq 1 18); do
+            if curl -fsS --max-time 20 -H 'Cache-Control: no-cache' "$url" 2> /dev/null | grep -q "name=\"kog-site-build\" content=\"$SHA\""; then
+              echo "live after attempt $attempt: https://client.kog.tw/ has build $SHA"
+              exit 0
+            fi
+            echo "attempt $attempt: not live yet"
+            sleep 10
+          done
+          echo "::error::https://client.kog.tw/ does not show build $SHA after 3 minutes: the Pages build failed or a signed publish replaced the page, see the Pages builds of this repository"
+          exit 1

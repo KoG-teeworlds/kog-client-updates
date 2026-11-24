@@ -64,7 +64,7 @@ def prefix(name):
     return "../"
 
 
-def render(name, meta, body):
+def render(name, meta, body, marker=None):
     base = prefix(name)
     title = meta["title"]
     description = meta["description"]
@@ -82,6 +82,7 @@ def render(name, meta, body):
     script = ""
     if name == "index":
         script = '<script src="assets/manifest.js"></script>\n<script src="assets/app.js"></script>\n'
+    build_meta = '<meta name="kog-site-build" content="%s">\n' % html.escape(marker, quote=True) if marker else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -89,7 +90,7 @@ def render(name, meta, body):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="{CSP}">
 <meta name="referrer" content="no-referrer">
-<title>{html.escape(title)}</title>
+{build_meta}<title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description, quote=True)}">
 <link rel="canonical" href="{canonical}">
 <link rel="icon" href="{base}favicon.svg" type="image/svg+xml">
@@ -147,13 +148,13 @@ def sitemap(names):
     return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n%s\n</urlset>\n' % entries
 
 
-def build():
+def build(marker=None):
     outputs = {}
     names = []
     for path in sorted(CONTENT.glob("*.html")):
         name = path.stem
         meta, body = read_page(path)
-        outputs[output_path(name)] = render(name, meta, body)
+        outputs[output_path(name)] = render(name, meta, body, marker)
         names.append(name)
     names.sort(key=lambda n: (n != "index", n))
     outputs[SITE / "sitemap.xml"] = sitemap(names)
@@ -161,9 +162,14 @@ def build():
 
 
 def main():
-    check = "--check" in sys.argv
+    args = sys.argv[1:]
+    check = "--check" in args
+    marker = args[args.index("--marker") + 1] if "--marker" in args else None
+    out = Path(args[args.index("--out") + 1]).resolve() if "--out" in args else None
     stale = []
-    for path, text in build().items():
+    for path, text in build(marker).items():
+        if out:
+            path = out / path.relative_to(SITE)
         if check:
             if not path.exists() or path.read_text() != text:
                 stale.append(str(path.relative_to(ROOT)))
