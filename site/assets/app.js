@@ -54,10 +54,23 @@
     return entry;
   }
 
+  var VERIFY_FILES = { windows: "KoG-Client-windows.zip", macos: "KoG-Client-macOS.dmg", linux: "KoG-Client-linux.tar.xz" };
+
+  function showVerifyFile(os) {
+    var name = document.getElementById("verify-file");
+    if (name && VERIFY_FILES[os]) name.textContent = VERIFY_FILES[os];
+  }
+
+  ["windows", "macos", "linux"].forEach(function (id) {
+    var radio = document.getElementById("tab-" + id);
+    if (radio) radio.addEventListener("change", function () { if (radio.checked) showVerifyFile(id); });
+  });
+
   function showInstallFor(os) {
     if (!os) return;
     var radio = document.getElementById("tab-" + os);
     if (radio) radio.checked = true;
+    showVerifyFile(os);
     ["windows", "macos", "linux"].forEach(function (id) {
       var label = document.querySelector('.tablist label[for="tab-' + id + '"]');
       if (label) label.classList.toggle("yours", id === os);
@@ -78,7 +91,7 @@
     button.setAttribute("type", "button");
     button.setAttribute("aria-label", label);
     button.addEventListener("click", function () {
-      navigator.clipboard.writeText(text).then(function () {
+      navigator.clipboard.writeText(typeof text === "function" ? text() : text).then(function () {
         button.textContent = "Copied";
         setTimeout(function () { button.textContent = "Copy"; }, 2000);
       }, function () {
@@ -262,7 +275,7 @@
 
   var command = document.querySelector(".safe-check pre");
   if (command) {
-    var copyCommand = copyButton(command.textContent.replace(/\n$/, ""), "Copy the command");
+    var copyCommand = copyButton(function () { return command.textContent.replace(/\n$/, ""); }, "Copy the command");
     if (copyCommand) {
       var holder = el("div", "", "codeblock");
       command.parentNode.insertBefore(holder, command);
@@ -279,5 +292,6 @@
       if (Manifest.CHANNELS.indexOf(channel) >= 0) load(channel, false);
     });
   }
+  showInstallFor(detectOs());
   load("stable", true);
 })();
