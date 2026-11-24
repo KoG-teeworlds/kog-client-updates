@@ -76,6 +76,8 @@
 <ul>
 <li><a href="#table">What is sent where</a>
 </li>
+<li><a href="#update-request">The update request</a>
+</li>
 <li><a href="#not-present">What is not there</a>
 </li>
 <li><a href="#opt-out">Switching things off</a>
@@ -95,7 +97,7 @@
 </header>
 <section class="sec">
 <div class="callout note" role="note">
-<p>Provenance. The list comes from reading the client's source and <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">docs/PRIVACY.md</a>, which was also checked by running the client for 20 seconds without joining a server. Where this page and PRIVACY.md differ, this page follows the source: the update check does start (see below), and the default device name has no host name in it.</p>
+<p>Provenance. The list comes from reading the client's source and <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">docs/PRIVACY.md</a>, which was also checked by running the client for 20 seconds without joining a server.</p>
 </div>
 </section>
 <section class="sec">
@@ -103,7 +105,7 @@
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>To</th><th>When</th><th>By</th><th>What besides your IP address</th><th>Setting</th></tr></thead>
 <tbody>
-<tr><td><code>client.kog.tw</code> and <code>raw.githubusercontent.com</code> (fallback), GitHub releases</td><td>Update check at start, in builds with the updater (Windows, Linux releases); a download only if you accept</td><td>Updater</td><td>Nothing</td><td><code>kog_check_updates</code> (on), <code>kog_update_channel</code></td></tr>
+<tr><td><code>client.kog.tw</code> and <code>raw.githubusercontent.com</code> (fallback), GitHub releases</td><td>Update check at start in builds with the updater compiled in (release, canary and dev builds); a download only if you confirm. On macOS the check runs, but the list has no macOS file, so nothing is offered</td><td>Updater</td><td>Nothing</td><td><code>kog_check_updates</code> (on), <code>kog_update_channel</code></td></tr>
 <tr><td><code>kog.tw</code> (or <code>cl_kog_account_url</code>)</td><td>Only when you press Log in or Log out, and only if <code>cl_kog_login</code> is on (canary and dev builds)</td><td>Login component</td><td>The OAuth code and PKCE verifier, a device name (a neutral default such as <code>KoG Client (Linux)</code>, no host name), the <strong>public</strong> device key</td><td><code>cl_kog_login</code>, <code>cl_kog_account_url</code>, <code>cl_kog_device_name</code></td></tr>
 <tr><td><code>master1.ddnet.org</code> to <code>master4.ddnet.org</code></td><td>At start (server list)</td><td>Inherited from DDNet</td><td>Nothing</td><td>None; the server browser needs it</td></tr>
 <tr><td><code>info.ddnet.org</code></td><td>At start (communities and countries)</td><td>Inherited</td><td>Nothing. Your player name is added only when <code>br_indicate_finished</code> is on.</td><td><code>br_indicate_finished</code> (off)</td></tr>
@@ -117,6 +119,17 @@
 </tbody>
 </table></div>
 <p><strong>Retention.</strong> The client does not keep a record of these requests: login requests are not logged and the browser link is logged by host only. How long the receiving hosts keep your IP address is up to them; this documentation does not state it. For GitHub, see GitHub's own privacy statement; for the KoG account service, see kog.tw.</p>
+</section>
+<section class="sec">
+<h2 id="update-request">The update request <a class="anchor" href="#update-request" aria-label="Link to this section: The update request">#</a></h2>
+<ul>
+<li><strong>User agent:</strong> <code>DDNet &lt;version&gt; (platform; arch)</code>. The client still reports the DDNet program name here.</li>
+<li><strong>No other headers</strong> are added, and <strong>no install id</strong> is sent: the random value <code>kog_install_id</code> (used for the staged rollout) stays on your computer.</li>
+<li>The check only <strong>fetches and verifies</strong> the signed manifest. A <strong>download needs your confirmation</strong>.</li>
+<li>If there is no connection, the settings show "no connection" and nothing else happens.</li>
+<li>The fallback host <code>raw.githubusercontent.com/KoG-teeworlds/kog-client-updates/published/</code> is used if client.kog.tw fails. The stable channel will also fetch <code>update.json.sigb</code>.</li>
+<li>Switch it off with <code>kog_check_updates 0</code>.</li>
+</ul>
 </section>
 <section class="sec">
 <h2 id="not-present">What is not there <a class="anchor" href="#not-present" aria-label="Link to this section: What is not there">#</a></h2>

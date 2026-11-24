@@ -145,7 +145,7 @@ cmake --build . --config Release --target game-client</code></pre>
 <tr><td><code>-DDEV=ON</code></td><td>OFF</td><td>Faster development build, Debug by default; no packaging files.</td></tr>
 </tbody>
 </table></div>
-<p>Without <code>-DAUTOUPDATE=ON</code> your build has no updater at all. This differs from what <code>docs/BUILDING.md</code> still says (the DDNet default of ON for Windows and Linux); the <code>CMakeLists.txt</code> of this repository sets OFF.</p>
+<p>Without <code>-DAUTOUPDATE=ON</code> your build has no updater at all: <code>AUTOUPDATE</code> is OFF by default in the <code>CMakeLists.txt</code> of this repository. It is ON in the package workflow, which builds the canary, dev and release packages, and not in the pull request and <code>main</code> CI builds.</p>
 </section>
 <section class="sec">
 <h2 id="tests">Tests <a class="anchor" href="#tests" aria-label="Link to this section: Tests">#</a></h2>

@@ -51,6 +51,10 @@
 </table>
 <p>A process running as the same user can still ask the keychain or read the file. This is the same protection as an SSH key. The key is never in the config, logs, screenshots or crash reports, and memory buffers are wiped after use.</p>
 
+<div class="callout planned" role="note">
+<p>Planned change, not built. The device key may move from the operating system's keychain to a plain key file with an optional passphrase. This page describes what is built today: the keychain on macOS and Windows. It will be updated when the change is merged.</p>
+</div>
+
 <h2 id="sent">What is sent where</h2>
 <p>Nothing leaves your computer except requests to the account service (<code>kog.tw</code> by default): the discovery document, the token exchange, user info, device registration and removal. For registration the client sends the OAuth code and the PKCE verifier, the device name and the <strong>public</strong> half of the device key. The private key, the password and the access token never go anywhere else. The browser link is logged by host only, never with its query, and requests are not logged.</p>
 
