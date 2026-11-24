@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
+<meta name="kog-site-build" content="426c5533c6d40ee9c101431bfaf193cda845e603">
 <title>Update channel | KoG Client technical documentation</title>
 <meta name="description" content="The signed update manifest of the KoG client: format 2, every field, the signature file, key ids, per-channel keys, rollback protection and how the client verifies an update.">
 <link rel="canonical" href="https://client.kog.tw/technical/update-channel/">
@@ -67,7 +67,7 @@
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
 </ul>
 </details>
@@ -121,7 +121,7 @@
 <p>A client checks a channel only against that channel's own keys, and the channel name is inside the signed text, so a manifest signed for one channel is refused on another.</p>
 
 <figure class="diagram" id="figure-channel-keys">
-<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/channel-keys-dark.svg"><img src="../../assets/diagrams/channel-keys-light.svg" alt="Diagram of the three channels and their keys. The client has the public keys of every channel built in. The stable channel is checked against two CI keys and the owner&#x27;s hardware keys and needs both kinds of signature. The canary and dev channels each have their own two CI keys and need one signature. A key of one channel cannot be used for another channel, because the channel name is inside the signed manifest." width="998" height="535" loading="lazy" decoding="async"></picture></div>
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/channel-keys-dark.svg"><img src="../../assets/diagrams/channel-keys-light.svg" alt="Diagram of the three channels and their keys. The client has the public keys of every channel built in. The stable channel is checked against two CI keys and the owner&#x27;s hardware keys and needs both kinds of signature. The canary and dev channels each have their own two CI keys and need one signature. A key of one channel cannot be used for another channel, because the channel name is inside the signed manifest." width="998" height="535" decoding="async"></picture></div>
 <figcaption>Channel and key layout. The public keys are compiled into the client; the private halves are never in it. <a href="../../assets/diagrams/channel-keys-light.svg">Open the diagram alone</a></figcaption>
 <details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>flowchart LR
   subgraph CL[&quot;Compiled into the client: kog_update_pubkey.h&quot;]
@@ -226,9 +226,9 @@
 </ol>
 <p>A key that is not shipped in a client release is never made active. For stable, the owner's hardware keys (<code>KOG_STABLE_OWNER_KEYS</code>) and an offline backup CI key (<code>KOG_STABLE_BACKUP_CI_KEYS</code>) are separate from the CI keys. The stable keys in the client are still placeholders (<code>KOG_UPDATE_KEYS_PLACEHOLDER_STABLE 1</code>): a channel with placeholder keys does not update.</p>
 </section>
-<section class="sec">
+<section class="sec long">
 <h2 id="client-checks">How the client verifies an update <a class="anchor" href="#client-checks" aria-label="Link to this section: How the client verifies an update">#</a></h2>
-<figure class="diagram" id="figure-update-flow">
+<figure class="diagram tall" id="figure-update-flow">
 <div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/update-flow-dark.svg"><img src="../../assets/diagrams/update-flow-light.svg" alt="Sequence diagram of an update check. The client asks client.kog.tw for the manifest and its signature. If that fails it asks a fallback host with the same files. It verifies the signature against the keys of its own channel, then checks channel, sequence, expiry, version and rollout. It downloads each changed file from the allowed hosts, checks size and SHA-256 before anything is replaced, keeps the previous version, and restores it if the new one does not reach the start screen twice." width="930" height="846" loading="lazy" decoding="async"></picture></div>
 <figcaption>What the client does for one update check. Any failed check stops the update and leaves the installed version as it is. <a href="../../assets/diagrams/update-flow-light.svg">Open the diagram alone</a></figcaption>
 <details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>sequenceDiagram

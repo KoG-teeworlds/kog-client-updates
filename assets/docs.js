@@ -133,11 +133,19 @@
     input.type = "search";
     input.id = "docs-search";
     input.setAttribute("autocomplete", "off");
-    var label = el("label", "Search the documentation");
+    input.setAttribute("placeholder", "Search the documentation");
+    var label = el("label", "Search the documentation", "visually-hidden");
     label.setAttribute("for", "docs-search");
     var results = el("ul", "");
     results.setAttribute("aria-label", "Search results");
     var hint = el("p", "", "hint");
+    var idle = function () {
+      hint.textContent = "";
+      hint.appendChild(document.createTextNode("Press "));
+      hint.appendChild(el("kbd", "/"));
+      hint.appendChild(document.createTextNode(" to search from anywhere"));
+    };
+    idle();
     box.appendChild(label);
     box.appendChild(input);
     box.appendChild(hint);
@@ -155,8 +163,8 @@
     var show = function () {
       var words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
       results.textContent = "";
+      if (!words.length) { idle(); return; }
       hint.textContent = "";
-      if (!words.length) return;
       var found = [];
       var matches = function (text) {
         text = text.toLowerCase();
@@ -180,6 +188,16 @@
       }
     };
 
+    document.addEventListener("keydown", function (event) {
+      var target = event.target;
+      var typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      if (event.key === "/" && !typing && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        var nav = document.querySelector(".nav-toggle");
+        if (nav) nav.setAttribute("open", "");
+        input.focus();
+      }
+    });
     input.addEventListener("focus", function () { load(function () {}); });
     input.addEventListener("input", function () { load(show); });
     input.addEventListener("keydown", function (event) {

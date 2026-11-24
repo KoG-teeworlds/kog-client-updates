@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
+<meta name="kog-site-build" content="426c5533c6d40ee9c101431bfaf193cda845e603">
 <title>Architecture | KoG Client technical documentation</title>
 <meta name="description" content="The parts of the KoG client (updater, login, key store, settings, HTTP layer) and the three public addresses it talks to, with a diagram.">
 <link rel="canonical" href="https://client.kog.tw/technical/architecture/">
@@ -67,7 +67,7 @@
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
 </ul>
 </details>
@@ -105,7 +105,7 @@
 </ul>
 
 <figure class="diagram" id="figure-architecture">
-<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/architecture-dark.svg"><img src="../../assets/diagrams/architecture-light.svg" alt="Diagram of the KoG client on your computer and the public places it talks to. Inside the client, the settings menus start the updater and the login component. Both use one HTTP layer. The updater reads signed manifests from client.kog.tw and files from GitHub releases, and checks them against public keys compiled into the client. The login component talks to the KoG account service at kog.tw through the HTTP layer and through your web browser, and keeps the device key in the operating system key store. A dashed arrow marks the planned join proof towards game servers." width="1376" height="512" loading="lazy" decoding="async"></picture></div>
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/architecture-dark.svg"><img src="../../assets/diagrams/architecture-light.svg" alt="Diagram of the KoG client on your computer and the public places it talks to. Inside the client, the settings menus start the updater and the login component. Both use one HTTP layer. The updater reads signed manifests from client.kog.tw and files from GitHub releases, and checks them against public keys compiled into the client. The login component talks to the KoG account service at kog.tw through the HTTP layer and through your web browser, and keeps the device key in the operating system key store. A dashed arrow marks the planned join proof towards game servers." width="1376" height="512" decoding="async"></picture></div>
 <figcaption>The KoG client and the public addresses it talks to. Solid lines exist today; the dashed line is planned. <a href="../../assets/diagrams/architecture-light.svg">Open the diagram alone</a></figcaption>
 <details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>flowchart LR
   subgraph PC[&quot;Your computer: the KoG client&quot;]

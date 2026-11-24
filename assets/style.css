@@ -221,6 +221,8 @@ summary::-webkit-details-marker { display: none; }
 .search ul { margin-top: 0.4rem; }
 .search li a { display: block; padding: 0.4rem 0.5rem; border-left: 0; }
 .search .hint { color: var(--muted); margin: 0.4rem 0.25rem 0; font-size: 0.85rem; }
+.search kbd { font-size: 0.8rem; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 0.3rem; padding: 0 0.35rem; background: var(--surface); }
+.search input::placeholder { color: var(--muted); opacity: 1; }
 
 .doc { min-width: 0; padding-top: 0.5rem; container: doc / inline-size; }
 .crumbs ol { display: flex; flex-wrap: wrap; list-style: none; margin: 0.5rem 0 0; padding: 0; font-size: 0.9rem; color: var(--muted); }
@@ -280,6 +282,7 @@ pre code { user-select: text; white-space: pre; }
 .diagram-scroll { overflow-x: auto; text-align: center; }
 .diagram img { max-width: 100%; min-width: min(100%, 36rem); height: auto; display: inline-block; }
 .diagram figcaption { color: var(--muted); font-size: 0.95rem; margin-top: 0.6rem; }
+.diagram.tall img { min-width: 0; width: auto; max-height: 38rem; }
 .diagram-src { margin: 0.5rem 0 0; }
 .diagram-src pre { margin: 0.25rem 0; font-size: 0.85rem; }
 
@@ -305,12 +308,12 @@ dl.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(21r
 .edit { font-size: 0.92rem; color: var(--muted); }
 
 @container doc (min-width: 70rem) {
-  .sec { column-count: 2; column-gap: 3.5rem; column-rule: 1px solid var(--line); }
-  .sec > h2, .sec > .table-scroll, .sec > pre, .sec > .codeblock, .sec > .diagram, .sec > .map, .sec > dl.glossary, .sec > .pager { column-span: all; }
-  .sec > :is(p, ul, ol) { max-width: none; }
-  .sec > :is(h3, p, ul, ol):first-child, .sec > h3 { margin-top: 0.8rem; }
-  .sec > h3 { break-after: avoid; }
-  .sec li, .sec > p { break-inside: avoid; }
+  .sec.long { column-count: 2; column-gap: 3.5rem; column-rule: 1px solid var(--line); column-fill: balance; }
+  .sec > h2, .sec > .table-scroll, .sec > pre, .sec > .codeblock, .sec > .diagram, .sec > .map, .sec > dl.glossary, .sec > .callout { column-span: all; }
+  .sec.long > :is(p, ul, ol) { max-width: none; }
+  .sec.long > h3 { break-after: avoid; margin-top: 0.8rem; }
+  .sec.long li { break-inside: avoid; }
+  .sec.long > p { orphans: 3; widows: 3; }
 }
 
 @media (min-width: 48rem) {

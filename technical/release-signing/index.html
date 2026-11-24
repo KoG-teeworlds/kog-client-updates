@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
+<meta name="kog-site-build" content="426c5533c6d40ee9c101431bfaf193cda845e603">
 <title>Release signing | KoG Client technical documentation</title>
 <meta name="description" content="How a KoG client release is built, attested and signed: the CI signature, the planned second signature with a hardware key for stable, channels, rollback and the emergency stop.">
 <link rel="canonical" href="https://client.kog.tw/technical/release-signing/">
@@ -67,7 +67,7 @@
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
 </ul>
 </details>
@@ -105,8 +105,8 @@
 </header>
 <section class="sec">
 <h2 id="model">The two-signature model <a class="anchor" href="#model" aria-label="Link to this section: The two-signature model">#</a></h2>
-<figure class="diagram" id="figure-release-signing">
-<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/release-signing-dark.svg"><img src="../../assets/diagrams/release-signing-light.svg" alt="Flow diagram of how a release becomes an update the client accepts. A public workflow builds the client files from the main branch and attests them. A check without secrets verifies attestations, hashes and that the commit is on main and produces the manifest. The CI key signs it. For the stable channel, which is not published yet, the owner also verifies the release on their own machine and signs with a hardware key. The signed manifest is published to client.kog.tw, and the client checks every signature itself." width="389" height="1097" loading="lazy" decoding="async"></picture></div>
+<figure class="diagram tall" id="figure-release-signing">
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/release-signing-dark.svg"><img src="../../assets/diagrams/release-signing-light.svg" alt="Flow diagram of how a release becomes an update the client accepts. A public workflow builds the client files from the main branch and attests them. A check without secrets verifies attestations, hashes and that the commit is on main and produces the manifest. The CI key signs it. For the stable channel, which is not published yet, the owner also verifies the release on their own machine and signs with a hardware key. The signed manifest is published to client.kog.tw, and the client checks every signature itself." width="389" height="1097" decoding="async"></picture></div>
 <figcaption>The two-signature model. Canary and dev need the CI signature only. Stable will need both; no stable release exists yet. <a href="../../assets/diagrams/release-signing-light.svg">Open the diagram alone</a></figcaption>
 <details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>flowchart TB
   A[&quot;Commit on main (dev for the dev channel)&quot;] --&gt; B[&quot;Public workflow builds the client files&lt;br/&gt;and attests them&quot;]
@@ -131,7 +131,7 @@
 </table></div>
 <p>Because the client requires both signatures for stable, neither a stolen GitHub account nor a stolen CI secret alone can publish a stable update: the second signature is made on a hardware security key, after the owner verified the release on their own machine and touched the key.</p>
 </section>
-<section class="sec">
+<section class="sec long">
 <h2 id="steps">What happens to a release <a class="anchor" href="#steps" aria-label="Link to this section: What happens to a release">#</a></h2>
 <h3 id="canary-and-dev">Canary and dev <a class="anchor" href="#canary-and-dev" aria-label="Link to this section: Canary and dev">#</a></h3>
 <ol>
