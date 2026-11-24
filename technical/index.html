@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="1593ddc841e535297eb547f107a3f04039d9aede">
+<meta name="kog-site-build" content="31f3796410b9fd8cb5eccbc0410c2e704e36b299">
 <title>Technical documentation | KoG Client</title>
 <meta name="description" content="How the KoG client works, in detail: architecture, the signed update channel, verification, login, privacy, building from source, release signing, security and what is built or only planned.">
 <link rel="canonical" href="https://client.kog.tw/technical/">
@@ -29,42 +29,40 @@
 <header class="site">
 <div class="wrap bar">
 <a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav class="main" aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 <li><a href="../">Download</a></li>
-<li><a href="../technical/" aria-current="page">Technical</a></li>
+<li><a href="../technical/" aria-current="page">Docs</a></li>
+<li><a href="../privacy/">Privacy</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
-<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
 <li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
-</ul></nav>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></details></nav>
+<button type="button" class="search-open" data-index="../assets/search-index.json" hidden><span>Search</span><kbd>/</kbd></button>
 </div>
 </header>
 <div class="wrap">
 <div class="docs">
 <nav class="docs-nav" aria-label="Documentation">
 <details class="nav-toggle"><summary>Contents</summary>
-<div class="search" data-index="../assets/search-index.json" hidden></div>
+<button type="button" class="search-open side" data-index="../assets/search-index.json" hidden><span>Search the documentation</span><kbd>/</kbd></button>
 <ul class="groups">
 <li><details class="group" open><summary>Start</summary><ul>
-<li><a href="../technical/" aria-current="page">Overview</a></li>
-<li><a href="../technical/architecture/">Architecture</a> <span class="state built">Built</span></li>
+<li><a href="../technical/" aria-current="page">Overview</a>
+<ul class="inpage"><li><a href="#start">Start here</a></li><li><a href="#what">What it is and is not</a></li><li><a href="#status">What is built and what is planned</a></li><li><a href="#map">Map of the documentation</a></li><li><a href="#license">Licence and credits</a></li></ul></li>
+<li><a href="../technical/architecture/">Architecture</a> <span class="state partial">Partly built</span></li>
 </ul></details></li>
 <li><details class="group" open><summary>Updates and trust</summary><ul>
 <li><a href="../technical/update-channel/">Update channel</a> <span class="state built">Built</span></li>
 <li><a href="../technical/release-signing/">Release signing</a> <span class="state partial">Partly built</span></li>
 <li><a href="../technical/verify/">Verify a download</a> <span class="state built">Built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Account</summary><ul>
-<li><a href="../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Network</summary><ul>
-<li><a href="../technical/protocol/">Protocol</a> <span class="state planned">Planned</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Data and building</summary><ul>
-<li><a href="../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
-<li><a href="../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
-</ul></details></li>
-<li><details class="group" open><summary>Security</summary><ul>
 <li><a href="../technical/security/">Security</a> <span class="state partial">Partly built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Account and data</summary><ul>
+<li><a href="../technical/login/">Login</a> <span class="state partial">Partly built</span></li>
+<li><a href="../technical/privacy/">Privacy</a> <span class="state built">Built</span></li>
+</ul></details></li>
+<li><details class="group" open><summary>Build</summary><ul>
+<li><a href="../technical/build/">Build from source</a> <span class="state partial">Partly built</span></li>
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
@@ -76,6 +74,8 @@
 <aside class="docs-toc" aria-label="On this page">
 <details class="toc-toggle" open><summary>On this page</summary>
 <ul>
+<li><a href="#start">Start here</a>
+</li>
 <li><a href="#what">What it is and is not</a>
 </li>
 <li><a href="#status">What is built and what is planned</a>
@@ -88,7 +88,7 @@
 </details>
 </aside>
 <main id="main" class="doc">
-<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../">KoG Client</a></li><li aria-current="page">Technical</li></ol></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../">KoG Client</a></li><li aria-current="page">Docs</li></ol></nav>
 <header class="doc-head">
 <div>
 <p class="eyebrow">Start</p>
@@ -101,6 +101,16 @@
 <div class="callout note" role="note">
 <p>Status of these pages. Everything here describes the <strong>client</strong> only, and was read from the repository <a href="https://github.com/KoG-teeworlds/kog-client">KoG-teeworlds/kog-client</a> (its <code>docs/</code> folder, source and workflows, at the state of 24 November 2026) and from the files published at client.kog.tw. A claim that was not run or tested says so on the page. Anything that is not built is marked <span class="state planned">Planned</span>.</p>
 </div>
+</section>
+<section class="sec">
+<h2 id="start">Start here <a class="anchor" href="#start" aria-label="Link to this section: Start here">#</a></h2>
+<p>Pick what you want to do.</p>
+<ul class="map paths">
+<li><a href="/#install"><strong>I just want to play</strong><span class="sub">Download the client and install it. No account and no reading needed.</span></a></li>
+<li><a href="/technical/verify/"><strong>I want to check a download</strong><span class="sub">Compare a file with the signed list. Commands for each system.</span></a></li>
+<li><a href="/technical/build/"><strong>I want to build it</strong><span class="sub">Compile the client from source and run its tests.</span></a></li>
+<li><a href="/technical/architecture/"><strong>I want to understand how it works</strong><span class="sub">The parts of the client, the update channel, the login and what it adds to the game connection.</span></a></li>
+</ul>
 </section>
 <section class="sec">
 <h2 id="what">What it is and is not <a class="anchor" href="#what" aria-label="Link to this section: What it is and is not">#</a></h2>
@@ -122,7 +132,7 @@
 <tr><td>In-app updater (Windows, Linux)</td><td><span class="state built">Built</span></td><td>Verifies signature, expiry, sequence and every file hash; keeps the previous version for rollback. Little real-world testing so far, and the Windows disk-space check was not run on Windows.</td><td><a href="/technical/update-channel/">Update channel</a></td></tr>
 <tr><td>Browser login and device key</td><td><span class="state built">Built</span></td><td>Canary and dev builds only (<code>cl_kog_login</code>). The HTTP steps and the key store have no automated test.</td><td><a href="/technical/login/">Login</a></td></tr>
 <tr><td>Join proof (signed challenge when joining a server)</td><td><span class="state partial">Partly built</span></td><td>The signing code exists, the wire transport does not. <code>cl_kog_auto_login</code> is off and sends nothing.</td><td><a href="/technical/login/#join-proof">Login</a></td></tr>
-<tr><td>Capability announcement to servers (<code>kog_hello</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Only names are reserved in the source.</td><td><a href="/technical/protocol/">Protocol</a></td></tr>
+<tr><td>Capability announcement to servers (<code>kog_hello</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Only names are reserved in the source.</td><td><a href="/technical/architecture/#protocol">Protocol</a></td></tr>
 <tr><td>Opt-in network statistics (<code>kog_telemetry</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Nothing is sent.</td><td><a href="/technical/privacy/">Privacy</a></td></tr>
 <tr><td>Stable channel with two signatures</td><td><span class="state planned">Planned</span></td><td>The stable keys are placeholders. No stable release has been made.</td><td><a href="/technical/release-signing/">Release signing</a></td></tr>
 <tr><td>Signed list of known builds (<code>builds/allowlist.json</code>)</td><td><span class="state planned">Planned</span></td><td>Idea only; nothing is served at that address.</td><td><a href="/technical/roadmap/">Roadmap</a></td></tr>
@@ -141,7 +151,6 @@
 <li><a href="/technical/release-signing/"><strong>Release signing</strong><span class="sub">CI signature, hardware key, channels, rollback and halt.</span></a></li>
 <li><a href="/technical/verify/"><strong>Verify a download</strong><span class="sub">Hashes, attestations and kogsign, with commands that work.</span></a></li>
 <li><a href="/technical/login/"><strong>Login</strong><span class="sub">OAuth 2.0 with PKCE in your browser and a device key.</span></a></li>
-<li><a href="/technical/protocol/"><strong>Protocol</strong><span class="sub">What the client adds to the game connection: built and planned.</span></a></li>
 <li><a href="/technical/privacy/"><strong>Privacy</strong><span class="sub">What is sent where, when, and how to switch it off.</span></a></li>
 <li><a href="/technical/build/"><strong>Build from source</strong><span class="sub">Commands for each system, tests, reproducibility.</span></a></li>
 <li><a href="/technical/security/"><strong>Security</strong><span class="sub">What is protected, what is not, and how to report.</span></a></li>
@@ -180,7 +189,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../privacy/">Privacy</a></li>
-<li><a href="../technical/">Technical</a></li>
+<li><a href="../technical/">Docs</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
@@ -190,5 +199,6 @@
 </div>
 </footer>
 <script src="../assets/docs.js" defer></script>
+<script src="../assets/nav.js" defer></script>
 </body>
 </html>
