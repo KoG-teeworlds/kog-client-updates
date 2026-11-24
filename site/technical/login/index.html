@@ -66,7 +66,7 @@
 </ul></details></li>
 <li><details class="group" open><summary>Project</summary><ul>
 <li><a href="../../technical/roadmap/">Roadmap</a> <span class="state planned">Planned</span></li>
-<li><a href="../../technical/glossary/">Glossary</a> <span class="state built">Built</span></li>
+<li><a href="../../technical/glossary/">Glossary</a></li>
 </ul></details></li>
 </ul>
 </details>
@@ -126,8 +126,8 @@
 </section>
 <section class="sec">
 <h2 id="flow">The flow <a class="anchor" href="#flow" aria-label="Link to this section: The flow">#</a></h2>
-<figure class="diagram" id="figure-login">
-<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/login-dark.svg"><img src="../../assets/diagrams/login-light.svg" alt="Sequence diagram of the browser login. The client reads the discovery document of the KoG account service, starts a listener on a random loopback port and opens the login page in the web browser with a PKCE challenge and a random state. After you log in, the browser is redirected to the loopback listener with a code. The client exchanges the code and the PKCE verifier for an access token, reads the account name, makes an Ed25519 key pair, stores the private key in the OS key store, registers the public key and a device name with the account service, and discards the token." width="930" height="1039" loading="lazy" decoding="async"></picture></div>
+<figure class="diagram tall" id="figure-login">
+<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/login-dark.svg"><img src="../../assets/diagrams/login-light.svg" alt="Sequence diagram of the browser login. The client reads the discovery document of the KoG account service, starts a listener on a random loopback port and opens the login page in the web browser with a PKCE challenge and a random state. After you log in, the browser is redirected to the loopback listener with a code. The client exchanges the code and the PKCE verifier for an access token, reads the account name, makes an Ed25519 key pair, stores the private key in the OS key store, registers the public key and a device name with the account service, and discards the token." width="930" height="1039" decoding="async"></picture></div>
 <figcaption>The login of the client with PKCE. The private key is made on your computer and never leaves it. Only the public key is registered. <a href="../../assets/diagrams/login-light.svg">Open the diagram alone</a></figcaption>
 <details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary><pre class="mermaid-src" tabindex="0"><code>sequenceDiagram
   autonumber

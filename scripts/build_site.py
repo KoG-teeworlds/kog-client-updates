@@ -46,6 +46,7 @@ DOCS = [
 ]
 DOCS_ORDER = [name for _, names in DOCS for name in names]
 STATUS = {"built": "Built", "partial": "Partly built", "planned": "Planned"}
+LONG_SECTION = 1200  # characters of prose from which a section is set in two columns on a wide screen
 CHECKED = "24 November 2026"
 CHECKED_COMMIT = "f93469fdd"
 
@@ -165,7 +166,14 @@ def focusable_pre(body):
 def sections(body):
     """The page text in one block per h2: the intro, then one section for each heading. Wide screens set them in columns."""
     parts = re.split(r"(?=<h2[ >])", body)
-    return "\n".join('<section class="sec">\n%s\n</section>' % part.strip() for part in parts if part.strip())
+    out = []
+    for part in parts:
+        if not part.strip():
+            continue
+        prose = re.sub(r"<(table|pre|figure|dl)\b.*?</\1>", "", part, flags=re.S)
+        long = len(strip_tags(prose)) > LONG_SECTION
+        out.append('<section class="sec%s">\n%s\n</section>' % (" long" if long else "", part.strip()))
+    return "\n".join(out)
 
 
 def svg_size(path):
@@ -184,7 +192,7 @@ def diagram_meta(name):
     return text, meta
 
 
-def diagram_figure(name, base):
+def diagram_figure(name, base, lazy=True):
     source, meta = diagram_meta(name)
     light = "assets/diagrams/%s-light.svg" % name
     dark = "assets/diagrams/%s-dark.svg" % name
@@ -194,23 +202,29 @@ def diagram_figure(name, base):
     width, height = svg_size(SITE / light)
     text = "\n".join(line for line in source.split("\n") if not line.startswith("%% "))
     return (
-        '<figure class="diagram" id="figure-%s">\n'
+        '<figure class="diagram%s" id="figure-%s">\n'
         '<div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways">'
         '<picture><source media="(prefers-color-scheme: dark)" srcset="%s%s">'
-        '<img src="%s%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></picture></div>\n'
+        '<img src="%s%s" alt="%s" width="%d" height="%d"%s decoding="async"></picture></div>\n'
         "<figcaption>%s <a href=\"%s%s\">Open the diagram alone</a></figcaption>\n"
         '<details class="diagram-src"><summary>Diagram source as text (Mermaid)</summary>'
         '<pre class="mermaid-src" tabindex="0"><code>%s</code></pre></details>\n'
         "</figure>"
         % (
-            name, base, dark, base, light, html.escape(meta["alt"], quote=True), width, height,
+            " tall" if height > width * 0.9 else "", name, base, dark, base, light, html.escape(meta["alt"], quote=True), width, height, ' loading="lazy"' if lazy else "",
             html.escape(meta["caption"]), base, light, html.escape(text.strip("\n")),
         )
     )
 
 
 def expand_diagrams(body, base):
-    return re.sub(r"<!--\s*diagram\s+([\w-]+)\s*-->", lambda m: diagram_figure(m.group(1), base), body)
+    count = []
+
+    def one(match):
+        count.append(1)
+        return diagram_figure(match.group(1), base, lazy=len(count) > 1)
+
+    return re.sub(r"<!--\s*diagram\s+([\w-]+)\s*-->", one, body)
 
 
 def nav_title(name, pages):

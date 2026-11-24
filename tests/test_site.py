@@ -585,6 +585,32 @@ class DocsTests(unittest.TestCase):
                 self.assertEqual([resolve(url_of(path), h).path for h in current], [url_of(path)])
                 self.assertIn('<summary>Contents</summary>', nav)
 
+    REFERENCE = ["technical", "technical/glossary"]
+
+    def test_status_badges_are_only_on_feature_pages(self):
+        for name in build_site.DOCS_ORDER:
+            text = (SITE / name / "index.html").read_text()
+            nav = re.search(r'<nav class="docs-nav".*?</nav>', text, re.S).group(0)
+            head = re.search(r'<header class="doc-head">.*?</header>', text, re.S).group(0)
+            if name in self.REFERENCE:
+                self.assertNotIn("Built", head.split('<aside')[0], name)
+                self.assertNotRegex(head, r"<dt>Status</dt>", name)
+                self.assertNotRegex(nav, r'<a href="[^"]*/%s/"[^>]*>[^<]*</a> <span class="state' % re.escape(name.split("/")[-1] if "/" in name else "technical"), name)
+            else:
+                self.assertRegex(head, r'<h1>[^<]*<span class="state', name)
+                self.assertRegex(head, r"<dt>Status</dt>", name)
+        for name in ["architecture", "update-channel", "release-signing", "verify", "login", "protocol", "privacy", "build", "security", "roadmap"]:
+            self.assertIn("technical/" + name, build_site.DOCS_ORDER)
+            self.assertNotIn("technical/" + name, self.REFERENCE)
+
+    def test_only_the_first_diagram_of_a_page_loads_eagerly(self):
+        for path in DOC_PAGES:
+            imgs = re.findall(r"<img src=\"[^\"]*diagrams[^>]*>", path.read_text())
+            for position, tag in enumerate(imgs):
+                self.assertEqual('loading="lazy"' in tag, position > 0, tag)
+                self.assertIn("width=", tag)
+                self.assertIn("height=", tag)
+
     def test_breadcrumb_toc_edit_link_and_skip_target(self):
         for path in DOC_PAGES:
             with self.subTest(page=url_of(path)):
@@ -622,7 +648,7 @@ class DocsTests(unittest.TestCase):
         used = set()
         for path in DOC_PAGES:
             text = path.read_text()
-            for figure in re.findall(r'<figure class="diagram".*?</figure>', text, re.S):
+            for figure in re.findall(r'<figure class="diagram[ "].*?</figure>', text, re.S):
                 alt = re.search(r'<img src="([^"]+)" alt="([^"]+)" width="(\d+)" height="(\d+)"', figure)
                 self.assertIsNotNone(alt, figure[:200])
                 self.assertGreater(len(alt.group(2)), 40)
