@@ -832,6 +832,75 @@ class HomeCheckTests(unittest.TestCase):
             self.assertIn("try {", before)
 
 
+class PerformanceTests(unittest.TestCase):
+    """Checks that need no network: things that are known to make pages heavy or janky must not come back."""
+
+    def css(self):
+        return (SITE / "assets" / "style.css").read_text()
+
+    def test_no_properties_that_repaint_on_every_scroll_frame(self):
+        css = self.css()
+        for pattern in (r"background-attachment:\s*fixed", r"backdrop-filter", r"filter:\s*blur", r"transition:\s*all\b", r"will-change"):
+            self.assertIsNone(re.search(pattern, css), pattern)
+        self.assertIn("body::before { content: \"\"; position: fixed;", css)
+
+    def test_long_sections_are_rendered_lazily_and_motion_is_reduced_on_request(self):
+        css = self.css()
+        self.assertIn("content-visibility: auto", css)
+        self.assertIn("contain-intrinsic-size", css)
+        self.assertIn("prefers-reduced-motion: reduce", css)
+
+    def test_scripts_do_not_listen_to_scroll_and_use_observers(self):
+        docs = (SITE / "assets" / "docs.js").read_text()
+        self.assertNotRegex(docs, r"addEventListener\(\s*[\"']scroll")
+        self.assertIn("IntersectionObserver", docs)
+        self.assertNotRegex((SITE / "assets" / "app.js").read_text(), r"addEventListener\(\s*[\"']scroll")
+
+    def test_fonts_are_preloaded_exist_and_are_the_only_ones_used(self):
+        css = self.css()
+        used = set(re.findall(r'url\("(fonts/[\w.-]+\.woff2)"\)', css))
+        self.assertEqual(used, {"fonts/saira-cond-700-latin.woff2", "fonts/spline-mono-latin.woff2"})
+        for name in used:
+            self.assertTrue((SITE / "assets" / name).exists(), name)
+        self.assertEqual({p.name for p in (SITE / "assets" / "fonts").glob("*.woff2")}, {Path(n).name for n in used})
+        for path in PAGES:
+            text = path.read_text()
+            self.assertIn('<link rel="preload" href="', text)
+            self.assertIn('as="font" type="font/woff2" crossorigin>', text)
+
+    def test_images_have_dimensions_and_scripts_never_block_rendering(self):
+        for path in PAGES:
+            text = path.read_text()
+            for tag in re.findall(r"<img[^>]*>", text):
+                self.assertIn("width=", tag, (path, tag))
+                self.assertIn("height=", tag, (path, tag))
+            for tag in re.findall(r"<script[^>]*>", text):
+                self.assertTrue("defer" in tag or text.index(tag) > text.index("</footer>"), (path, tag))
+
+    def test_a_page_stays_small_and_makes_few_requests(self):
+        css = self.css()
+        for path in PAGES:
+            text = path.read_text()
+            page = parse(path)
+            files = ["assets/style.css", "assets/kog-logo.svg", "favicon.svg", "assets/fonts/saira-cond-700-latin.woff2"]
+            files += [("../" * (len(path.relative_to(SITE).parts) - 1)).replace("../", "") + s for s in []]
+            files += [s for s in (r[2].split("../")[-1] for r in page.refs if r[0] == "script")]
+            if "<code" in text or "facts" in text or path == SITE / "index.html":
+                files.append("assets/fonts/spline-mono-latin.woff2")
+            figure = re.search(r'<img src="[^"]*assets/diagrams/([\w-]+-light\.svg)"', text)
+            if figure:
+                files.append("assets/diagrams/" + figure.group(1))
+            weight = path.stat().st_size + sum((SITE / f).stat().st_size for f in files)
+            with self.subTest(page=url_of(path), requests=len(files) + 1):
+                self.assertLess(weight, 200 * 1024)
+                self.assertLessEqual(len(files) + 1, 12)
+
+    def test_the_build_card_has_a_skeleton_and_reserved_height(self):
+        home = (SITE / "index.html").read_text()
+        self.assertIn('<div class="skeleton" aria-hidden="true">', home)
+        self.assertIn("#build-info { min-height:", self.css())
+
+
 class WeightTests(unittest.TestCase):
     def test_total_weight_of_html_css_and_js_stays_under_budget(self):
         total = sum(p.stat().st_size for p in SITE.rglob("*") if p.is_file() and p.suffix in (".html", ".css", ".js"))

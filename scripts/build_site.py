@@ -421,6 +421,7 @@ def render(name, meta, body, marker=None, pages=None):
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="KoG Client: an open-source Teeworlds client for King of Gores">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="{base}assets/fonts/saira-cond-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{base}assets/style.css">
 </head>
 <body{body_class}>
