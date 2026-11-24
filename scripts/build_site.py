@@ -46,6 +46,8 @@ DOCS = [
 ]
 DOCS_ORDER = [name for _, names in DOCS for name in names]
 STATUS = {"built": "Built", "partial": "Partly built", "planned": "Planned"}
+CHECKED = "24 November 2026"
+CHECKED_COMMIT = "f93469fdd"
 
 CSP = (
     "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; "
@@ -147,8 +149,23 @@ def wrap_tables(body):
     return body.replace("</table>", "</table></div>")
 
 
+LANGUAGES = {"sh": "Shell", "json": "JSON", "text": "Text"}
+
+
 def focusable_pre(body):
-    return re.sub(r"<pre(?![^>]*tabindex)([^>]*)>", r'<pre\1 tabindex="0">', body)
+    def one(match):
+        attrs = match.group(1)
+        name = re.search(r'class="(\w+)"', attrs)
+        lang = ' data-lang="%s"' % LANGUAGES[name.group(1)] if name and name.group(1) in LANGUAGES else ""
+        return "<pre%s%s tabindex=\"0\">" % (attrs, lang)
+
+    return re.sub(r"<pre(?![^>]*tabindex)([^>]*)>", one, body)
+
+
+def sections(body):
+    """The page text in one block per h2: the intro, then one section for each heading. Wide screens set them in columns."""
+    parts = re.split(r"(?=<h2[ >])", body)
+    return "\n".join('<section class="sec">\n%s\n</section>' % part.strip() for part in parts if part.strip())
 
 
 def svg_size(path):
@@ -290,16 +307,30 @@ def docs_group(name):
 
 def docs_main(name, meta, body, pages, base):
     body, headings = add_heading_anchors(body)
-    body = expand_diagrams(wrap_tables(focusable_pre(body)), base)
+    toc = docs_toc(headings)
+    body = sections(expand_diagrams(wrap_tables(focusable_pre(body)), base))
     status = meta.get("status")
     badge = ' <span class="state %s">%s</span>' % (status, STATUS[status]) if status else ""
     lead = '<p class="lead">%s</p>\n' % meta["lead"] if meta.get("lead") else ""
+    rows = []
+    if status:
+        rows.append("<dt>Status</dt><dd>%s</dd>" % STATUS[status])
+    if name == "technical":
+        features = body[body.index('id="status"'): body.index('id="map"')]
+        counts = [len(re.findall(r'class="state %s"' % kind, features)) for kind in STATUS]
+        rows.append("<dt>Features</dt><dd>%d built, %d partly built, %d planned</dd>" % tuple(counts))
+        rows.append("<dt>It is</dt><dd>A reference implementation. You do not need it to play.</dd>")
+    rows.append("<dt>Section</dt><dd>%s</dd>" % html.escape(docs_group(name)))
+    rows.append(
+        '<dt>Checked</dt><dd>%s, against <a href="%s/commit/%s">kog-client %s</a></dd>' % (CHECKED, REPO, CHECKED_COMMIT, CHECKED_COMMIT)
+    )
+    glance = '<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl>%s</dl></aside>' % "".join(rows)
     return (
-        '<div class="docs">\n%s\n%s\n<main id="main" class="doc">\n%s\n<header class="doc-head">\n<p class="eyebrow">%s</p>\n'
-        "<h1>%s%s</h1>\n%s</header>\n%s\n%s\n</main>\n</div>"
+        '<div class="docs%s">\n%s\n%s\n<main id="main" class="doc">\n%s\n<header class="doc-head">\n<div>\n<p class="eyebrow">%s</p>\n'
+        "<h1>%s%s</h1>\n%s</div>\n%s\n</header>\n%s\n%s\n</main>\n</div>"
         % (
-            docs_sidebar(name, pages, base), docs_toc(headings), docs_breadcrumb(name, pages, base), html.escape(docs_group(name)),
-            html.escape(meta.get("heading") or nav_title(name, pages)), badge, lead, body, docs_pager(name, pages, base),
+            "" if toc else " no-toc", docs_sidebar(name, pages, base), toc, docs_breadcrumb(name, pages, base), html.escape(docs_group(name)),
+            html.escape(meta.get("heading") or nav_title(name, pages)), badge, lead, glance, body, docs_pager(name, pages, base),
         )
     )
 
