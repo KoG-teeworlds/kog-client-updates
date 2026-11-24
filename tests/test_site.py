@@ -791,6 +791,25 @@ class StyleTests(unittest.TestCase):
                 with self.subTest(theme=name, pair=foreground + "/" + background):
                     self.assertGreaterEqual(contrast(theme[foreground], theme[background]), 4.5)
 
+    def test_the_documentation_area_is_fluid_up_to_at_least_1800_px(self):
+        css = (SITE / "assets" / "style.css").read_text()
+        checked = 0
+        for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+            names = [n.strip() for n in selector.split(",")]
+            if not any(n in (".docs", ".doc", ".docs-page .wrap", ".docs.no-toc") for n in names):
+                continue
+            for value in re.findall(r"(?<![-\w])max-width:\s*([^;]+)", body):
+                checked += 1
+                value = value.strip()
+                if value == "none":
+                    continue
+                match = re.fullmatch(r"([\d.]+)(rem|px)", value)
+                self.assertIsNotNone(match, "%s max-width %s" % (selector, value))
+                pixels = float(match.group(1)) * (16 if match.group(2) == "rem" else 1)
+                self.assertGreaterEqual(pixels, 1800, "%s caps the article at %s" % (selector.strip(), value))
+        self.assertGreaterEqual(checked, 1)
+        self.assertIn("grid-template-columns: 16rem minmax(0, 1fr) 13.5rem", css)
+
     def test_motion_and_focus_rules_exist(self):
         css = (SITE / "assets" / "style.css").read_text()
         self.assertIn("prefers-reduced-motion", css)

@@ -86,14 +86,19 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Privacy</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Data and building</p>
 <h1>Privacy <span class="state built">Built</span></h1>
 <p class="lead">Every host you connect to sees your IP address. The KoG additions are small; the rest is inherited from DDNet and TClient. The plain-language version is on the <a href="/privacy/">privacy page</a>; this page is the detailed table.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Built</dd><dt>Section</dt><dd>Data and building</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <div class="callout note" role="note">
 <p>Provenance. The list comes from reading the client's source and <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">docs/PRIVACY.md</a>, which was also checked by running the client for 20 seconds without joining a server. Where this page and PRIVACY.md differ, this page follows the source: the update check does start (see below), and the default device name has no host name in it.</p>
 </div>
-
+</section>
+<section class="sec">
 <h2 id="table">What is sent where <a class="anchor" href="#table" aria-label="Link to this section: What is sent where">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>To</th><th>When</th><th>By</th><th>What besides your IP address</th><th>Setting</th></tr></thead>
@@ -112,7 +117,8 @@
 </tbody>
 </table></div>
 <p><strong>Retention.</strong> The client does not keep a record of these requests: login requests are not logged and the browser link is logged by host only. How long the receiving hosts keep your IP address is up to them; this documentation does not state it. For GitHub, see GitHub's own privacy statement; for the KoG account service, see kog.tw.</p>
-
+</section>
+<section class="sec">
 <h2 id="not-present">What is not there <a class="anchor" href="#not-present" aria-label="Link to this section: What is not there">#</a></h2>
 <ul>
 <li>No telemetry, analytics, advertising or crash uploads.</li>
@@ -120,7 +126,8 @@
 <li>No chat is sent anywhere except to the game server. TClient's chat translation, which sent chat to a third party, was removed.</li>
 <li>The client no longer contacts TClient's servers (update check, information file, identification message).</li>
 </ul>
-
+</section>
+<section class="sec">
 <h2 id="opt-out">Switching things off <a class="anchor" href="#opt-out" aria-label="Link to this section: Switching things off">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>You want</th><th>Set</th></tr></thead>
@@ -133,6 +140,7 @@
 </tbody>
 </table></div>
 <p>Settings are entered in the client's console or in the settings menu, and are saved in the config in the data folder named on the <a href="/technical/">overview</a>.</p>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/protocol/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Protocol</span></a>
 <a class="pager-next" rel="next" href="../../technical/build/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Build from source</span></a>

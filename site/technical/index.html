@@ -88,14 +88,19 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../">KoG Client</a></li><li aria-current="page">Technical</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Start</p>
 <h1>Technical documentation</h1>
 <p class="lead">How the KoG client is built, signed and checked, page by page, and what exists today versus what is only planned. Looking for a download? <a href="/">Go to the start page</a>.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Features</dt><dd>3 built, 1 partly built, 7 planned</dd><dt>It is</dt><dd>A reference implementation. You do not need it to play.</dd><dt>Section</dt><dd>Start</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <div class="callout note" role="note">
 <p>Status of these pages. Everything here describes the <strong>client</strong> only, and was read from the repository <a href="https://github.com/KoG-teeworlds/kog-client">KoG-teeworlds/kog-client</a> (its <code>docs/</code> folder, source and workflows, at the state of 24 November 2026) and from the files published at client.kog.tw. A claim that was not run or tested says so on the page. Anything that is not built is marked <span class="state planned">Planned</span>.</p>
 </div>
-
+</section>
+<section class="sec">
 <h2 id="what">What it is and is not <a class="anchor" href="#what" aria-label="Link to this section: What it is and is not">#</a></h2>
 <p>The KoG client is a <strong>reference implementation</strong>: a working example of features that need new code in the game client. It is a fork of <a href="https://github.com/TaterClient/TClient">TClient</a> 10.9.0, which is a fork of the <a href="https://ddnet.org">DDNet</a> client 20.1. The KoG-specific code lives in separate files (<code>kog_*</code>), so upstream changes can still be merged.</p>
 <ul>
@@ -105,9 +110,10 @@
 <li><strong>Not</strong> required to play on KoG, and not a stable product: there is no stable release yet.</li>
 <li>The executable is <code>KoG-Client</code> (<code>KoG-Client.exe</code>, <code>KoG-Client.app</code>). Its data folder is separate from DDNet's: <code>%APPDATA%\KoG-Client</code>, <code>~/Library/Application Support/KoG-Client</code>, <code>~/.local/share/kog-client</code>.</li>
 </ul>
-
+</section>
+<section class="sec">
 <h2 id="status">What is built and what is planned <a class="anchor" href="#status" aria-label="Link to this section: What is built and what is planned">#</a></h2>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table class="status-table">
 <thead><tr><th>Feature</th><th>State</th><th>Notes</th><th>Details</th></tr></thead>
 <tbody>
 <tr><td>Signed update manifest, channels canary and dev</td><td><span class="state built">Built</span></td><td>Canary is published and signed. Dev is built but nothing is published there yet.</td><td><a href="/technical/update-channel/">Update channel</a></td></tr>
@@ -123,7 +129,8 @@
 <tr><td>Reproducible builds</td><td><span class="state planned">Planned</span></td><td>Not yet. Builds carry an attestation instead.</td><td><a href="/technical/build/#repro">Build</a></td></tr>
 </tbody>
 </table></div>
-
+</section>
+<section class="sec">
 <h2 id="map">Map of the documentation <a class="anchor" href="#map" aria-label="Link to this section: Map of the documentation">#</a></h2>
 <p>The pages are in reading order. Use the contents on the left, or the Previous and Next links at the end of each page.</p>
 <ul class="map">
@@ -139,7 +146,8 @@
 <li><a href="/technical/roadmap/"><strong>Roadmap</strong><span class="sub">Planned features, and the history so far.</span></a></li>
 <li><a href="/technical/glossary/"><strong>Glossary</strong><span class="sub">Terms used in these pages.</span></a></li>
 </ul>
-
+</section>
+<section class="sec">
 <h2 id="license">Licence and credits <a class="anchor" href="#license" aria-label="Link to this section: Licence and credits">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Project</th><th>Authors</th><th>Licence</th></tr></thead>
@@ -152,6 +160,7 @@
 </tbody>
 </table></div>
 <p>All upstream notices are kept in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">license.txt</a>. Added third-party code: Monocypher 4.0.3 (BSD-2-Clause or CC0-1.0). <strong>Open item:</strong> some inherited assets, such as fonts and artwork from TClient, still need a licence check before a first release; <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">NOTICE_KOG.md</a> lists them. Under the zlib licence this is an altered version and must not be presented as the original software.</p>
+</section>
 <nav class="pager" aria-label="Pagination">
 <span class="pager-none"></span>
 <a class="pager-next" rel="next" href="../technical/architecture/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Architecture</span></a>
