@@ -54,12 +54,27 @@
     return onGithub || onSite ? url.href : null;
   }
 
-  function packageLinks(version) {
+  function packageLinks(version, listed) {
     if (typeof version !== "string" || !VERSION.test(version)) return [];
+    var byName = {};
+    if (Array.isArray(listed)) {
+      listed.forEach(function (entry) {
+        if (entry !== null && typeof entry === "object" && typeof entry.name === "string" && !own(byName, entry.name)) byName[entry.name] = entry;
+      });
+    }
     var links = [];
     PACKAGES.forEach(function (item) {
-      var url = allowedUrl("https://github.com" + REPO_PATH + "v" + version + "/" + item.file);
-      if (url) links.push({ id: item.id, label: item.label, file: item.file, url: url });
+      var entry = own(byName, item.file) ? byName[item.file] : null;
+      var url = entry ? allowedUrl(entry.url) : null;
+      var sha256 = null;
+      var size = null;
+      if (url && typeof entry.sha256 === "string" && SHA256.test(entry.sha256) && isInt(entry.size, 1, MAX_SIZE)) {
+        sha256 = entry.sha256;
+        size = entry.size;
+      } else {
+        url = allowedUrl("https://github.com" + REPO_PATH + "v" + version + "/" + item.file);
+      }
+      if (url) links.push({ id: item.id, label: item.label, file: item.file, url: url, sha256: sha256, size: size });
     });
     return links;
   }
@@ -103,7 +118,7 @@
         issued: manifest.issued,
         expires: manifest.expires,
         expired: now >= manifest.expires,
-        packages: packageLinks(manifest.version),
+        packages: packageLinks(manifest.version, manifest.packages),
         files: files,
       },
     };
