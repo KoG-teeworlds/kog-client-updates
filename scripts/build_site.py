@@ -135,6 +135,7 @@ def render(name, meta, body, marker=None):
 <li><a href="{REPO}/blob/main/license.txt">Licence</a></li>
 <li><a href="{REPO}/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
 </ul>
+<p>This page is published automatically when a change is merged.</p>
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
 </footer>
