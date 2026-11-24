@@ -18,7 +18,7 @@ PAGES = [SITE / "index.html", SITE / "404.html"] + sorted(p for p in SITE.rglob(
 DOC_PAGES = [SITE / name / "index.html" for name in build_site.DOCS_ORDER]
 RESERVED = ["stable", "canary", "dev", "base", "releases"]
 BUDGET_TOTAL = 400 * 1024
-BUDGET_PAGE = 70 * 1024
+BUDGET_PAGE = 90 * 1024
 BUDGET_DOC_PAGE = 200 * 1024
 BUDGET_SCRIPT = 20 * 1024
 

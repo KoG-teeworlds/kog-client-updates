@@ -51,7 +51,7 @@ CHECKED = "24 November 2026"
 CHECKED_COMMIT = "f93469fdd"
 
 CSP = (
-    "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; "
+    "default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data:; "
     "connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'"
 )
 

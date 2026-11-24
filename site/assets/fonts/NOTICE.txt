@@ -1,0 +1,3 @@
+saira-latin.woff2 and saira-cond-700-latin.woff2 are the Latin subsets of the open fonts Saira and Saira Condensed
+(Google Fonts), licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). They are served from this
+site only; the pages load nothing from a font service.
