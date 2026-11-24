@@ -1,0 +1,264 @@
+@title Technical details | KoG Client
+@description For developers and the curious: what the KoG client is, how builds are signed and verified, the endpoints of client.kog.tw, the login flow, privacy, and what is built or only planned.
+
+<section class="hero">
+<p class="eyebrow">For technical readers</p>
+<h1>Technical details</h1>
+<p class="lead">How the KoG client is built, signed and checked, and what exists today versus what is only planned. Looking for a download? <a href="../">Go to the start page</a>.</p>
+</section>
+
+<nav class="toc" aria-labelledby="toc-title">
+<h2 id="toc-title">On this page</h2>
+<ol>
+<li><a href="#what">What it is and is not</a></li>
+<li><a href="#status">What is built and what is planned</a></li>
+<li><a href="#channels">Build channels</a></li>
+<li><a href="#manifest">The signed update manifest</a></li>
+<li><a href="#verify">How to verify a download</a></li>
+<li><a href="#endpoints">Endpoints of client.kog.tw</a></li>
+<li><a href="#login">The KoG login</a></li>
+<li><a href="#privacy">What is sent where</a></li>
+<li><a href="#messages">Network messages</a></li>
+<li><a href="#repro">Reproducibility</a></li>
+<li><a href="#build">Build from source</a></li>
+<li><a href="#signing">How releases are signed</a></li>
+<li><a href="#security">Security contact</a></li>
+<li><a href="#license">Licence and credits</a></li>
+<li><a href="#history">History</a></li>
+</ol>
+</nav>
+
+<section id="what" aria-labelledby="what-title">
+<h2 id="what-title">What it is and is not</h2>
+<p>The KoG client is a <strong>reference implementation</strong>: a working example of features that need both a client and a server. It is a fork of <a href="https://github.com/TaterClient/TClient">TClient</a> 10.9.0, which is a fork of the <a href="https://ddnet.org">DDNet</a> client 20.1. The KoG-specific code lives in separate files (<code>kog_*</code>), so upstream changes can still be merged.</p>
+<ul>
+<li><strong>Added:</strong> a verifying updater, a browser login with a device key, release signing and sync scripts, build and release workflows.</li>
+<li><strong>Removed from TClient:</strong> the ChaiScript scripting engine, chat translation (it sent chat to a third-party service) and a committed Steam library. The client no longer contacts TClient's servers.</li>
+<li><strong>Not</strong> an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors. "KoG Client" is a placeholder name.</li>
+<li><strong>Not</strong> required to play on KoG, and not a stable product: there is no stable release yet.</li>
+<li>The executable is <code>KoG-Client</code> (<code>KoG-Client.exe</code>, <code>KoG-Client.app</code>). Its data folder is separate from DDNet's: <code>%APPDATA%\KoG-Client</code>, <code>~/Library/Application Support/KoG-Client</code>, <code>~/.local/share/kog-client</code>.</li>
+</ul>
+</section>
+
+<section id="status" aria-labelledby="status-title">
+<h2 id="status-title">What is built and what is planned</h2>
+<div class="table-scroll">
+<table class="stack compact">
+<thead><tr><th>Feature</th><th>State</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td data-label="Feature">Signed update manifest, channels canary and dev</td><td data-label="State"><span class="state built">Built</span></td><td data-label="Notes">Canary is published and signed. Dev is built but nothing is published there yet.</td></tr>
+<tr><td data-label="Feature">In-app updater (Windows, Linux)</td><td data-label="State"><span class="state built">Built</span></td><td data-label="Notes">Verifies signature, expiry, sequence and every file hash; keeps the previous version for rollback. Little real-world testing so far.</td></tr>
+<tr><td data-label="Feature">Browser login and device key</td><td data-label="State"><span class="state built">Built</span></td><td data-label="Notes">Canary and dev builds only (<code>cl_kog_login</code>). The HTTP steps and keychain use have no automated test.</td></tr>
+<tr><td data-label="Feature">Join proof (signed challenge when joining a server)</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">The signing code exists, the wire transport does not. <code>cl_kog_auto_login</code> is off and sends nothing.</td></tr>
+<tr><td data-label="Feature">Capability announcement to servers (<code>kog_hello</code>)</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">The setting exists, is off and is not implemented.</td></tr>
+<tr><td data-label="Feature">Opt-in network statistics (<code>kog_telemetry</code>)</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">The setting exists, is off and is not implemented. Nothing is sent.</td></tr>
+<tr><td data-label="Feature">Stable channel with two signatures</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">The stable keys are placeholders. No stable release has been made.</td></tr>
+<tr><td data-label="Feature">Signed list of known builds (<code>builds/allowlist.json</code>)</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">Part of a design only; nothing is served at that address.</td></tr>
+<tr><td data-label="Feature">KoG master server, integrity proofs</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">Designs only, see <a href="#messages">network messages</a>.</td></tr>
+<tr><td data-label="Feature">Code signing for Windows and macOS</td><td data-label="State"><span class="state planned">Planned</span></td><td data-label="Notes">Not done. Builds are neither code-signed nor notarised, which is why Windows and macOS warn.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="channels" aria-labelledby="channels-title">
+<h2 id="channels-title">Build channels</h2>
+<div class="table-scroll">
+<table class="stack">
+<thead><tr><th>Channel</th><th>Built from</th><th>Signatures</th><th>Manifest valid for</th></tr></thead>
+<tbody>
+<tr><td data-label="Channel"><code>stable</code></td><td data-label="Built from">A release started by hand on <code>main</code></td><td data-label="Signatures">CI key and the owner's hardware key</td><td data-label="Valid for">up to 90 days</td></tr>
+<tr><td data-label="Channel"><code>canary</code></td><td data-label="Built from">Every push to <code>main</code></td><td data-label="Signatures">CI key</td><td data-label="Valid for">up to 30 days</td></tr>
+<tr><td data-label="Channel"><code>dev</code></td><td data-label="Built from">Every push to <code>dev</code></td><td data-label="Signatures">CI key</td><td data-label="Valid for">up to 14 days</td></tr>
+</tbody>
+</table>
+</div>
+<p>Canary and dev versions carry the channel (<code>0.1.0-canary.8</code>) and are GitHub prereleases; the last 10 of each are kept. The channel is chosen with <code>kog_update_channel</code> or in the settings, never from the network. Switching to a channel with an older version asks for confirmation. Source: <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">UPDATE_CHANNEL.md</a>.</p>
+</section>
+
+<section id="manifest" aria-labelledby="manifest-title">
+<h2 id="manifest-title">The signed update manifest</h2>
+<p><code>update.json</code> is JSON, format 2. Unknown fields are ignored by the client but are covered by the signature.</p>
+<div class="table-scroll">
+<table class="stack">
+<thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td data-label="Field"><code>format</code>, <code>channel</code>, <code>version</code></td><td data-label="Meaning">Required. The channel inside the signed text must equal the channel the client asked for.</td></tr>
+<tr><td data-label="Field"><code>sequence</code></td><td data-label="Meaning">Required. Rises with every manifest of a channel. A client refuses one that is not higher than the last it applied.</td></tr>
+<tr><td data-label="Field"><code>issued</code>, <code>expires</code></td><td data-label="Meaning">Required, Unix seconds. An expired manifest, or one from the future, is refused. The window is at most the channel's maximum.</td></tr>
+<tr><td data-label="Field"><code>platforms.linux-x86_64</code>, <code>platforms.win64</code></td><td data-label="Meaning">The client binary: <code>sha256</code>, <code>size</code>, <code>url</code>.</td></tr>
+<tr><td data-label="Field"><code>files[]</code>, <code>remove[]</code></td><td data-label="Meaning">Data files to update (<code>path</code> below <code>data/</code>, hash, size, URL, optional mirrors) and data paths to delete. Executables never go through <code>files</code>.</td></tr>
+<tr><td data-label="Field"><code>packages[]</code></td><td data-label="Meaning">Optional: name, hash, size and URL of the zip, dmg and tar.xz that this download page shows. The updater ignores it.</td></tr>
+<tr><td data-label="Field"><code>rollout_percent</code>, <code>halted</code>, <code>min_version</code></td><td data-label="Meaning">Optional: staged rollout (the bucket is a random per-install value that is never sent anywhere), withdrawal of the update, and a blocking "update required" dialog for older clients.</td></tr>
+<tr><td data-label="Field"><code>notes_url</code>, <code>changes[]</code></td><td data-label="Meaning">Optional: release notes link (only <code>client.kog.tw</code> or <code>github.com/KoG-teeworlds</code>) and up to 3 plain-text lines.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="signature">Signature file and key ids</h3>
+<p><code>update.json.sig</code> is one line: <code>kog-update-sig-v1 KEYID SIGNATURE</code>. The signature is Ed25519 over the exact bytes of <code>update.json</code>, 128 hex characters. The key id is the first 8 hex characters of the public key, so a verifier can see which key was used. The stable channel will have a second signature, <code>update.json.sigb</code> (OpenSSH format, made with a hardware key).</p>
+<h3 id="client-checks">What the client checks</h3>
+<ul>
+<li>The signature against the public keys of that channel only. Each channel has two CI keys (a and b), compiled into the client in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/src/engine/client/kog_update_pubkey.h">kog_update_pubkey.h</a>. Trust never depends on the host or on TLS.</li>
+<li>Rollback protection: <code>sequence</code> higher than the last applied one on that channel, not expired, not from the future, a version of the channel's form, and a version the client rolled back from before is not tried again.</li>
+<li>Every file's SHA-256 and size before it replaces anything, from allow-listed hosts (<code>github.com/KoG-teeworlds/kog-client/releases/download/</code> and <code>client.kog.tw</code>).</li>
+<li>Fail-safe: the previous version stays beside the new one. After 2 starts that did not reach the start screen, the client restores it.</li>
+</ul>
+<h3 id="rotation">Per-channel keys and rotation</h3>
+<p>A key of one channel cannot sign another channel, and the channel name is part of the signed text. To replace a CI key without leaving installed clients behind, the client always ships both slots a and b, and the signing secret holds one. A slot is made active only after a client release that contains its public key has been shipped; then the other slot can be replaced. Details: <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">UPDATE_CHANNEL.md</a>.</p>
+</section>
+
+<section id="verify" aria-labelledby="verify-title">
+<h2 id="verify-title">How to verify a download</h2>
+<p>Three independent checks. Replace the file name with the one you downloaded. Commands for the checks that need the source are run from a checkout of <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
+
+<h3 id="verify-hash">1. File hash</h3>
+<p>The start page shows the SHA-256 of each package, read from the signed manifest. Compare it with:</p>
+<pre><code>sha256sum KoG-Client-linux.tar.xz</code></pre>
+<pre><code>shasum -a 256 KoG-Client-macOS.dmg</code></pre>
+<pre><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
+<p>The three commands are for Linux, macOS and Windows PowerShell, in that order.</p>
+
+<h3 id="verify-attestation">2. Build attestation</h3>
+<p>GitHub keeps a signed statement of which workflow and commit built each file. With the <a href="https://cli.github.com/">GitHub CLI</a>:</p>
+<pre><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
+
+<h3 id="verify-manifest">3. Manifest signature</h3>
+<p>Check the signature yourself with <code>kogsign</code>, the small verifier the signing job uses:</p>
+<pre><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
+cd kog-client
+cc -O2 -o kogsign scripts/kog/kogsign.c src/engine/external/monocypher/monocypher.c src/engine/external/monocypher/monocypher-ed25519.c -Isrc/engine/external/monocypher
+curl -fsSO https://client.kog.tw/canary/update.json
+curl -fsSO https://client.kog.tw/canary/update.json.sig
+for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign verify "$k" update.json update.json.sig; done</code></pre>
+<p>Two public keys are tried. One prints <code>ok</code>; the other prints <code>malformed signature file or wrong key id</code>, because the key id in the signature file names the key that signed. If neither prints <code>ok</code>, do not trust the manifest.</p>
+<p>Everything in one go (both hosts, signatures, expiry, and the hash of every file in the manifest; needs <code>curl</code>, <code>python3</code>, <code>ssh-keygen</code> and a C compiler):</p>
+<pre><code>scripts/kog/verify_published.sh canary</code></pre>
+<p>Use <code>dev</code> or <code>stable</code> instead of <code>canary</code> once those channels are published.</p>
+<p class="small">The attestation, manifest and <code>verify_published.sh</code> commands were run against the published canary build before this page was written. The hash commands for Windows and Linux and the build commands were not run for it.</p>
+</section>
+
+<section id="endpoints" aria-labelledby="endpoints-title">
+<h2 id="endpoints-title">Endpoints of client.kog.tw</h2>
+<p>The site is served from the branch <code>published</code> of <a href="https://github.com/KoG-teeworlds/kog-client-updates">kog-client-updates</a> by GitHub Pages. The signed manifests and this website are published by separate jobs.</p>
+<div class="table-scroll">
+<table class="stack compact">
+<thead><tr><th>Address</th><th>What</th><th>State</th></tr></thead>
+<tbody>
+<tr><td data-label="Address"><code>/canary/update.json</code>, <code>/canary/update.json.sig</code></td><td data-label="What">Manifest and signature of the canary channel</td><td data-label="State"><span class="state built">Built</span> published</td></tr>
+<tr><td data-label="Address"><code>/dev/update.json</code>, <code>/dev/update.json.sig</code></td><td data-label="What">Manifest and signature of the dev channel</td><td data-label="State"><span class="state built">Built</span> nothing published yet</td></tr>
+<tr><td data-label="Address"><code>/stable/update.json</code>, <code>.sig</code>, <code>.sigb</code></td><td data-label="What">Stable channel, two signatures. The start page also tries <code>/update.json</code>.</td><td data-label="State"><span class="state planned">Planned</span> no stable release yet</td></tr>
+<tr><td data-label="Address"><code>/builds/allowlist.json</code></td><td data-label="What">Signed list of released build hashes and recalls (design only)</td><td data-label="State"><span class="state planned">Planned</span></td></tr>
+<tr><td data-label="Address"><a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases</a></td><td data-label="What">The packages and client binaries the manifest points to (immutable releases)</td><td data-label="State"><span class="state built">Built</span></td></tr>
+<tr><td data-label="Address"><code>raw.githubusercontent.com/KoG-teeworlds/kog-client-updates/published/CHANNEL/update.json</code></td><td data-label="What">Fallback host of the client, on another name than the primary. Same files.</td><td data-label="State"><span class="state built">Built</span></td></tr>
+<tr><td data-label="Address"><code>/</code>, <code>/technical/</code>, <code>/privacy/</code></td><td data-label="What">This website</td><td data-label="State"><span class="state built">Built</span></td></tr>
+</tbody>
+</table>
+</div>
+<p>The names <code>stable</code>, <code>canary</code>, <code>dev</code>, <code>base</code>, <code>releases</code> and <code>builds</code> belong to the release data and are never used by website pages.</p>
+</section>
+
+<section id="login" aria-labelledby="login-title">
+<h2 id="login-title">The KoG login</h2>
+<p>Switch: <code>cl_kog_login</code>, on in canary and dev builds, off in stable. The client logs in through your browser (OAuth 2.0 authorization code with PKCE, S256) and then holds a device key pair. Nothing that could be replayed travels over the game connection, and nothing is sent in chat.</p>
+<ol>
+<li>The client reads the discovery document of the account server (<code>cl_kog_account_url</code>, default <code>https://kog.tw</code>) and checks that the endpoints are https and on an allowed origin.</li>
+<li>It listens on a random loopback port (at most 3 minutes) and opens the authorize URL in your browser, with PKCE and a random <code>state</code>.</li>
+<li>You log in on kog.tw. The browser redirects to <code>/callback</code> on the loopback port; the client accepts only the exact path and the right <code>state</code>.</li>
+<li>The client exchanges the code and the verifier for a token, reads the account name for the settings, makes an Ed25519 key pair and registers the public half and a device name (<code>POST /api/client/device</code>). Token requests do not follow redirects.</li>
+<li>The private key goes into the macOS Keychain or the Windows Credential Manager; on other systems into a file with mode 0600. The access token is discarded.</li>
+</ol>
+<p>Log out wipes the private key at once and asks the account server, through the browser, to remove the device. If that fails, the key is gone anyway and the device stays listed on kog.tw until you remove it there.</p>
+<p><strong>Join proof <span class="state planned">Planned</span>:</strong> the client can sign a challenge bound to the server address, a nonce, the device and the session, and answers only servers listed for the <code>kog</code> community. The wire format is only a design, so <code>cl_kog_auto_login</code> is off and sends nothing. Documents: <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/LOGIN.md">LOGIN.md</a> (what is built), the design <a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/238">pull request 238</a> (join proof) and <a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/229">229</a> (the client design). Both are open and not decided.</p>
+</section>
+
+<section id="privacy" aria-labelledby="privacy-title">
+<h2 id="privacy-title">What is sent where</h2>
+<p>Every host you connect to sees your IP address. The KoG additions are small; the rest is inherited from DDNet and TClient. The complete list is on the <a href="../privacy/">privacy page</a> and in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/PRIVACY.md">PRIVACY.md</a>.</p>
+<div class="table-scroll">
+<table class="stack">
+<thead><tr><th>To</th><th>When</th><th>What besides your IP address</th><th>Setting</th></tr></thead>
+<tbody>
+<tr><td data-label="To"><code>client.kog.tw</code>, GitHub releases</td><td data-label="When">Update check at start (Windows, Linux); a download only if you accept</td><td data-label="What">Nothing</td><td data-label="Setting"><code>kog_check_updates</code></td></tr>
+<tr><td data-label="To"><code>kog.tw</code></td><td data-label="When">Only when you log in or out, in canary and dev builds</td><td data-label="What">OAuth code and PKCE verifier, a device name (a neutral default, no host name), the public device key</td><td data-label="Setting"><code>cl_kog_login</code></td></tr>
+<tr><td data-label="To">Game servers</td><td data-label="When">Playing</td><td data-label="What">What any DDNet client sends, plus a version string that names this client</td><td data-label="Setting">None</td></tr>
+<tr><td data-label="To">Everything else</td><td data-label="When">-</td><td data-label="What">No telemetry, analytics, advertising or crash uploads</td><td data-label="Setting">-</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="messages" aria-labelledby="messages-title">
+<h2 id="messages-title">Network messages</h2>
+<p>As built, the KoG client defines no new network message types: its protocol definition (<code>datasrc/network.py</code>) has no KoG entry. A design rule is that nothing changes on the wire for 0.7 and stock clients. What is designed but <strong>not built</strong>:</p>
+<ul>
+<li><span class="state planned">Planned</span> A hello message that announces the client's KoG capabilities to a server (<code>kog_hello</code>).</li>
+<li><span class="state planned">Planned</span> The login proof in the join handshake, so that no credential travels over the game connection (<a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/238">design 238</a>).</li>
+<li><span class="state planned">Planned</span> A KoG master server that hands out server certificates and a revocation list (<a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/241">design 241</a>).</li>
+<li><span class="state planned">Planned</span> A statement about the client build, with a list of known builds and what that can and cannot prove (<a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/242">design 242</a>). A proof about a device key cannot show that the code is unmodified.</li>
+<li><span class="state planned">Planned</span> Opt-in network statistics (<code>kog_telemetry</code>).</li>
+</ul>
+<p>The overall design is <a href="https://github.com/KoG-teeworlds/kog-2.0-server/pull/229">pull request 229</a>. These pull requests are design documents, and they may change.</p>
+</section>
+
+<section id="repro" aria-labelledby="repro-title">
+<h2 id="repro-title">Reproducibility</h2>
+<p><strong>The builds are not reproducible yet.</strong> The repository has no documented procedure that rebuilds a release byte for byte, and this has not been tested. What exists instead: public workflows build the files on GitHub, every file carries a build attestation (<a href="#verify-attestation">check 2</a>), releases are immutable, and the signing job verifies attestation, hashes and that the commit is on <code>main</code> before it signs. That shows where a file came from, not that two builds from one commit give identical files.</p>
+</section>
+
+<section id="build" aria-labelledby="build-title">
+<h2 id="build-title">Build from source</h2>
+<p>Same as DDNet (see <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/BUILDING.md">BUILDING.md</a> for the dependencies). The client only, without server and tools, which is how the release workflows build it:</p>
+<pre><code>git clone https://github.com/KoG-teeworlds/kog-client
+cd kog-client
+mkdir build
+cd build
+cmake .. -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build . --target game-client</code></pre>
+<p>The updater is only compiled with <code>-DAUTOUPDATE=ON</code>, and a release build with that option fails while a channel's keys are placeholders. Run the tests with <code>cmake --build . --target run_tests</code> (needs <code>-DDOWNLOAD_GTEST=ON</code> or an installed GTest). A build you make yourself is not on any channel and is not signed.</p>
+</section>
+
+<section id="signing" aria-labelledby="signing-title">
+<h2 id="signing-title">How releases are signed</h2>
+<ul>
+<li><strong>Canary and dev:</strong> a workflow builds from <code>main</code> or <code>dev</code> (never for forks or pull requests), attests the files and makes a draft manifest. A verify job without secrets checks attestations, hashes and the commit; a separate job in a protected environment signs only that manifest with the channel's CI key; publishing commits it to the branch <code>published</code>.</li>
+<li><strong>Stable <span class="state planned">Planned</span>:</strong> the same, plus a second signature (<code>update.json.sigb</code>) made by the owner on a hardware security key after verifying the release on their own machine. A client requires both, so neither a stolen GitHub account nor a stolen CI secret alone can publish a stable update. There is an emergency stop that signs a <code>halted</code> manifest. The stable keys in the client are still placeholders.</li>
+<li><strong>Known weak points:</strong> the CI private keys are in an encrypted state file of a private repository, so canary and dev testers are exposed if it leaks; with one maintainer, the reviewer of a signing run can approve their own run; and the workflows have had little time in production. The full threat model is in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">UPDATE_CHANNEL.md</a>.</li>
+</ul>
+</section>
+
+<section id="security" aria-labelledby="security-title">
+<h2 id="security-title">Security contact</h2>
+<p>Report vulnerabilities privately through <a href="https://github.com/KoG-teeworlds/kog-client/security/advisories/new">GitHub's vulnerability reporting</a>, not in a public issue. See <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">SECURITY.md</a>. Supported: the latest release, once there is one, and the <code>main</code> branch. This is volunteer work with no response time promised.</p>
+</section>
+
+<section id="license" aria-labelledby="license-title">
+<h2 id="license-title">Licence and credits</h2>
+<div class="table-scroll">
+<table class="stack">
+<thead><tr><th>Project</th><th>Authors</th><th>Licence</th></tr></thead>
+<tbody>
+<tr><td data-label="Project">Teeworlds</td><td data-label="Authors">Magnus Auvinen and contributors</td><td data-label="Licence">zlib</td></tr>
+<tr><td data-label="Project">DDRace</td><td data-label="Authors">Shereef Marzouk</td><td data-label="Licence">zlib</td></tr>
+<tr><td data-label="Project"><a href="https://github.com/ddnet/ddnet">DDNet</a></td><td data-label="Authors">Dennis Felsing and contributors</td><td data-label="Licence">zlib; <code>data/</code> CC-BY-SA 3.0 except assets, fonts, languages and skins, which have their own licences</td></tr>
+<tr><td data-label="Project"><a href="https://github.com/TaterClient/TClient">TClient</a></td><td data-label="Authors">Tater and contributors</td><td data-label="Licence">as DDNet</td></tr>
+<tr><td data-label="Project">KoG client</td><td data-label="Authors">King of Gores</td><td data-label="Licence">zlib</td></tr>
+</tbody>
+</table>
+</div>
+<p>All upstream notices are kept in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">license.txt</a>. Added third-party code: Monocypher 4.0.3 (BSD-2-Clause or CC0-1.0). <strong>Open item:</strong> some inherited assets, such as fonts and artwork from TClient, still need a licence check before a first release; <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">NOTICE_KOG.md</a> lists them. Under the zlib licence this is an altered version and must not be presented as the original software.</p>
+</section>
+
+<section id="history" aria-labelledby="history-title">
+<h2 id="history-title">History</h2>
+<p>There is no stable release yet. Testing builds are on the <a href="https://github.com/KoG-teeworlds/kog-client/releases">GitHub releases page</a>.</p>
+<h3>November 2026, before the first release</h3>
+<ul>
+<li>Forked from TClient 10.9.0 (DDNet 20.1).</li>
+<li>Added a notice, a README, contributor files and issue templates.</li>
+<li>Removed the ChaiScript scripting engine, chat translation and the committed Steam library, and stopped contacting TClient's servers.</li>
+<li>Added the KoG version identity, an updater that verifies signed manifests, and the browser login.</li>
+<li>Added release signing and upstream sync scripts, and build, release, spelling and security-scan workflows.</li>
+<li>Published the first canary builds.</li>
+</ul>
+</section>

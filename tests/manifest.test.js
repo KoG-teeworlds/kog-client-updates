@@ -234,11 +234,12 @@ function fakeDom() {
   return { document, nodes, calls };
 }
 
-async function runApp(responses) {
+async function runApp(responses, userAgent) {
   const { document, nodes, calls } = fakeDom();
   const requested = [];
   const sandbox = {
     window: { KogManifest: Manifest },
+    navigator: userAgent ? { userAgent } : undefined,
     document,
     AbortController,
     setTimeout,
@@ -270,11 +271,11 @@ test("the page shows a valid manifest through text nodes and checked links only"
   assert.equal(calls.innerHTML, 0);
   assert.equal(nodes.unstable.hidden, false);
   const text = nodes.release.textContent;
-  assert.match(text, /Version 1\.2\.3 \(stable\)/);
+  assert.match(text, /Stable version 1\.2\.3 from/);
   assert.match(text, /Download for Windows/);
-  assert.match(text, new RegExp(SHA));
+  assert.doesNotMatch(text, /undefined|NaN/);
   for (const [tag, name, value] of calls.attrs) {
-    if (name === "href") assert.ok(Manifest.allowedUrl(value) || ["verify/", "stable/update.json", "stable/update.json.sig"].includes(value) || value === "https://github.com/KoG-teeworlds/kog-client/releases", value);
+    if (name === "href") assert.ok(Manifest.allowedUrl(value) || ["technical/#verify"].includes(value) || value === "https://github.com/KoG-teeworlds/kog-client/releases", value);
     assert.notEqual(name.slice(0, 2), "on");
   }
   assert.equal(requested[0][1].credentials, "omit");
@@ -296,18 +297,18 @@ test("a platform with a hostile URL is left out of the page", async () => {
   const { nodes, calls } = await runApp({ "update.json": { body: JSON.stringify(m) } });
   assert.doesNotMatch(JSON.stringify(calls.attrs), /javascript:/);
   assert.doesNotMatch(nodes.release.textContent, /javascript:/);
-  assert.match(nodes.release.textContent, /Linux \(64-bit\)/);
+  assert.match(nodes.release.textContent, /Download for Linux/);
 });
 
 test("an expired manifest shows a warning", async () => {
   const now = Math.floor(Date.now() / 1000);
   const { nodes } = await runApp({ "update.json": { body: JSON.stringify(manifest({ issued: now - 40 * 86400, expires: now - 10 * 86400 })) } });
-  assert.match(nodes.release.textContent, /expired on/);
+  assert.match(nodes.release.textContent, /ran out on/);
 });
 
 test("no manifest means a calm message and a link to GitHub", async () => {
   const { nodes, calls } = await runApp({});
-  assert.match(nodes.release.textContent, /No stable release has been published yet/);
+  assert.match(nodes.release.textContent, /No testing build has been published yet/);
   assert.ok(calls.attrs.some(([, name, value]) => name === "href" && value === "https://github.com/KoG-teeworlds/kog-client/releases"));
 });
 
@@ -320,7 +321,7 @@ test("a server error is reported, a manifest at the second stable path is found"
   const broken = await runApp({ "update.json": { status: 500, body: "" } });
   assert.match(broken.nodes.release.textContent, /Could not load/);
   const second = await runApp({ "stable/update.json": { body: liveManifest() } });
-  assert.match(second.nodes.release.textContent, /Version 1\.2\.3/);
+  assert.match(second.nodes.release.textContent, /Stable version 1\.2\.3/);
   assert.deepEqual(second.requested.map((r) => r[0]), ["update.json", "stable/update.json"]);
 });
 
@@ -331,7 +332,7 @@ test("choosing another channel loads that channel's manifest", async () => {
   nodes.channel.listeners.change();
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.ok(requested.some(([url]) => url === "canary/update.json"));
-  assert.match(nodes.release.textContent, /unstable canary build/);
+  assert.match(nodes.release.textContent, /This build is for testing/);
   nodes.channel.value = "nightly";
   nodes.channel.listeners.change();
   await new Promise((resolve) => setTimeout(resolve, 10));
@@ -374,14 +375,24 @@ test("the page shows size, hash and check command per package, and no invented n
   const text = nodes.release.textContent;
   assert.match(text, /KoG-Client-windows\.zip \u00b7 /);
   assert.match(text, new RegExp("1".repeat(64)));
-  assert.match(text, /Get-FileHash/);
-  assert.match(text, /sha256sum -c/);
-  assert.match(text, /shasum -a 256 -c/);
+  assert.match(text, /How to check a file/);
   assert.doesNotMatch(text, /undefined|NaN|null/);
 });
 
-test("a stable channel without a release offers the canary channel politely", async () => {
-  const { nodes, calls } = await runApp({});
-  assert.match(nodes.release.textContent, /No stable release has been published yet/);
-  assert.match(nodes.release.textContent, /Show canary builds/);
+test("without a stable release the newest testing build is shown, with a note", async () => {
+  const body = liveManifest({ channel: "canary", version: "1.2.3-canary.9" });
+  const { nodes, requested } = await runApp({ "canary/update.json": { body } });
+  assert.deepEqual(requested.map((r) => r[0]), ["update.json", "stable/update.json", "canary/update.json"]);
+  const text = nodes.release.textContent;
+  assert.match(text, /Testing build 1\.2\.3-canary\.9 from/);
+  assert.match(text, /There is no stable version yet/);
+  assert.equal(nodes.channel.value, "canary");
+});
+
+test("the big button is for the detected system and the others are links", async () => {
+  const { nodes } = await runApp({ "update.json": { body: liveManifest() } }, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+  const text = nodes.release.textContent;
+  assert.match(text, /Download for Windows/);
+  assert.match(text, /Other systems: /);
+  assert.doesNotMatch(text, /Choose your system/);
 });

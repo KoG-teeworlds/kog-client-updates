@@ -12,14 +12,21 @@ REPO = "https://github.com/KoG-teeworlds/kog-client"
 WEBSITE = "https://kog.tw/"
 CLIENTS = "https://kog.tw/clients"
 
+DISCLAIMER_LEAD = "The KoG client is a reference implementation."
+DISCLAIMER = (
+    DISCLAIMER_LEAD
+    + " It exists to demonstrate and test new features that need client integration, such as new network messages and the KoG login."
+    + " You do not need it to play on KoG: the normal DDNet and Teeworlds clients are fully supported."
+    + " Builds are for testing and may change or break."
+)
+DISCLAIMER_LINK = "Just want to play?"
+
 NAV = [
-    ("index", "Download", "#download"),
-    ("verify", "Verify", "verify/"),
-    ("install", "Install", "install/"),
-    ("updates", "Updates", "updates/"),
-    ("privacy", "Privacy", "privacy/"),
-    ("faq", "FAQ", "faq/"),
-    ("changelog", "Changelog", "changelog/"),
+    ("index", "Download", ""),
+    ("technical", "Technical", "technical/"),
+    (None, "Source", REPO),
+    (None, "kog.tw", WEBSITE),
+    (None, "Approved clients", CLIENTS),
 ]
 
 CSP = (
@@ -71,14 +78,21 @@ def render(name, meta, body, marker=None):
     canonical = ORIGIN + url_path(name)
     nav = []
     for key, label, target in NAV:
+        external = target.startswith("https://")
         current = ' aria-current="page"' if key == name else ""
-        nav.append('<li><a href="%s"%s>%s</a></li>' % (base + target, current, label))
-    strip = ""
-    if name != "index":
-        strip = (
-            '<div class="strip"><div class="wrap"><p><strong>Best effort only.</strong> Volunteer-maintained, '
-            "no warranty or support guarantee. You do not need this client to play on KoG.</p></div></div>\n"
-        )
+        arrow = '<span aria-hidden="true"> &#8599;</span>' if external else ""
+        nav.append('<li><a href="%s"%s>%s%s</a></li>' % (target if external else base + target, current, label, arrow))
+    disclaimer = (
+        '<aside class="disclaimer" aria-label="Disclaimer"><div class="wrap"><p><strong>%s</strong>%s '
+        '<a href="%s">%s<span aria-hidden="true"> &#8594;</span></a></p></div></aside>\n'
+        % (html.escape(DISCLAIMER_LEAD), html.escape(DISCLAIMER[len(DISCLAIMER_LEAD):]), WEBSITE, DISCLAIMER_LINK)
+    )
+    redirect = meta.get("redirect")
+    refresh = ""
+    if redirect:
+        target = ORIGIN + redirect
+        refresh = '<meta http-equiv="refresh" content="0; url=%s">\n<meta name="robots" content="noindex">\n' % html.escape(target, quote=True)
+        canonical = target
     script = ""
     if name == "index":
         script = '<script src="assets/manifest.js"></script>\n<script src="assets/app.js"></script>\n'
@@ -90,7 +104,7 @@ def render(name, meta, body, marker=None):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="{CSP}">
 <meta name="referrer" content="no-referrer">
-{build_meta}<title>{html.escape(title)}</title>
+{build_meta}{refresh}<title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description, quote=True)}">
 <link rel="canonical" href="{canonical}">
 <link rel="icon" href="{base}favicon.svg" type="image/svg+xml">
@@ -107,17 +121,16 @@ def render(name, meta, body, marker=None):
 <link rel="stylesheet" href="{base}assets/style.css">
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+{disclaimer}<a class="skip" href="#main">Skip to content</a>
 <header class="site">
 <div class="wrap">
 <a class="brand" href="{base or './'}"><img src="{base}assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><ul>
 {chr(10).join(nav)}
 </ul></nav>
-<a class="back" href="{WEBSITE}">kog.tw<span aria-hidden="true"> &#8599;</span><span class="visually-hidden"> (back to the KoG website)</span></a>
 </div>
 </header>
-{strip}<main id="main">
+<main id="main">
 <div class="wrap">
 {body}
 </div>
@@ -131,6 +144,7 @@ def render(name, meta, body, marker=None):
 <li><a href="{REPO}">Source code</a></li>
 <li><a href="{REPO}/issues">Issues</a></li>
 <li><a href="{base}privacy/">Privacy</a></li>
+<li><a href="{base}technical/">Technical</a></li>
 <li><a href="{REPO}/blob/main/SECURITY.md">Security</a></li>
 <li><a href="{REPO}/blob/main/license.txt">Licence</a></li>
 <li><a href="{REPO}/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
@@ -156,7 +170,8 @@ def build(marker=None):
         name = path.stem
         meta, body = read_page(path)
         outputs[output_path(name)] = render(name, meta, body, marker)
-        names.append(name)
+        if "redirect" not in meta:
+            names.append(name)
     names.sort(key=lambda n: (n != "index", n))
     outputs[SITE / "sitemap.xml"] = sitemap(names)
     return outputs

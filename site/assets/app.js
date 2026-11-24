@@ -6,10 +6,12 @@
   if (!Manifest || !box) return;
 
   var RELEASES_URL = "https://github.com/KoG-teeworlds/kog-client/releases";
-  var VERIFY_URL = "verify/";
+  var VERIFY_URL = "technical/#verify";
   var select = document.getElementById("channel");
   var unstable = document.getElementById("unstable");
   var token = 0;
+
+  var KIND = { stable: "Stable version", canary: "Testing build", dev: "Development build" };
 
   function el(tag, text, className) {
     var node = document.createElement(tag);
@@ -35,44 +37,28 @@
     return "";
   }
 
-  var CHECKS = {
-    windows: function (file, sha) {
-      return '(Get-FileHash .\\' + file + ' -Algorithm SHA256).Hash -eq "' + sha + '"';
-    },
-    macos: function (file, sha) {
-      return 'echo "' + sha + '  ' + file + '" | shasum -a 256 -c';
-    },
-    linux: function (file, sha) {
-      return 'echo "' + sha + '  ' + file + '" | sha256sum -c';
-    },
-  };
+  function fileLine(item) {
+    return item.file + (item.size ? " · " + Manifest.formatSize(item.size) : "");
+  }
 
-  function card(item, os, anyMatch) {
-    var mine = item.id === os;
-    var entry = el("li", "", "platform" + (mine ? " recommended" : ""));
-    var head = el("div", "", "platform-head");
-    head.appendChild(el("h3", item.label));
-    if (mine) head.appendChild(el("span", "Your system", "badge"));
-    entry.appendChild(head);
-    var meta = item.file + (item.size ? " \u00b7 " + Manifest.formatSize(item.size) : "");
-    entry.appendChild(el("p", meta, "file"));
-    var primary = mine || !anyMatch;
-    entry.appendChild(link("Download for " + item.label, item.url, "button" + (primary ? "" : " secondary")));
-    if (item.sha256) {
-      var details = el("details", "", "check");
-      details.appendChild(el("summary", "SHA-256 and check command"));
-      var hash = el("p");
-      hash.appendChild(el("code", item.sha256, "hash"));
-      details.appendChild(hash);
-      details.appendChild(el("p", "Run this in the folder of the download. It prints True (PowerShell) or OK if the file matches:", "small"));
-      var pre = el("pre");
-      pre.appendChild(el("code", CHECKS[item.id](item.file, item.sha256)));
-      details.appendChild(pre);
-      entry.appendChild(details);
-    } else {
-      entry.appendChild(el("p", "This release lists no hash for this file. Verify it with the GitHub attestation.", "small"));
-    }
+  function bigButton(item) {
+    return link("Download for " + item.label, item.url, "button big");
+  }
+
+  function choice(item) {
+    var entry = el("li");
+    var button = link("Download for " + item.label, item.url, "button");
+    button.appendChild(el("span", fileLine(item), "file"));
+    entry.appendChild(button);
     return entry;
+  }
+
+  function showInstallFor(os) {
+    if (!os) return;
+    ["windows", "macos", "linux"].forEach(function (id) {
+      var section = document.getElementById("install-" + id);
+      if (section) section.open = id === os;
+    });
   }
 
   function show(nodes) {
@@ -86,15 +72,15 @@
     var paragraph = el("p", text, warn ? "warn" : "empty");
     var more = el("p");
     if (offerCanary) {
-      var button = el("button", "Show canary builds", "button");
+      var button = el("button", "Show testing builds", "button");
       button.setAttribute("type", "button");
       button.addEventListener("click", function () {
         if (select) select.value = "canary";
-        load("canary");
+        load("canary", false);
       });
       more.appendChild(button);
     }
-    more.appendChild(link("Releases on GitHub", RELEASES_URL, "button secondary"));
+    more.appendChild(link("All builds on GitHub", RELEASES_URL, "button secondary"));
     show([paragraph, more]);
   }
 
@@ -127,83 +113,94 @@
     return next();
   }
 
-  function render(data) {
+  function render(data, fellBack) {
     var nodes = [];
-    var summary = el("p", "", "release-line");
-    summary.appendChild(el("strong", "Version " + data.version));
-    summary.appendChild(document.createTextNode(" (" + data.channel + "), published " + Manifest.formatDate(data.issued) + ", release information valid until " + Manifest.formatDate(data.expires) + "."));
-    nodes.push(summary);
-    if (data.expired) {
-      nodes.push(el("p", "This release information expired on " + Manifest.formatDate(data.expires) + ". The page may be out of date. Check the GitHub releases page.", "warn"));
-    }
-    if (data.channel !== "stable") {
-      nodes.push(el("p", "This is an unstable " + data.channel + " build. It can break, and it may need a clean reinstall of the stable version.", "warn"));
-    }
-
     var os = detectOs();
-    var anyMatch = data.packages.some(function (item) {
-      return item.id === os;
-    });
-    var list = el("ul", "", "platforms");
+    var mine = null;
     data.packages.forEach(function (item) {
-      list.appendChild(card(item, os, anyMatch));
+      if (item.id === os) mine = item;
     });
-    nodes.push(list);
-    nodes.push(el("p", "Android and iOS: not available.", "small"));
+    showInstallFor(os);
 
-    var signed = el("p", "", "small");
-    signed.appendChild(document.createTextNode("Signed manifest of this channel: "));
-    signed.appendChild(link("update.json", data.channel + "/update.json"));
-    signed.appendChild(document.createTextNode(" and "));
-    signed.appendChild(link("update.json.sig", data.channel + "/update.json.sig"));
-    signed.appendChild(document.createTextNode(". "));
-    signed.appendChild(link("How to verify a download", VERIFY_URL));
-    signed.appendChild(document.createTextNode(". This page does not check signatures itself."));
-    nodes.push(signed);
-
-    if (data.files.length > 0) {
-      var details = el("details");
-      details.appendChild(el("summary", "Signed file hashes (what the in-app updater downloads)"));
-      var scroll = el("div", "", "table-scroll");
-      var table = el("table");
-      var head = el("tr");
-      ["Platform", "Size", "SHA-256"].forEach(function (name) {
-        head.appendChild(el("th", name));
+    if (mine) {
+      var main = el("p", "", "main-download");
+      main.appendChild(bigButton(mine));
+      nodes.push(main);
+      nodes.push(el("p", fileLine(mine), "file-line"));
+      var others = data.packages.filter(function (item) {
+        return item !== mine;
       });
-      table.appendChild(head);
-      data.files.forEach(function (file) {
-        var row = el("tr");
-        row.appendChild(el("td", file.label));
-        row.appendChild(el("td", Manifest.formatSize(file.size)));
-        var cell = el("td");
-        cell.appendChild(el("code", file.sha256, "hash"));
-        row.appendChild(cell);
-        table.appendChild(row);
+      if (others.length > 0) {
+        var other = el("p", "Other systems: ", "other");
+        others.forEach(function (item, index) {
+          if (index > 0) other.appendChild(document.createTextNode(", "));
+          other.appendChild(link(item.label, item.url));
+        });
+        nodes.push(other);
+      }
+    } else {
+      nodes.push(el("p", "Choose your system:", "choose-title"));
+      var list = el("ul", "", "choose");
+      data.packages.forEach(function (item) {
+        list.appendChild(choice(item));
       });
-      scroll.appendChild(table);
-      details.appendChild(scroll);
-      nodes.push(details);
+      nodes.push(list);
     }
+
+    var build = el("p", "", "build-line");
+    build.appendChild(el("strong", KIND[data.channel] + " " + data.version));
+    build.appendChild(document.createTextNode(" from " + Manifest.formatDate(data.issued) + "."));
+    nodes.push(build);
+    if (fellBack) nodes.push(el("p", "There is no stable version yet, so this is a testing build.", "small"));
+    if (data.channel !== "stable") {
+      nodes.push(el("p", "This build is for testing. It can break, and it can change without notice. You can always play with the normal DDNet client.", "warn"));
+    }
+    if (data.expired) {
+      nodes.push(el("p", "The release information on this page ran out on " + Manifest.formatDate(data.expires) + ", so a newer build may exist. Check the GitHub releases page.", "warn"));
+    }
+
+    var checks = (mine ? [mine] : data.packages).filter(function (item) {
+      return item.sha256;
+    });
+    var details = el("details", "", "check");
+    details.appendChild(el("summary", "Check the file (optional)"));
+    details.appendChild(el("p", "After the download, you can compare the file with this fingerprint (SHA-256). If it differs, do not open the file.", "small"));
+    checks.forEach(function (item) {
+      details.appendChild(el("p", item.file, "small"));
+      var hash = el("p");
+      hash.appendChild(el("code", item.sha256, "hash"));
+      details.appendChild(hash);
+    });
+    var how = el("p", "", "small");
+    how.appendChild(link("How to check a file", VERIFY_URL));
+    how.appendChild(document.createTextNode(". This page does not check signatures itself."));
+    details.appendChild(how);
+    nodes.push(details);
     show(nodes);
   }
 
-  function load(channel) {
+  function load(channel, tryFallback, fellBack) {
     var mine = ++token;
-    show([el("p", "Looking for the latest " + channel + " release…")]);
+    show([el("p", "Looking for the newest build…", "empty")]);
     firstManifest(Manifest.MANIFEST_PATHS[channel])
       .then(function (text) {
-        if (mine !== token) return;
+        if (mine !== token) return null;
         if (text === null) {
-          if (channel === "stable") message("No stable release has been published yet. The first one will appear here. Until then, testers can try the canary channel.", false, true);
-          else message("No " + channel + " release has been published yet.");
-          return;
+          if (channel === "stable" && tryFallback) {
+            if (select) select.value = "canary";
+            return load("canary", false, true);
+          }
+          if (channel === "stable") message("There is no stable version yet. The first one will appear here. Until then, you can try a testing build.", false, true);
+          else message("No " + KIND[channel].toLowerCase() + " has been published yet.");
+          return null;
         }
         var result = Manifest.parse(text, channel, Math.floor(Date.now() / 1000));
         if (!result.ok) {
-          message(result.reason === "clock" ? "The release information looks newer than your device clock. Check your clock, or use the GitHub releases page." : "The release information could not be validated, so it is not shown. Use the GitHub releases page and verify what you download.", true);
-          return;
+          message(result.reason === "clock" ? "The release information looks newer than your device clock. Check your clock, or use the GitHub releases page." : "The release information could not be validated, so it is not shown. Use the GitHub releases page and check what you download.", true);
+          return null;
         }
-        render(result.data);
+        render(result.data, fellBack === true);
+        return null;
       })
       .catch(function () {
         if (mine === token) message("Could not load the release information. Try again later or use the GitHub releases page.", true);
@@ -214,8 +211,8 @@
   if (select) {
     select.addEventListener("change", function () {
       var channel = select.value;
-      if (Manifest.CHANNELS.indexOf(channel) >= 0) load(channel);
+      if (Manifest.CHANNELS.indexOf(channel) >= 0) load(channel, false);
     });
   }
-  load("stable");
+  load("stable", true);
 })();
