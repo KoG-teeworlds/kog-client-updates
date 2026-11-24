@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Release signing | KoG Client technical documentation</title>
 <meta name="description" content="How a KoG client release is built, attested and signed: the CI signature, the planned second signature with a hardware key for stable, channels, rollback and the emergency stop.">
 <link rel="canonical" href="https://client.kog.tw/technical/release-signing/">
@@ -96,10 +96,14 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Release signing</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Updates and trust</p>
 <h1>Release signing <span class="state partial">Partly built</span></h1>
 <p class="lead">A release only reaches players after public checks and a signature the client can verify itself. Canary and dev are signed by a CI key. Stable, which does not exist yet, will need a second signature from a hardware key as well.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Partly built</dd><dt>Section</dt><dd>Updates and trust</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <h2 id="model">The two-signature model <a class="anchor" href="#model" aria-label="Link to this section: The two-signature model">#</a></h2>
 <figure class="diagram" id="figure-release-signing">
 <div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/release-signing-dark.svg"><img src="../../assets/diagrams/release-signing-light.svg" alt="Flow diagram of how a release becomes an update the client accepts. A public workflow builds the client files from the main branch and attests them. A check without secrets verifies attestations, hashes and that the commit is on main and produces the manifest. The CI key signs it. For the stable channel, which is not published yet, the owner also verifies the release on their own machine and signs with a hardware key. The signed manifest is published to client.kog.tw, and the client checks every signature itself." width="389" height="1097" loading="lazy" decoding="async"></picture></div>
@@ -126,7 +130,8 @@
 </tbody>
 </table></div>
 <p>Because the client requires both signatures for stable, neither a stolen GitHub account nor a stolen CI secret alone can publish a stable update: the second signature is made on a hardware security key, after the owner verified the release on their own machine and touched the key.</p>
-
+</section>
+<section class="sec">
 <h2 id="steps">What happens to a release <a class="anchor" href="#steps" aria-label="Link to this section: What happens to a release">#</a></h2>
 <h3 id="canary-and-dev">Canary and dev <a class="anchor" href="#canary-and-dev" aria-label="Link to this section: Canary and dev">#</a></h3>
 <ol>
@@ -143,13 +148,16 @@
 <li>Publishing happens only with both signatures, checked against the pinned public keys.</li>
 </ol>
 <p>The public scripts are in <code>scripts/kog/</code> of the client repository (<code>verify_release.sh</code>, <code>approve_release.sh</code>, <code>publish_signed.sh</code>, <code>verify_published.sh</code>). The stable path has not been run for a real release.</p>
-
+</section>
+<section class="sec">
 <h2 id="rollback">Rollback protection <a class="anchor" href="#rollback" aria-label="Link to this section: Rollback protection">#</a></h2>
 <p>Rollback means making clients install an older, known-bad version. The client defends against it in four ways, all checked locally after the signature: the <strong>sequence</strong> must rise per channel; the manifest has an <strong>expiry</strong> (14, 30 or 90 days by channel), so an old manifest stops working and a freeze ends; a version <strong>older than the installed one</strong> is applied only after you confirmed a channel switch; and a version the client <strong>rolled back from</strong> is remembered and not tried again. Details: <a href="/technical/update-channel/#client-checks">update channel</a>.</p>
-
+</section>
+<section class="sec">
 <h2 id="halt">Emergency stop <a class="anchor" href="#halt" aria-label="Link to this section: Emergency stop">#</a></h2>
 <p>For stable there is a script that signs a copy of the current manifest with <code>halted: true</code> and a higher sequence, using the hardware key and the offline backup CI key, and publishes it without waiting for CI. A client that sees it does not update. A halt withdraws an update from clients that have not applied it; it does not remove a version already installed.</p>
-
+</section>
+<section class="sec">
 <h2 id="keys">Keys <a class="anchor" href="#keys" aria-label="Link to this section: Keys">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Key</th><th>Held by</th><th>Where the client has it</th></tr></thead>
@@ -160,7 +168,8 @@
 </tbody>
 </table></div>
 <p>Rotation of the CI keys is described on the <a href="/technical/update-channel/#keys">update channel page</a>. After a loss of the CI keys, the backup key still signs together with the hardware key, and a client release replaces the CI keys.</p>
-
+</section>
+<section class="sec">
 <h2 id="weak-points">Known weak points <a class="anchor" href="#weak-points" aria-label="Link to this section: Known weak points">#</a></h2>
 <ul>
 <li>The CI private keys are held by automation. Anyone who could change that automation and read the keys could sign a canary or dev manifest. For stable that is not enough, because signature B is needed. For canary and dev, the people exposed are the testers who opted in.</li>
@@ -169,6 +178,7 @@
 <li>The workflows have had little time in production. They were checked with actionlint and shellcheck. Hardware-key signatures were checked with a software emulation of the format against OpenSSH, not with a real security key.</li>
 </ul>
 <p>The client's full threat table is on the <a href="/technical/security/">security page</a>.</p>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/update-channel/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Update channel</span></a>
 <a class="pager-next" rel="next" href="../../technical/verify/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Verify a download</span></a>

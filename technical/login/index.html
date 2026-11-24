@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Login | KoG Client technical documentation</title>
 <meta name="description" content="How the KoG client logs in: OAuth 2.0 authorization code with PKCE in your system browser, a loopback listener, an Ed25519 device key in the OS keychain, what is sent where, revocation, and the planned join proof.">
 <link rel="canonical" href="https://client.kog.tw/technical/login/">
@@ -99,14 +99,19 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Login</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Account</p>
 <h1>Login <span class="state partial">Partly built</span></h1>
 <p class="lead">The client logs in to your KoG account through your browser and then holds a device key pair. Nothing that could be replayed travels over the game connection, and nothing is sent in chat. This page describes what is built and what is not.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Partly built</dd><dt>Section</dt><dd>Account</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <div class="callout note" role="note">
 <p>Source of truth: <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/LOGIN.md">docs/LOGIN.md</a>. The client treats the KoG account service at <code>https://kog.tw</code> as a black box that speaks OAuth 2.0 and OpenID Connect discovery and has two device endpoints. This page does not describe how that service works inside.</p>
 </div>
-
+</section>
+<section class="sec">
 <h2 id="settings">Switches <a class="anchor" href="#settings" aria-label="Link to this section: Switches">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
@@ -119,7 +124,8 @@
 <tr><td><code>cl_kog_account_name</code></td><td>empty</td><td>The account name shown in the settings. Not a secret.</td></tr>
 </tbody>
 </table></div>
-
+</section>
+<section class="sec">
 <h2 id="flow">The flow <a class="anchor" href="#flow" aria-label="Link to this section: The flow">#</a></h2>
 <figure class="diagram" id="figure-login">
 <div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/login-dark.svg"><img src="../../assets/diagrams/login-light.svg" alt="Sequence diagram of the browser login. The client reads the discovery document of the KoG account service, starts a listener on a random loopback port and opens the login page in the web browser with a PKCE challenge and a random state. After you log in, the browser is redirected to the loopback listener with a code. The client exchanges the code and the PKCE verifier for an access token, reads the account name, makes an Ed25519 key pair, stores the private key in the OS key store, registers the public key and a device name with the account service, and discards the token." width="930" height="1039" loading="lazy" decoding="async"></picture></div>
@@ -155,7 +161,8 @@
 <li>The client exchanges the code and the PKCE verifier for an access token, reads the account name for the settings, makes an <strong>Ed25519 key pair</strong> and registers the public half and the device name (<code>POST /api/client/device</code>, answered with <code>201</code> and a device id).</li>
 <li>The private key goes into the key store. The access token is discarded.</li>
 </ol>
-
+</section>
+<section class="sec">
 <h2 id="hosts">Which hosts the login talks to <a class="anchor" href="#hosts" aria-label="Link to this section: Which hosts the login talks to">#</a></h2>
 <p>The discovery document is only a hint where the account service lives, so its three endpoints (authorize, token, user info) are checked before anything is sent to them. An endpoint must be https and have</p>
 <ol>
@@ -164,7 +171,8 @@
 <li>an origin listed in <code>cl_kog_account_extra_origins</code>, for a staging setup.</li>
 </ol>
 <p>Everything else (another domain, <code>kog.tw.evil.example</code>, <code>kog.tw@evil.example</code>, another port, plain http) makes the login fail with "unusable login description" before the browser is opened. The device calls go to <code>cl_kog_account_url</code> only. The token, user info, device and removal requests <strong>do not follow redirects</strong>: a 307 or 308 would send the code and the verifier again to a place you never chose. There is no certificate pinning; TLS is verified normally.</p>
-
+</section>
+<section class="sec">
 <h2 id="key-store">The device key <a class="anchor" href="#key-store" aria-label="Link to this section: The device key">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>System</th><th>Where the private key lives</th></tr></thead>
@@ -175,14 +183,17 @@
 </tbody>
 </table></div>
 <p>A process running as the same user can still ask the keychain or read the file. This is the same protection as an SSH key. The key is never in the config, logs, screenshots or crash reports, and memory buffers are wiped after use.</p>
-
+</section>
+<section class="sec">
 <h2 id="sent">What is sent where <a class="anchor" href="#sent" aria-label="Link to this section: What is sent where">#</a></h2>
 <p>Nothing leaves your computer except requests to the account service (<code>kog.tw</code> by default): the discovery document, the token exchange, user info, device registration and removal. For registration the client sends the OAuth code and the PKCE verifier, the device name and the <strong>public</strong> half of the device key. The private key, the password and the access token never go anywhere else. The browser link is logged by host only, never with its query, and requests are not logged.</p>
-
+</section>
+<section class="sec">
 <h2 id="revocation">Log out and revocation <a class="anchor" href="#revocation" aria-label="Link to this section: Log out and revocation">#</a></h2>
 <p>Log out on this device wipes the private key <strong>at once</strong>. The account service only accepts the removal of a device with a token, so the client runs the browser step again and sends <code>DELETE /api/client/device/{id}</code>. If that is cancelled or fails, the key is gone anyway and the device stays listed on kog.tw until you remove it there. Only <code>200</code> and <code>204</code> count as removed; a <code>404</code> means the browser was signed in to a different account than the one that owns the device, and the client says so instead of claiming success.</p>
 <p>If your computer is stolen, remove the device on kog.tw. After that, the device is no longer listed on your account.</p>
-
+</section>
+<section class="sec">
 <h2 id="threats">Threats considered <a class="anchor" href="#threats" aria-label="Link to this section: Threats considered">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Threat</th><th>What happens</th></tr></thead>
@@ -194,7 +205,8 @@
 <tr><td>A fake account service</td><td>TLS is verified, the discovery document is accepted only from the configured https base URL, and its endpoints must be on an allowed origin.</td></tr>
 </tbody>
 </table></div>
-
+</section>
+<section class="sec">
 <h2 id="join-proof">Join proof <span class="state planned">Planned</span> <a class="anchor" href="#join-proof" aria-label="Link to this section: Join proof Planned">#</a></h2>
 <p>The client can already sign a challenge with the device key: the signing code binds the <strong>server address</strong>, a nonce, the device id and a session id, each length-prefixed, so a challenge cannot be reused on another server, with another nonce, by another device or in another session. The decision whether to answer at all is in the client: only if <code>cl_kog_login</code> and <code>cl_kog_auto_login</code> are on, a key exists, the server is listed for the <code>kog</code> community in the server list (which a server cannot claim for itself), you did not already use <code>/login</code> in this join, and at most once per join. Other servers never get an answer.</p>
 <p>The wire format that would carry the challenge is not decided and not built. The transport in the client is a stub that sends nothing, which is why <code>cl_kog_auto_login</code> is off. Today, nothing of this reaches any server.</p>
@@ -211,9 +223,11 @@
   Note over C: Sign server address, nonce, device and session&lt;br/&gt;with the device key
   C-&gt;&gt;S: Proof (signature, no secret)</code></pre></details>
 </figure>
-
+</section>
+<section class="sec">
 <h2 id="tests">Tests <a class="anchor" href="#tests" aria-label="Link to this section: Tests">#</a></h2>
 <p><code>src/test/kog_login_test.cpp</code> covers the RFC 7636 PKCE vector, the RFC 8032 Ed25519 vectors, callback parsing, the listener, the allowed endpoint origins, the challenge bytes and signature, the neutral device name, the wiping of request bodies and a 307 that the token request must not follow. <strong>Not tested automatically:</strong> the HTTP steps of the flow, the key store, the key file and the settings box, which need a running account service or a desktop session.</p>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/verify/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Verify a download</span></a>
 <a class="pager-next" rel="next" href="../../technical/protocol/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Protocol</span></a>

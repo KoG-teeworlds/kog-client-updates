@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Architecture | KoG Client technical documentation</title>
 <meta name="description" content="The parts of the KoG client (updater, login, key store, settings, HTTP layer) and the three public addresses it talks to, with a diagram.">
 <link rel="canonical" href="https://client.kog.tw/technical/architecture/">
@@ -87,10 +87,14 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Architecture</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Start</p>
 <h1>Architecture <span class="state built">Built</span></h1>
 <p class="lead">What is inside the client, how the parts depend on each other, and which public addresses it contacts. Server-side programs are out of scope: this documentation describes the client.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Built</dd><dt>Section</dt><dd>Start</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <h2 id="overview">Overview <a class="anchor" href="#overview" aria-label="Link to this section: Overview">#</a></h2>
 <p>The KoG client is the DDNet and TClient game client plus a small set of additions in separate <code>kog_*</code> files. The additions do two things: they keep the client up to date from a signed manifest, and they let you log in to your KoG account through your browser. Everything else is the code of the game client that the fork is based on.</p>
 <p>Outside your computer the client talks to exactly three places that belong to KoG or its tooling, plus the game servers you choose to join and the server list inherited from DDNet:</p>
@@ -130,7 +134,8 @@
   classDef planned stroke-dasharray:6 4
   class SRV planned</code></pre></details>
 </figure>
-
+</section>
+<section class="sec">
 <h2 id="components">Components <a class="anchor" href="#components" aria-label="Link to this section: Components">#</a></h2>
 <p>Paths are relative to <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
@@ -149,7 +154,8 @@
 <tr><td>HTTP layer</td><td><code>src/engine/http.h</code>, <code>src/engine/shared/http_curl.cpp</code></td><td>The one place that makes HTTPS requests (libcurl). The updater and the login use it; the login switches off redirects for its token requests.</td><td><span class="state built">Built</span></td></tr>
 </tbody>
 </table></div>
-
+</section>
+<section class="sec">
 <h2 id="design-rules-that-follow-from-this-layout">Design rules that follow from this layout <a class="anchor" href="#design-rules-that-follow-from-this-layout" aria-label="Link to this section: Design rules that follow from this layout">#</a></h2>
 <ul>
 <li><strong>Checks are separate from effects.</strong> The rules that decide whether a manifest or a callback is acceptable live in <code>engine/shared</code> and are covered by unit tests (<code>src/test/kog_update_test.cpp</code>, <code>kog_login_test.cpp</code>, <code>kog_failsafe_test.cpp</code>). The updater and the login component only do the I/O.</li>
@@ -161,6 +167,7 @@
 <div class="callout note" role="note">
 <p>Not verified. This page was written from reading the source. The unit tests above were not re-run for it, and the interplay of the parts (for example the updater and the key store in one session) has no end-to-end test.</p>
 </div>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Overview</span></a>
 <a class="pager-next" rel="next" href="../../technical/update-channel/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Update channel</span></a>

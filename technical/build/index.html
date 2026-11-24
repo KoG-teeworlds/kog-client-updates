@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Build from source | KoG Client technical documentation</title>
 <meta name="description" content="How to build the KoG client from source on Linux, macOS and Windows with CMake, how to run the tests, and an honest statement about reproducible builds.">
 <link rel="canonical" href="https://client.kog.tw/technical/build/">
@@ -95,38 +95,47 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Build from source</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Data and building</p>
 <h1>Build from source <span class="state partial">Partly built</span></h1>
 <p class="lead">The client builds like DDNet: with CMake, the client only. The commands below are the ones the project's own build workflow uses. A build you make yourself is not on any channel and is not signed.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Partly built</dd><dt>Section</dt><dd>Data and building</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <div class="callout note" role="note">
 <p>What was run. The commands below were taken from the repository's build workflows (<code>.github/workflows/kog-build.yml</code>, <code>kog-package.yml</code>) and README, where they run on GitHub's Linux, macOS and Windows runners. They were <strong>not run by hand</strong> for this page. For the dependencies and the many options, see <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/BUILDING.md">docs/BUILDING.md</a>, which is the DDNet guide.</p>
 </div>
-
+</section>
+<section class="sec">
 <h2 id="get">Get the source <a class="anchor" href="#get" aria-label="Link to this section: Get the source">#</a></h2>
 <p>Bundled libraries come from a git submodule (<code>ddnet-libs</code>), which Windows and macOS builds need.</p>
-<pre class="sh" tabindex="0"><code>git clone https://github.com/KoG-teeworlds/kog-client
+<pre class="sh" data-lang="Shell" tabindex="0"><code>git clone https://github.com/KoG-teeworlds/kog-client
 cd kog-client
 git submodule update --init --recursive</code></pre>
-
+</section>
+<section class="sec">
 <h2 id="linux">Linux <a class="anchor" href="#linux" aria-label="Link to this section: Linux">#</a></h2>
 <p>The dependencies the workflow installs on Ubuntu (other distributions have the same libraries under other names):</p>
-<pre class="sh" tabindex="0"><code>sudo apt-get install -y cmake glslang-tools libavcodec-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libswresample-dev libswscale-dev libvulkan-dev libwavpack-dev libx264-dev ninja-build pkg-config spirv-tools zlib1g-dev</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>sudo apt-get install -y cmake glslang-tools libavcodec-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libswresample-dev libswscale-dev libvulkan-dev libwavpack-dev libx264-dev ninja-build pkg-config spirv-tools zlib1g-dev</code></pre>
 <p>The client only, without server and tools, which is how the release workflows build it:</p>
-<pre class="sh" tabindex="0"><code>mkdir build
+<pre class="sh" data-lang="Shell" tabindex="0"><code>mkdir build
 cd build
 cmake .. -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build . --target game-client</code></pre>
-
+</section>
+<section class="sec">
 <h2 id="macos">macOS <a class="anchor" href="#macos" aria-label="Link to this section: macOS">#</a></h2>
-<pre class="sh" tabindex="0"><code>brew install ffmpeg molten-vk ninja pkg-config sdl2</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>brew install ffmpeg molten-vk ninja pkg-config sdl2</code></pre>
 <p>Then the same <code>mkdir build</code>, <code>cmake</code> and <code>cmake --build</code> commands as on Linux. The workflow adds <code>-G Ninja</code> and <code>-DIPO=ON</code> for release builds.</p>
-
+</section>
+<section class="sec">
 <h2 id="windows">Windows <a class="anchor" href="#windows" aria-label="Link to this section: Windows">#</a></h2>
 <p>The workflow uses a Visual Studio generator for x64 and the bundled libraries. In a developer PowerShell, from the <code>build</code> folder:</p>
-<pre class="sh" tabindex="0"><code>cmake .. -A x64 -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF
+<pre class="sh" data-lang="Shell" tabindex="0"><code>cmake .. -A x64 -DCLIENT=ON -DSERVER=OFF -DTOOLS=OFF
 cmake --build . --config Release --target game-client</code></pre>
-
+</section>
+<section class="sec">
 <h2 id="options">Options that matter <a class="anchor" href="#options" aria-label="Link to this section: Options that matter">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead>
@@ -138,16 +147,19 @@ cmake --build . --config Release --target game-client</code></pre>
 </tbody>
 </table></div>
 <p>Without <code>-DAUTOUPDATE=ON</code> your build has no updater at all. This differs from what <code>docs/BUILDING.md</code> still says (the DDNet default of ON for Windows and Linux); the <code>CMakeLists.txt</code> of this repository sets OFF.</p>
-
+</section>
+<section class="sec">
 <h2 id="tests">Tests <a class="anchor" href="#tests" aria-label="Link to this section: Tests">#</a></h2>
 <p>Configure with the GTest option once, then run the test target:</p>
-<pre class="sh" tabindex="0"><code>cmake .. -DDOWNLOAD_GTEST=ON
+<pre class="sh" data-lang="Shell" tabindex="0"><code>cmake .. -DDOWNLOAD_GTEST=ON
 cmake --build . --target run_tests</code></pre>
 <p>The KoG-specific tests are <code>src/test/kog_update_test.cpp</code> (manifest rules and signatures), <code>kog_failsafe_test.cpp</code> (rollback) and <code>kog_login_test.cpp</code> (PKCE, callback, challenge). Linux builds in CI also start the client under a virtual display for 25 seconds (<code>scripts/kog/smoke_test.sh</code>); the Windows and macOS runners have no GPU, so only compilation and unit tests run there.</p>
-
+</section>
+<section class="sec">
 <h2 id="repro">Reproducibility <a class="anchor" href="#repro" aria-label="Link to this section: Reproducibility">#</a></h2>
 <p><strong>The builds are not reproducible yet.</strong> The repository has no documented procedure that rebuilds a release byte for byte, and this has not been tested. What exists instead: public workflows build the files on GitHub, every file carries a <a href="/technical/verify/#verify-attestation">build attestation</a>, releases are immutable, and the signing check verifies attestation, hashes and that the commit is on <code>main</code> before it signs. That shows where a file came from, not that two builds from one commit give identical files.</p>
 <p>Other targets inherited from DDNet (Android, iOS, WebAssembly) have guides in the repository, but the KoG client is only built and released for Windows, macOS and Linux, and nothing about the others is checked here.</p>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/privacy/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Privacy</span></a>
 <a class="pager-next" rel="next" href="../../technical/security/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Security</span></a>

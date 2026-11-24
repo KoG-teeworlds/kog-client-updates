@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Update channel | KoG Client technical documentation</title>
 <meta name="description" content="The signed update manifest of the KoG client: format 2, every field, the signature file, key ids, per-channel keys, rollback protection and how the client verifies an update.">
 <link rel="canonical" href="https://client.kog.tw/technical/update-channel/">
@@ -95,14 +95,19 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Update channel</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Updates and trust</p>
 <h1>Update channel <span class="state built">Built</span></h1>
 <p class="lead">The client updates itself from a signed manifest. Nothing the network delivers is trusted until the signatures check. This page is the reference for the format and for what the client verifies.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Built</dd><dt>Section</dt><dd>Updates and trust</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <div class="callout note" role="note">
 <p>Source of truth. The client's own description is <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/docs/UPDATE_CHANNEL.md">docs/UPDATE_CHANNEL.md</a>. This page follows it and adds a worked example. The updater is only compiled with <code>-DAUTOUPDATE=ON</code>, and a release build fails while a channel's keys are placeholders.</p>
 </div>
-
+</section>
+<section class="sec">
 <h2 id="channels">Channels <a class="anchor" href="#channels" aria-label="Link to this section: Channels">#</a></h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
 <thead><tr><th>Channel</th><th>Built from</th><th>Signatures</th><th>Manifest valid for</th><th>State</th></tr></thead>
@@ -139,7 +144,8 @@
   classDef planned stroke-dasharray:6 4
   class S1,S2,S3,M1 planned</code></pre></details>
 </figure>
-
+</section>
+<section class="sec">
 <h2 id="endpoints">Endpoints of client.kog.tw <a class="anchor" href="#endpoints" aria-label="Link to this section: Endpoints of client.kog.tw">#</a></h2>
 <p>The site is served by GitHub Pages from the branch <code>published</code> of <a href="https://github.com/KoG-teeworlds/kog-client-updates">kog-client-updates</a>. Manifests and this website are published by separate jobs and never overwrite each other.</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
@@ -154,7 +160,8 @@
 </tbody>
 </table></div>
 <p>The names <code>stable</code>, <code>canary</code>, <code>dev</code>, <code>base</code>, <code>releases</code> and <code>builds</code> belong to the release data and are never used by website pages.</p>
-
+</section>
+<section class="sec">
 <h2 id="manifest">The manifest, format 2 <a class="anchor" href="#manifest" aria-label="Link to this section: The manifest, format 2">#</a></h2>
 <p><code>update.json</code> is JSON. A field that is absent means the old behaviour. Unknown fields are ignored by the client but are signed with the rest.</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table, scrolls sideways"><table>
@@ -179,7 +186,7 @@
 
 <h3 id="an-annotated-example">An annotated example <a class="anchor" href="#an-annotated-example" aria-label="Link to this section: An annotated example">#</a></h3>
 <p>The shape is taken from the published canary manifest. The hashes are shortened and the URLs trimmed, so this is an illustration and not a file to verify. Comments after <code>//</code> are not part of JSON.</p>
-<pre class="json" tabindex="0"><code>{
+<pre class="json" data-lang="JSON" tabindex="0"><code>{
   "format": 2,                       // required, must be 2
   "channel": "canary",               // must equal the channel the client asked for
   "version": "0.1.0-canary.9",       // the form of the channel
@@ -195,17 +202,19 @@
   "packages": [ { "name": "...", "sha256": "...", "size": 0, "url": "..." } ]   // for the download page only
 }</code></pre>
 <p>The matching <code>update.json.sig</code> of that manifest begins <code>kog-update-sig-v1 1cb978aa d7465f8c...</code>.</p>
-
+</section>
+<section class="sec">
 <h2 id="signature">Signature file and key ids <a class="anchor" href="#signature" aria-label="Link to this section: Signature file and key ids">#</a></h2>
 <p><code>update.json.sig</code> is one line:</p>
-<pre class="text" tabindex="0"><code>kog-update-sig-v1 KEYID SIGNATURE</code></pre>
+<pre class="text" data-lang="Text" tabindex="0"><code>kog-update-sig-v1 KEYID SIGNATURE</code></pre>
 <ul>
 <li><code>kog-update-sig-v1</code> is the format tag.</li>
 <li><code>SIGNATURE</code> is Ed25519 over the <strong>exact bytes</strong> of <code>update.json</code>, 128 hex characters. It is checked with Monocypher.</li>
 <li><code>KEYID</code> is the first 8 hex characters of the public key, so a verifier can see which key was used.</li>
 </ul>
 <p>The stable channel will have a second signature, <code>update.json.sigb</code>, in OpenSSH format (<code>ssh-keygen -Y sign -n kog-client-release</code>, key type <code>sk-ssh-ed25519@openssh.com</code>) made with a hardware key. The client checks the application, that the key was touched (user presence), the namespace and the signature. See <a href="/technical/release-signing/">release signing</a>.</p>
-
+</section>
+<section class="sec">
 <h2 id="keys">Per-channel keys and rotation <a class="anchor" href="#keys" aria-label="Link to this section: Per-channel keys and rotation">#</a></h2>
 <p>Each channel has two CI keys, a and b, compiled into the client in <a href="https://github.com/KoG-teeworlds/kog-client/blob/main/src/engine/client/kog_update_pubkey.h">kog_update_pubkey.h</a> (<code>KOG_&lt;CHANNEL&gt;_CI_KEYS</code>). A key of one channel cannot sign another channel, and the channel name is part of the signed text.</p>
 <p>To replace a CI key without leaving installed clients behind, the client always ships both slots and the signing side holds one active key:</p>
@@ -216,7 +225,8 @@
 <li>A client release with that change is shipped before the next rotation. Only then may the slot that was just filled become active.</li>
 </ol>
 <p>A key that is not shipped in a client release is never made active. For stable, the owner's hardware keys (<code>KOG_STABLE_OWNER_KEYS</code>) and an offline backup CI key (<code>KOG_STABLE_BACKUP_CI_KEYS</code>) are separate from the CI keys. The stable keys in the client are still placeholders (<code>KOG_UPDATE_KEYS_PLACEHOLDER_STABLE 1</code>): a channel with placeholder keys does not update.</p>
-
+</section>
+<section class="sec">
 <h2 id="client-checks">How the client verifies an update <a class="anchor" href="#client-checks" aria-label="Link to this section: How the client verifies an update">#</a></h2>
 <figure class="diagram" id="figure-update-flow">
 <div class="diagram-scroll" tabindex="0" role="region" aria-label="Diagram, scrolls sideways"><picture><source media="(prefers-color-scheme: dark)" srcset="../../assets/diagrams/update-flow-dark.svg"><img src="../../assets/diagrams/update-flow-light.svg" alt="Sequence diagram of an update check. The client asks client.kog.tw for the manifest and its signature. If that fails it asks a fallback host with the same files. It verifies the signature against the keys of its own channel, then checks channel, sequence, expiry, version and rollout. It downloads each changed file from the allowed hosts, checks size and SHA-256 before anything is replaced, keeps the previous version, and restores it if the new one does not reach the start screen twice." width="930" height="846" loading="lazy" decoding="async"></picture></div>
@@ -253,6 +263,7 @@
 <div class="callout note" role="note">
 <p>Not verified. The Windows free-disk check and the executable-bit handling were not run on Windows, and the updater has had little real-world use. Hardware-key signatures were tested with a software emulation of the OpenSSH format, not with a real security key.</p>
 </div>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/architecture/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Architecture</span></a>
 <a class="pager-next" rel="next" href="../../technical/release-signing/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Release signing</span></a>

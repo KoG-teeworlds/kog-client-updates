@@ -44,7 +44,7 @@
 
   // The contents and the table of the page stay open on wide screens and fold on narrow ones.
   var navWide = window.matchMedia ? window.matchMedia("(min-width: 48rem)") : null;
-  var tocWide = window.matchMedia ? window.matchMedia("(min-width: 64rem)") : null;
+  var tocWide = window.matchMedia ? window.matchMedia("(min-width: 87.5rem)") : null;
   var nav = document.querySelector(".nav-toggle");
   var toc = document.querySelector(".toc-toggle");
   function setOpen(node, open) {

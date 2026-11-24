@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://kog-teeworlds.github.io; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="kog-site-build" content="14c5b7dcf23eef494ead19d882ac3c02e9bdcd04">
+<meta name="kog-site-build" content="65106abd29d2289ad440cd0b723d39ce4da6c344">
 <title>Verify a download | KoG Client technical documentation</title>
 <meta name="description" content="How to check a KoG client download: the SHA-256 hash, the GitHub build attestation, and the signature of the update manifest with kogsign, with commands you can run.">
 <link rel="canonical" href="https://client.kog.tw/technical/verify/">
@@ -89,28 +89,34 @@
 <main id="main" class="doc">
 <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../">KoG Client</a></li><li><a href="../../technical/">Technical</a></li><li aria-current="page">Verify a download</li></ol></nav>
 <header class="doc-head">
+<div>
 <p class="eyebrow">Updates and trust</p>
 <h1>Verify a download <span class="state built">Built</span></h1>
 <p class="lead">Three independent checks. Replace the file name with the one you downloaded. Commands for the checks that need the source are run from a checkout of <a href="https://github.com/KoG-teeworlds/kog-client">kog-client</a>.</p>
+</div>
+<aside class="glance" aria-label="At a glance"><p class="glance-title">At a glance</p><dl><dt>Status</dt><dd>Built</dd><dt>Section</dt><dd>Updates and trust</dd><dt>Checked</dt><dd>24 November 2026, against <a href="https://github.com/KoG-teeworlds/kog-client/commit/f93469fdd">kog-client f93469fdd</a></dd></dl></aside>
 </header>
+<section class="sec">
 <h2 id="verify-hash">1. File hash <a class="anchor" href="#verify-hash" aria-label="Link to this section: 1. File hash">#</a></h2>
 <p>The start page shows the SHA-256 of each package, read from the signed manifest. Compare it with the output of the command for your system.</p>
 <p>Linux:</p>
-<pre class="sh" tabindex="0"><code>sha256sum KoG-Client-linux.tar.xz</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>sha256sum KoG-Client-linux.tar.xz</code></pre>
 <p>macOS:</p>
-<pre class="sh" tabindex="0"><code>shasum -a 256 KoG-Client-macOS.dmg</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>shasum -a 256 KoG-Client-macOS.dmg</code></pre>
 <p>Windows PowerShell:</p>
-<pre class="sh" tabindex="0"><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>Get-FileHash .\KoG-Client-windows.zip -Algorithm SHA256</code></pre>
 <p>If the hash differs, delete the file and download it again. A matching hash only shows that you have the file the manifest names. It does not show that the manifest is genuine: that is what check 3 is for.</p>
-
+</section>
+<section class="sec">
 <h2 id="verify-attestation">2. Build attestation <a class="anchor" href="#verify-attestation" aria-label="Link to this section: 2. Build attestation">#</a></h2>
 <p>GitHub keeps a signed statement of which workflow and commit built each file. With the <a href="https://cli.github.com/">GitHub CLI</a>:</p>
-<pre class="sh" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>gh attestation verify KoG-Client-linux.tar.xz -R KoG-teeworlds/kog-client</code></pre>
 <p>It succeeds only if the file is byte-identical to what the project's workflow built. It tells you where a file came from, not that the code is good.</p>
-
+</section>
+<section class="sec">
 <h2 id="verify-manifest">3. Manifest signature <a class="anchor" href="#verify-manifest" aria-label="Link to this section: 3. Manifest signature">#</a></h2>
 <p>Check the signature yourself with <code>kogsign</code>, the small verifier the signing job uses. It is built from a few files of the repository, with Monocypher for Ed25519:</p>
-<pre class="sh" tabindex="0"><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
+<pre class="sh" data-lang="Shell" tabindex="0"><code>git clone --depth 1 https://github.com/KoG-teeworlds/kog-client
 cd kog-client
 cc -O2 -o kogsign scripts/kog/kogsign.c src/engine/external/monocypher/monocypher.c src/engine/external/monocypher/monocypher-ed25519.c -Isrc/engine/external/monocypher
 curl -fsSO https://client.kog.tw/canary/update.json
@@ -121,7 +127,7 @@ for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign veri
 
 <h3 id="verify-all">Everything in one go <a class="anchor" href="#verify-all" aria-label="Link to this section: Everything in one go">#</a></h3>
 <p>Both hosts, signatures, expiry, and the hash of every file in the manifest. It needs <code>curl</code>, <code>python3</code>, <code>ssh-keygen</code> and a C compiler:</p>
-<pre class="sh" tabindex="0"><code>scripts/kog/verify_published.sh canary</code></pre>
+<pre class="sh" data-lang="Shell" tabindex="0"><code>scripts/kog/verify_published.sh canary</code></pre>
 <p>Use <code>dev</code> or <code>stable</code> instead of <code>canary</code> once those channels are published.</p>
 
 <div class="callout note" role="note">
@@ -130,6 +136,7 @@ for k in $(python3 scripts/kog/keys_from_header.py ci canary); do ./kogsign veri
 <div class="callout warning" role="note">
 <p>Warning. None of these checks proves that a build is free of bugs or of unwanted behaviour. They show who built the file, from which commit, and that it was not changed on the way to you. Builds are not code-signed for Windows or macOS yet, which is why those systems warn when you start them.</p>
 </div>
+</section>
 <nav class="pager" aria-label="Pagination">
 <a class="pager-prev" rel="prev" href="../../technical/release-signing/"><span class="pager-label">&#8592; Previous</span><span class="pager-title">Release signing</span></a>
 <a class="pager-next" rel="next" href="../../technical/login/"><span class="pager-label">Next &#8594;</span><span class="pager-title">Login</span></a>
