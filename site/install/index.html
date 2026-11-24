@@ -30,13 +30,15 @@
 <header class="site">
 <div class="wrap bar">
 <a class="brand" href="../"><img src="../assets/kog-logo.svg" alt="" width="36" height="36"><span>KoG Client</span></a>
-<nav class="main" aria-label="Main"><ul>
+<nav class="main" aria-label="Main"><details class="menu"><summary>Menu</summary><ul>
 <li><a href="../">Download</a></li>
-<li><a href="../technical/">Technical</a></li>
+<li><a href="../technical/">Docs</a></li>
+<li><a href="../privacy/">Privacy</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source<span aria-hidden="true"> &#8599;</span></a></li>
-<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
 <li><a href="https://kog.tw/clients">Approved clients<span aria-hidden="true"> &#8599;</span></a></li>
-</ul></nav>
+<li><a href="https://kog.tw/">kog.tw<span aria-hidden="true"> &#8599;</span></a></li>
+</ul></details></nav>
+<button type="button" class="search-open" data-index="../assets/search-index.json" hidden><span>Search</span><kbd>/</kbd></button>
 </div>
 </header>
 <div class="wrap">
@@ -55,7 +57,7 @@
 <li><a href="https://github.com/KoG-teeworlds/kog-client">Source code</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/issues">Issues</a></li>
 <li><a href="../privacy/">Privacy</a></li>
-<li><a href="../technical/">Technical</a></li>
+<li><a href="../technical/">Docs</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/SECURITY.md">Security</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/license.txt">Licence</a></li>
 <li><a href="https://github.com/KoG-teeworlds/kog-client/blob/main/NOTICE_KOG.md">Credits and notice</a></li>
@@ -64,5 +66,6 @@
 <p>An independent fork of <a href="https://github.com/TaterClient/TClient">TClient</a>, itself a fork of <a href="https://ddnet.org">DDNet</a>. Not an official release of Teeworlds, DDNet or TClient, and not endorsed by their authors.</p>
 </div>
 </footer>
+<script src="../assets/nav.js" defer></script>
 </body>
 </html>

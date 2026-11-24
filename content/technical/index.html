@@ -8,6 +8,15 @@
 <p>Status of these pages. Everything here describes the <strong>client</strong> only, and was read from the repository <a href="https://github.com/KoG-teeworlds/kog-client">KoG-teeworlds/kog-client</a> (its <code>docs/</code> folder, source and workflows, at the state of 24 November 2026) and from the files published at client.kog.tw. A claim that was not run or tested says so on the page. Anything that is not built is marked <span class="state planned">Planned</span>.</p>
 </div>
 
+<h2 id="start">Start here</h2>
+<p>Pick what you want to do.</p>
+<ul class="map paths">
+<li><a href="/#install"><strong>I just want to play</strong><span class="sub">Download the client and install it. No account and no reading needed.</span></a></li>
+<li><a href="/technical/verify/"><strong>I want to check a download</strong><span class="sub">Compare a file with the signed list. Commands for each system.</span></a></li>
+<li><a href="/technical/build/"><strong>I want to build it</strong><span class="sub">Compile the client from source and run its tests.</span></a></li>
+<li><a href="/technical/architecture/"><strong>I want to understand how it works</strong><span class="sub">The parts of the client, the update channel, the login and what it adds to the game connection.</span></a></li>
+</ul>
+
 <h2 id="what">What it is and is not</h2>
 <p>The KoG client is a <strong>reference implementation</strong>: a working example of features that need new code in the game client. It is a fork of <a href="https://github.com/TaterClient/TClient">TClient</a> 10.9.0, which is a fork of the <a href="https://ddnet.org">DDNet</a> client 20.1. The KoG-specific code lives in separate files (<code>kog_*</code>), so upstream changes can still be merged.</p>
 <ul>
@@ -26,7 +35,7 @@
 <tr><td>In-app updater (Windows, Linux)</td><td><span class="state built">Built</span></td><td>Verifies signature, expiry, sequence and every file hash; keeps the previous version for rollback. Little real-world testing so far, and the Windows disk-space check was not run on Windows.</td><td><a href="/technical/update-channel/">Update channel</a></td></tr>
 <tr><td>Browser login and device key</td><td><span class="state built">Built</span></td><td>Canary and dev builds only (<code>cl_kog_login</code>). The HTTP steps and the key store have no automated test.</td><td><a href="/technical/login/">Login</a></td></tr>
 <tr><td>Join proof (signed challenge when joining a server)</td><td><span class="state partial">Partly built</span></td><td>The signing code exists, the wire transport does not. <code>cl_kog_auto_login</code> is off and sends nothing.</td><td><a href="/technical/login/#join-proof">Login</a></td></tr>
-<tr><td>Capability announcement to servers (<code>kog_hello</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Only names are reserved in the source.</td><td><a href="/technical/protocol/">Protocol</a></td></tr>
+<tr><td>Capability announcement to servers (<code>kog_hello</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Only names are reserved in the source.</td><td><a href="/technical/architecture/#protocol">Protocol</a></td></tr>
 <tr><td>Opt-in network statistics (<code>kog_telemetry</code>)</td><td><span class="state planned">Planned</span></td><td>The setting exists, is off and is not implemented. Nothing is sent.</td><td><a href="/technical/privacy/">Privacy</a></td></tr>
 <tr><td>Stable channel with two signatures</td><td><span class="state planned">Planned</span></td><td>The stable keys are placeholders. No stable release has been made.</td><td><a href="/technical/release-signing/">Release signing</a></td></tr>
 <tr><td>Signed list of known builds (<code>builds/allowlist.json</code>)</td><td><span class="state planned">Planned</span></td><td>Idea only; nothing is served at that address.</td><td><a href="/technical/roadmap/">Roadmap</a></td></tr>
@@ -44,7 +53,6 @@
 <li><a href="/technical/release-signing/"><strong>Release signing</strong><span class="sub">CI signature, hardware key, channels, rollback and halt.</span></a></li>
 <li><a href="/technical/verify/"><strong>Verify a download</strong><span class="sub">Hashes, attestations and kogsign, with commands that work.</span></a></li>
 <li><a href="/technical/login/"><strong>Login</strong><span class="sub">OAuth 2.0 with PKCE in your browser and a device key.</span></a></li>
-<li><a href="/technical/protocol/"><strong>Protocol</strong><span class="sub">What the client adds to the game connection: built and planned.</span></a></li>
 <li><a href="/technical/privacy/"><strong>Privacy</strong><span class="sub">What is sent where, when, and how to switch it off.</span></a></li>
 <li><a href="/technical/build/"><strong>Build from source</strong><span class="sub">Commands for each system, tests, reproducibility.</span></a></li>
 <li><a href="/technical/security/"><strong>Security</strong><span class="sub">What is protected, what is not, and how to report.</span></a></li>
