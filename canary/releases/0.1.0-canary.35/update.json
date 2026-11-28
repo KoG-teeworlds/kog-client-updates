@@ -1,0 +1,46 @@
+{
+  "format": 2,
+  "channel": "canary",
+  "sequence": 19,
+  "issued": 1795860082,
+  "expires": 1798452082,
+  "version": "0.1.0-canary.35",
+  "files": [],
+  "platforms": {
+    "linux-x86_64": {
+      "client": {
+        "sha256": "92f562fa7f44f0b4c3d9fe82e18aa7d7dbee1ee07e303ee61fd119f902c611c8",
+        "size": 15034088,
+        "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-35/client-linux-x86_64-0.1.0-canary.35"
+      }
+    },
+    "win64": {
+      "client": {
+        "sha256": "4878e5a8bb4f45dd1d2fc857a8119d16b762db9a76041528fbe58d17c660e6ef",
+        "size": 5198848,
+        "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-35/client-win64-0.1.0-canary.35.exe"
+      }
+    }
+  },
+  "remove": [],
+  "packages": [
+    {
+      "name": "KoG-Client-linux.tar.xz",
+      "sha256": "253b26afff7be894fd826744a7e46ba5fe051b7eb99bc51695a4c5c01a573584",
+      "size": 44433420,
+      "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-35/KoG-Client-linux.tar.xz"
+    },
+    {
+      "name": "KoG-Client-macOS.dmg",
+      "sha256": "9e9f7769b627793addc0979020d64d97802738a09dea70ceb4fb7fd0a2a26914",
+      "size": 53979774,
+      "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-35/KoG-Client-macOS.dmg"
+    },
+    {
+      "name": "KoG-Client-windows.zip",
+      "sha256": "2fd68389d6e345ecd61f0f4139f62d011367d2c02d99f3c97c21eec7dafc9aa0",
+      "size": 55845426,
+      "url": "https://github.com/KoG-teeworlds/kog-client/releases/download/canary-35/KoG-Client-windows.zip"
+    }
+  ]
+}
